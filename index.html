@@ -122,6 +122,8 @@
             }
 
             const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
+            // ВАЖЛИВО: Для orderBy вам може знадобитися створити індекс у консолі Firebase.
+            // Інакше запит може не спрацювати.
             const q = query(tasksCollection, orderBy("createdAt"));
 
             onSnapshot(q, (querySnapshot) => {
@@ -151,13 +153,17 @@
                 folderBtn.className = `px-3 py-1 rounded-full text-sm font-medium transition-colors ${currentFolder === folder ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
                 folderBtn.addEventListener('click', () => {
                     currentFolder = folder;
-                    subscribeToTasks();
+                    // Оновлюємо, щоб відобразити завдання лише для цієї папки
+                    subscribeToTasks(); 
                 });
                 foldersContainer.appendChild(folderBtn);
             });
         };
 
         const renderTasks = (tasks) => {
+            // Фільтрація за папкою
+            const filteredTasks = tasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
+
             const activeTasks = [];
             const deferredTasks = [];
             const completedTasks = [];
@@ -165,7 +171,7 @@
 
             const now = new Date().getTime();
 
-            tasks.forEach(task => {
+            filteredTasks.forEach(task => {
                 if (task.completed) {
                     completedTasks.push(task);
                 } else if (task.deferredUntil && task.deferredUntil.toDate().getTime() > now) {
@@ -193,14 +199,10 @@
             }
 
 
-            // Фільтрація за папкою
-            const filteredActive = activeTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
-            const filteredDeferred = deferredTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
-            const filteredCompleted = completedTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
-
-            renderTaskList(filteredActive, activeTasksList);
-            renderTaskList(filteredDeferred, deferredTasksList);
-            renderTaskList(filteredCompleted, completedTasksList);
+            // Рендеримо вже відфільтровані списки
+            renderTaskList(activeTasks, activeTasksList);
+            renderTaskList(deferredTasks, deferredTasksList);
+            renderTaskList(completedTasks, completedTasksList);
         };
 
         const renderTaskList = (tasks, listElement) => {
