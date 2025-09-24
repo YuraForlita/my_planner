@@ -24,10 +24,15 @@
     <div class="max-w-xl w-full">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник</h1>
-            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono"></span></p>
+            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono">Немає</span></p>
+
+            <!-- Повідомлення про помилку -->
+            <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+                Сталася помилка ініціалізації. Будь ласка, спробуйте ще раз.
+            </div>
 
             <!-- Кнопки аутентифікації, видимі, коли користувач не увійшов -->
-            <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6">
+            <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
                 <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
                 <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -150,6 +155,7 @@
             const contentSection = document.getElementById('content-section');
             const googleSignInButton = document.getElementById('google-signin-btn');
             const signOutButton = document.getElementById('signout-btn');
+            const errorMessage = document.getElementById('error-message');
 
             let currentFolder = 'Всі';
             let isCompletedVisible = false;
@@ -164,10 +170,21 @@
 
             // Ініціалізація Firebase та аутентифікація
             try {
-                overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
-                deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
-                overdueHoursInput.value = overdueHours;
-                deferHoursInput.value = deferHours;
+                if (overdueHoursInput) {
+                    overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
+                    overdueHoursInput.value = overdueHours;
+                }
+                if (deferHoursInput) {
+                    deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
+                    deferHoursInput.value = deferHours;
+                }
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is not defined. Cannot initialize.");
+                    errorMessage.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
+                    return;
+                }
                 
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -176,20 +193,20 @@
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        userIdSpan.textContent = userId;
+                        if (userIdSpan) userIdSpan.textContent = userId;
                         console.log("Користувач увійшов:", userId);
-                        authButtons.classList.add('hidden');
-                        contentSection.classList.remove('hidden');
+                        if (authButtons) authButtons.classList.add('hidden');
+                        if (contentSection) contentSection.classList.remove('hidden');
                         subscribeToTasks();
                     } else {
                         userId = null;
-                        userIdSpan.textContent = 'Немає';
+                        if (userIdSpan) userIdSpan.textContent = 'Немає';
                         console.log("Користувач вийшов.");
-                        authButtons.classList.remove('hidden');
-                        contentSection.classList.add('hidden');
+                        if (authButtons) authButtons.classList.remove('hidden');
+                        if (contentSection) contentSection.classList.add('hidden');
                         renderTasks([]); // Очистити список завдань
                     }
-                    loadingSpinner.classList.add('hidden');
+                    if (loadingSpinner) loadingSpinner.classList.add('hidden');
                 });
 
                 // Виконання початкового входу за допомогою наданого токена, якщо він є
@@ -200,7 +217,8 @@
                 }
             } catch (e) {
                 console.error("Помилка ініціалізації Firebase: ", e);
-                loadingSpinner.classList.add('hidden');
+                if (errorMessage) errorMessage.classList.remove('hidden');
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
             }
 
             const signInWithGoogle = async () => {
@@ -248,6 +266,7 @@
             };
 
             const renderFolders = (folders) => {
+                if (!foldersContainer) return;
                 foldersContainer.innerHTML = '';
                 folders.forEach(folder => {
                     const folderBtn = document.createElement('button');
@@ -262,6 +281,8 @@
             };
 
             const renderTasks = (tasks) => {
+                if (!activeTasksList || !deferredTasksList || !completedTasksList) return;
+                
                 const filteredTasks = tasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
 
                 const activeTasks = [];
@@ -291,10 +312,10 @@
                     overdueTasks.forEach(task => {
                         overdueText += `\n- ${task.text}`;
                     });
-                    overdueMessage.textContent = overdueText;
-                    overdueModal.classList.remove('hidden');
+                    if (overdueMessage) overdueMessage.textContent = overdueText;
+                    if (overdueModal) overdueModal.classList.remove('hidden');
                 } else {
-                    overdueModal.classList.add('hidden');
+                    if (overdueModal) overdueModal.classList.add('hidden');
                 }
 
                 renderTaskList(activeTasks, activeTasksList);
@@ -448,49 +469,57 @@
             
             const toggleCompletedTasks = () => {
                 isCompletedVisible = !isCompletedVisible;
-                completedTasksList.classList.toggle('hidden', !isCompletedVisible);
-                completedTasksToggle.textContent = isCompletedVisible ? 'Згорнути' : 'Розгорнути';
+                if (completedTasksList) completedTasksList.classList.toggle('hidden', !isCompletedVisible);
+                if (completedTasksToggle) completedTasksToggle.textContent = isCompletedVisible ? 'Згорнути' : 'Розгорнути';
             };
 
             const toggleDeferredTasks = () => {
                 isDeferredVisible = !isDeferredVisible;
-                deferredTasksList.classList.toggle('hidden', !isDeferredVisible);
-                deferredTasksToggle.textContent = isDeferredVisible ? 'Згорнути' : 'Розгорнути';
+                if (deferredTasksList) deferredTasksList.classList.toggle('hidden', !isDeferredVisible);
+                if (deferredTasksToggle) deferredTasksToggle.textContent = isDeferredVisible ? 'Згорнути' : 'Розгорнути';
             };
 
             const toggleSettings = () => {
                 isSettingsVisible = !isSettingsVisible;
-                settingsSection.classList.toggle('hidden', !isSettingsVisible);
-                settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
+                if (settingsSection) settingsSection.classList.toggle('hidden', !isSettingsVisible);
+                if (settingsToggle) settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
             };
 
             // Обробники подій
-            googleSignInButton.addEventListener('click', signInWithGoogle);
-            signOutButton.addEventListener('click', signOutUser);
-            addTaskButton.addEventListener('click', addTask);
-            taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    addTask();
-                }
-            });
-            completedTasksToggle.addEventListener('click', toggleCompletedTasks);
-            deferredTasksToggle.addEventListener('click', toggleDeferredTasks);
-            closeOverdueModal.addEventListener('click', () => {
-                overdueModal.classList.add('hidden');
-            });
-            settingsToggle.addEventListener('click', toggleSettings);
-            overdueHoursInput.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                overdueHours = value > 0 ? value : 1;
-                localStorage.setItem('overdueHours', overdueHours);
-                subscribeToTasks();
-            });
-            deferHoursInput.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                deferHours = value > 0 ? value : 1;
-                localStorage.setItem('deferHours', deferHours);
-            });
+            if (googleSignInButton) googleSignInButton.addEventListener('click', signInWithGoogle);
+            if (signOutButton) signOutButton.addEventListener('click', signOutUser);
+            if (addTaskButton) addTaskButton.addEventListener('click', addTask);
+            if (taskInput) {
+                taskInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        addTask();
+                    }
+                });
+            }
+            if (completedTasksToggle) completedTasksToggle.addEventListener('click', toggleCompletedTasks);
+            if (deferredTasksToggle) deferredTasksToggle.addEventListener('click', toggleDeferredTasks);
+            if (closeOverdueModal) {
+                closeOverdueModal.addEventListener('click', () => {
+                    overdueModal.classList.add('hidden');
+                });
+            }
+            if (settingsToggle) settingsToggle.addEventListener('click', toggleSettings);
+            if (overdueHoursInput) {
+                overdueHoursInput.addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    overdueHours = value > 0 ? value : 1;
+                    localStorage.setItem('overdueHours', overdueHours);
+                    subscribeToTasks();
+                });
+            }
+            if (deferHoursInput) {
+                deferHoursInput.addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    deferHours = value > 0 ? value : 1;
+                    localStorage.setItem('deferHours', deferHours);
+                });
+            }
         };
     </script>
 </body>
