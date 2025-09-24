@@ -40,6 +40,8 @@
         const loadingSpinner = document.getElementById('loading-spinner');
         const authButtons = document.getElementById('auth-buttons');
         const contentSection = document.getElementById('content-section');
+        const googleSignInButton = document.getElementById('google-signin-btn');
+        const signOutButton = document.getElementById('signout-btn');
 
         let currentFolder = 'Всі';
         let isCompletedVisible = false;
@@ -350,6 +352,8 @@
         };
 
         // Обробники подій
+        googleSignInButton.addEventListener('click', signInWithGoogle);
+        signOutButton.addEventListener('click', signOutUser);
         addTaskButton.addEventListener('click', addTask);
         taskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
