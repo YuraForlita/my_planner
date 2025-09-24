@@ -92,7 +92,14 @@
                         <button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
                     <div id="settings-content" class="hidden">
-                        <p class="text-gray-500 italic text-center">Цей розділ готовий до майбутніх налаштувань.</p>
+                         <div class="space-y-4">
+                            <div>
+                                <label for="deferred-duration" class="block text-sm font-medium text-gray-700">Відкласти на (годин)</label>
+                                <input type="number" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="24">
+                            </div>
+                            <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Зберегти налаштування</button>
+                            <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,7 +121,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
@@ -122,15 +129,13 @@
             
             // ВСТАВТЕ ВАШУ КОНФІГУРАЦІЮ FIREBASE ТУТ
             const firebaseConfig = {
-                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-                authDomain: "planer-97eb1.firebaseapp.com",
-                projectId: "planer-97eb1",
-                storageBucket: "planer-97eb1.firebasestorage.app",
-                messagingSenderId: "322073132266",
-                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-                measurementId: "G-GB94F6MG2N"
-                };
-
+              apiKey: "AIzaSyC...",
+              authDomain: "your-project-id.firebaseapp.com",
+              projectId: "your-project-id",
+              storageBucket: "your-project-id.appspot.com",
+              messagingSenderId: "...",
+              appId: "1:..."
+            };
 
             // Перевіряємо, чи була конфігурація додана користувачем
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyC...") {
@@ -166,8 +171,13 @@
             const settingsToggleBtn = document.getElementById('settings-toggle-btn');
             const settingsContent = document.getElementById('settings-content');
 
+            const deferredDurationInput = document.getElementById('deferred-duration');
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const settingsMessage = document.getElementById('settings-message');
+
             let userId = null;
             let currentTaskIdToDelete = null;
+            let deferredDurationHours = 24; // Значення за замовчуванням
 
             // Обробка зміни стану аутентифікації
             onAuthStateChanged(auth, async (user) => {
@@ -178,6 +188,7 @@
                     console.log("Користувач увійшов:", userId);
                     authButtons.classList.add('hidden');
                     contentSection.classList.remove('hidden');
+                    await loadSettings();
                     subscribeToTasks();
                 } else {
                     userId = null;
@@ -210,6 +221,26 @@
                 }
             };
 
+            // Функція для завантаження налаштувань
+            const loadSettings = async () => {
+                if (!userId) return;
+                try {
+                    const settingsRef = doc(db, `artifacts/gemini-todo/users/${userId}/settings/app_settings`);
+                    const docSnap = await getDoc(settingsRef);
+                    if (docSnap.exists()) {
+                        const settings = docSnap.data();
+                        deferredDurationHours = settings.deferredDurationHours || 24;
+                        deferredDurationInput.value = deferredDurationHours;
+                        console.log("Налаштування завантажено:", settings);
+                    } else {
+                        console.log("Налаштування не знайдено, використано значення за замовчуванням.");
+                        deferredDurationInput.value = deferredDurationHours;
+                    }
+                } catch (e) {
+                    console.error("Помилка завантаження налаштувань:", e);
+                }
+            };
+
             // Підписка на оновлення завдань
             const subscribeToTasks = () => {
                 if (!db || !userId) {
@@ -223,8 +254,23 @@
                     const deferredTasks = [];
                     const completedTasks = [];
                     
-                    querySnapshot.forEach((doc) => {
+                    querySnapshot.forEach(async (doc) => {
                         const task = { id: doc.id, ...doc.data() };
+                        
+                        // Перевірка відкладених завдань, щоб повернути їх в активні, якщо час минув
+                        if (task.status === 'deferred' && task.deferredAt) {
+                            const deferredTime = task.deferredAt.toMillis();
+                            const now = Date.now();
+                            const timeElapsed = now - deferredTime;
+                            const durationMillis = deferredDurationHours * 60 * 60 * 1000;
+                            
+                            if (timeElapsed >= durationMillis) {
+                                console.log(`Завдання "${task.text}" повертається до активних.`);
+                                await updateDoc(doc.ref, { status: 'active', deferredAt: null });
+                                return; // Зупиняємо, щоб уникнути додавання в списки
+                            }
+                        }
+
                         if (task.status === 'completed') {
                             completedTasks.push(task);
                         } else if (task.status === 'deferred') {
@@ -340,10 +386,47 @@
                 if (!userId) return;
                 try {
                     const taskRef = doc(db, `artifacts/gemini-todo/users/${userId}/tasks`, id);
-                    await updateDoc(taskRef, { status: newStatus });
+                    
+                    let updateData = { status: newStatus };
+                    if (newStatus === 'deferred') {
+                        updateData.deferredAt = serverTimestamp();
+                    } else {
+                        updateData.deferredAt = null;
+                    }
+                    
+                    await updateDoc(taskRef, updateData);
                     console.log("Статус завдання оновлено!");
                 } catch (e) {
                     console.error("Помилка оновлення статусу: ", e);
+                }
+            };
+            
+            // Збереження налаштувань
+            const saveSettings = async () => {
+                if (!userId) return;
+                const newDuration = parseInt(deferredDurationInput.value, 10);
+                if (isNaN(newDuration) || newDuration < 0) {
+                    settingsMessage.textContent = "Будь ласка, введіть дійсне число.";
+                    settingsMessage.classList.remove('hidden');
+                    settingsMessage.classList.add('text-red-600');
+                    return;
+                }
+                
+                try {
+                    const settingsRef = doc(db, `artifacts/gemini-todo/users/${userId}/settings/app_settings`);
+                    await setDoc(settingsRef, {
+                        deferredDurationHours: newDuration
+                    });
+                    deferredDurationHours = newDuration;
+                    settingsMessage.textContent = "Налаштування збережено успішно!";
+                    settingsMessage.classList.remove('hidden', 'text-red-600');
+                    settingsMessage.classList.add('text-green-600');
+                    setTimeout(() => settingsMessage.classList.add('hidden'), 3000);
+                } catch (e) {
+                    console.error("Помилка збереження налаштувань:", e);
+                    settingsMessage.textContent = "Не вдалося зберегти налаштування.";
+                    settingsMessage.classList.remove('hidden', 'text-green-600');
+                    settingsMessage.classList.add('text-red-600');
                 }
             };
 
@@ -390,6 +473,7 @@
             });
             confirmDeleteButton.addEventListener('click', deleteTask);
             cancelDeleteButton.addEventListener('click', hideConfirmModal);
+            saveSettingsBtn.addEventListener('click', saveSettings);
 
             deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
             completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
