@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мій Планувальник</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase-об'єкти
+        let app;
+        let db;
+        let auth;
+        let userId = 'анонімний'; // Тимчасове значення
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Елементи DOM
+        const taskInput = document.getElementById('task-input');
+        const addTaskButton = document.getElementById('add-task-btn');
+        const activeTasksList = document.getElementById('active-tasks');
+        const deferredTasksList = document.getElementById('deferred-tasks');
+        const completedTasksList = document.getElementById('completed-tasks');
+        const userIdSpan = document.getElementById('user-id-span');
+        const foldersContainer = document.getElementById('folders-container');
+        const completedTasksToggle = document.getElementById('completed-tasks-toggle');
+        const deferredTasksToggle = document.getElementById('deferred-tasks-toggle');
+        const overdueModal = document.getElementById('overdue-modal');
+        const overdueMessage = document.getElementById('overdue-message');
+        const closeOverdueModal = document.getElementById('close-overdue-modal');
+        const overdueDaysInput = document.getElementById('overdue-days-input');
+        const deferDaysInput = document.getElementById('defer-days-input');
+        const settingsToggle = document.getElementById('settings-toggle');
+        const settingsSection = document.getElementById('settings-section');
+
+        let currentFolder = 'Всі';
+        let isCompletedVisible = false;
+        let isDeferredVisible = false;
+        let isSettingsVisible = false;
+
+        // Налаштування за замовчуванням
+        let overdueHours = 72; // 3 дні
+        let deferHours = 24; // 1 день
+
+        setLogLevel('debug');
+
+        window.onload = async () => {
+            try {
+                // Завантаження налаштувань з localStorage
+                overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
+                deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
+                overdueDaysInput.value = overdueHours;
+                deferDaysInput.value = deferHours;
+
+                // Ініціалізація Firebase
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Аутентифікація
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            userIdSpan.textContent = userId;
+                            console.log("User authenticated:", userId);
+                            subscribeToTasks();
+                        } else {
+                            userId = crypto.randomUUID();
+                            userIdSpan.textContent = userId;
+                            console.log("User not authenticated, using anonymous UUID:", userId);
+                            subscribeToTasks();
+                            try {
+                                if (initialAuthToken) {
+                                    await signInWithCustomToken(auth, initialAuthToken);
+                                    console.log("Signed in with custom token.");
+                                } else {
+                                    await signInAnonymously(auth);
+                                    console.log("Signed in anonymously.");
+                                }
+                            } catch (error) {
+                                console.error("Authentication failed:", error);
+                            }
+                        }
+                    });
+                } else {
+                    console.error("Firebase config is missing.");
+                    userId = crypto.randomUUID();
+                    userIdSpan.textContent = userId;
+                    subscribeToTasks();
+                }
+            } catch (e) {
+                console.error("Помилка ініціалізації: ", e);
+            }
+        };
+
+        const subscribeToTasks = () => {
+            if (!db) {
+                console.error("Firestore is not initialized.");
+                return;
+            }
+
+            const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
+            const q = query(tasksCollection, orderBy("createdAt"));
+
+            onSnapshot(q, (querySnapshot) => {
+                const allTasks = [];
+                const folders = new Set(['Всі']);
+                
+                querySnapshot.forEach((doc) => {
+                    const task = { id: doc.id, ...doc.data() };
+                    allTasks.push(task);
+                    if (task.folder) {
+                        folders.add(task.folder);
+                    }
+                });
+
+                renderFolders(Array.from(folders));
+                renderTasks(allTasks);
+            }, (error) => {
+                console.error("Помилка отримання даних:", error);
+            });
+        };
+
+        const renderFolders = (folders) => {
+            foldersContainer.innerHTML = '';
+            folders.forEach(folder => {
+                const folderBtn = document.createElement('button');
+                folderBtn.textContent = `#${folder}`;
+                folderBtn.className = `px-3 py-1 rounded-full text-sm font-medium transition-colors ${currentFolder === folder ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+                folderBtn.addEventListener('click', () => {
+                    currentFolder = folder;
+                    subscribeToTasks();
+                });
+                foldersContainer.appendChild(folderBtn);
+            });
+        };
+
+        const renderTasks = (tasks) => {
+            const activeTasks = [];
+            const deferredTasks = [];
+            const completedTasks = [];
+            const overdueTasks = [];
+
+            const now = new Date().getTime();
+
+            tasks.forEach(task => {
+                if (task.completed) {
+                    completedTasks.push(task);
+                } else if (task.deferredUntil && task.deferredUntil.toDate().getTime() > now) {
+                    deferredTasks.push(task);
+                } else {
+                    activeTasks.push(task);
+                    const createdAt = task.createdAt?.toDate().getTime();
+                    const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
+                    if (hoursOld > overdueHours) {
+                        overdueTasks.push(task);
+                    }
+                }
+            });
+
+            // Показати модальне вікно, якщо є прострочені завдання
+            if (overdueTasks.length > 0) {
+                let overdueText = 'Ви давно не працювали над цими завданнями:';
+                overdueTasks.forEach(task => {
+                    overdueText += `\n- ${task.text}`;
+                });
+                overdueMessage.textContent = overdueText;
+                overdueModal.classList.remove('hidden');
+            } else {
+                overdueModal.classList.add('hidden');
+            }
+
+
+            // Фільтрація за папкою
+            const filteredActive = activeTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
+            const filteredDeferred = deferredTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
+            const filteredCompleted = completedTasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
+
+            renderTaskList(filteredActive, activeTasksList);
+            renderTaskList(filteredDeferred, deferredTasksList);
+            renderTaskList(filteredCompleted, completedTasksList);
+        };
+
+        const renderTaskList = (tasks, listElement) => {
+            listElement.innerHTML = '';
+            tasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                let cardColorClass = 'bg-white';
+                
+                const now = new Date().getTime();
+                const createdAt = task.createdAt?.toDate().getTime();
+                const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
+                
+                if (!task.completed && hoursOld > overdueHours) {
+                    cardColorClass = 'bg-red-200';
+                }
+
+                taskItem.className = `p-4 mb-3 rounded-xl shadow-md flex flex-col ${cardColorClass} overflow-hidden`;
+                
+                let buttonsHTML = '';
+                if (!task.completed) {
+                    buttonsHTML += `<button class="complete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">Виконано</button>`;
+                    buttonsHTML += `<button class="defer-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-sm">В роботі</button>`;
+                }
+                buttonsHTML += `<button class="delete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">Видалити</button>`;
+
+                const linkRegex = /(https?:\/\/[^\s]+)/g;
+                const taskTextWithLinks = task.text.replace(linkRegex, (url) => {
+                    // Check if the URL is an image URL
+                    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
+                    const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
+
+                    // If it's a direct image URL, handle it separately.
+                    // Otherwise, wrap it in an anchor tag.
+                    if (isImage) {
+                         return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
+                    } else {
+                        return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
+                    }
+                });
+
+                taskItem.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <span class="text-xs font-semibold text-gray-600">${task.folder ? `#${task.folder}` : ''}</span>
+                        <div class="flex-shrink-0 flex items-center">
+                            ${buttonsHTML}
+                        </div>
+                    </div>
+                    <p class="text-gray-800 whitespace-pre-wrap flex-grow">${taskTextWithLinks}</p>
+                    ${task.imageURL ? `<a href="${task.imageURL}" target="_blank" class="mt-4"><img src="${task.imageURL}" class="mt-4 rounded-lg max-w-full h-auto" alt="Зображення до завдання"></a>` : ''}
+                `;
+
+                // Обробники подій для кнопок
+                taskItem.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
+                if (taskItem.querySelector('.complete-btn')) {
+                    taskItem.querySelector('.complete-btn').addEventListener('click', () => toggleTaskStatus(task.id, true));
+                }
+                if (taskItem.querySelector('.defer-btn')) {
+                    taskItem.querySelector('.defer-btn').addEventListener('click', () => deferTask(task.id));
+                }
+
+                listElement.appendChild(taskItem);
+            });
+        };
+
+        const addTask = async () => {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') return;
+
+            if (!db) {
+                console.error("Firestore is not initialized.");
+                return;
+            }
+
+            const folderMatch = taskText.match(/^#(\S+)\s*/);
+            const folder = folderMatch ? folderMatch[1] : null;
+            const cleanText = folderMatch ? taskText.substring(folderMatch[0].length) : taskText;
+            
+            const imageMatch = cleanText.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|svg|webp))/i);
+            const imageURL = imageMatch ? imageMatch[0] : null;
+            const finalCleanText = imageMatch ? cleanText.replace(imageMatch[0], '') : cleanText;
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), {
+                    text: finalCleanText.trim(),
+                    completed: false,
+                    createdAt: new Date(),
+                    folder: folder,
+                    imageURL: imageURL,
+                    deferredUntil: null
+                });
+                taskInput.value = '';
+                console.log("Завдання додано успішно!");
+            } catch (e) {
+                console.error("Помилка додавання завдання: ", e);
+            }
+        };
+
+        const toggleTaskStatus = async (id, status) => {
+            if (!db) {
+                console.error("Firestore is not initialized.");
+                return;
+            }
+            try {
+                const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
+                await updateDoc(taskRef, {
+                    completed: status
+                });
+                console.log("Статус завдання оновлено!");
+            } catch (e) {
+                console.error("Помилка оновлення статусу: ", e);
+            }
+        };
+        
+        const deferTask = async (id) => {
+             if (!db) {
+                console.error("Firestore is not initialized.");
+                return;
+            }
+            try {
+                const deferTime = new Date();
+                deferTime.setHours(deferTime.getHours() + deferHours);
+                
+                const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
+                await updateDoc(taskRef, {
+                    deferredUntil: deferTime
+                });
+                console.log(`Завдання відкладено на ${deferHours} годин.`);
+            } catch (e) {
+                console.error("Помилка відкладення завдання: ", e);
+            }
+        };
+
+        const deleteTask = async (id) => {
+            if (!db) {
+                console.error("Firestore is not initialized.");
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id));
+                console.log("Завдання видалено!");
+            } catch (e) {
+                console.error("Помилка видалення завдання: ", e);
+            }
+        };
+        
+        const toggleCompletedTasks = () => {
+            isCompletedVisible = !isCompletedVisible;
+            completedTasksList.classList.toggle('hidden', !isCompletedVisible);
+            completedTasksToggle.textContent = isCompletedVisible ? 'Згорнути' : 'Розгорнути';
+        };
+
+        const toggleDeferredTasks = () => {
+            isDeferredVisible = !isDeferredVisible;
+            deferredTasksList.classList.toggle('hidden', !isDeferredVisible);
+            deferredTasksToggle.textContent = isDeferredVisible ? 'Згорнути' : 'Розгорнути';
+        };
+
+        const toggleSettings = () => {
+            isSettingsVisible = !isSettingsVisible;
+            settingsSection.classList.toggle('hidden', !isSettingsVisible);
+            settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
+        };
+
+        // Обробники подій
+        addTaskButton.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addTask();
+            }
+        });
+        completedTasksToggle.addEventListener('click', toggleCompletedTasks);
+        deferredTasksToggle.addEventListener('click', toggleDeferredTasks);
+        closeOverdueModal.addEventListener('click', () => {
+            overdueModal.classList.add('hidden');
+        });
+        settingsToggle.addEventListener('click', toggleSettings);
+        overdueDaysInput.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            overdueHours = value > 0 ? value : 1;
+            localStorage.setItem('overdueHours', overdueHours);
+            subscribeToTasks(); // Оновлюємо відображення
+        });
+        deferDaysInput.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            deferHours = value > 0 ? value : 1;
+            localStorage.setItem('deferHours', deferHours);
+        });
+
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+    <div class="max-w-xl w-full">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+            <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник</h1>
+            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono"></span></p>
+
+            <!-- Кнопки для папок -->
+            <div id="folders-container" class="flex flex-wrap gap-2 mb-4">
+                <!-- Кнопки папок будуть додані сюди JS -->
+            </div>
+
+            <!-- Введення нового завдання -->
+            <div class="flex items-start space-x-2 mb-6">
+                <textarea id="task-input" placeholder="Введіть нове завдання. Додайте #назва для групування, або URL зображення..." rows="3" class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
+            </div>
+
+            <!-- Активні завдання -->
+            <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
+                <div id="active-tasks" class="space-y-3">
+                    <!-- Активні завдання будуть додані сюди JS -->
+                </div>
+            </div>
+
+            <!-- Відкладені завдання -->
+            <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
+                 <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold text-gray-700">Відкладені завдання</h2>
+                    <button id="deferred-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                </div>
+                <div id="deferred-tasks" class="space-y-3 opacity-60 hidden">
+                    <!-- Відкладені завдання будуть додані сюди JS -->
+                </div>
+            </div>
+
+            <!-- Виконані завдання -->
+            <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
+                    <button id="completed-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                </div>
+                <div id="completed-tasks" class="space-y-3 opacity-60 hidden">
+                    <!-- Виконані завдання будуть додані сюди JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Налаштування -->
+        <div class="bg-white p-6 rounded-2xl shadow-xl mt-6">
+             <div class="flex items-center justify-between mb-2 cursor-pointer" id="settings-toggle-container">
+                <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
+                <button id="settings-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути налаштування</button>
+            </div>
+            <div id="settings-section" class="hidden">
+                <div class="flex flex-col space-y-2 mb-4">
+                    <label for="overdue-days-input" class="text-sm text-gray-600">Завдання стає "застарілим" через (годин):</label>
+                    <input type="number" id="overdue-days-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <label for="defer-days-input" class="text-sm text-gray-600">Відкладати завдання на (годин):</label>
+                    <input type="number" id="defer-days-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для сповіщень -->
+    <div id="overdue-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-2 text-red-600">Нагадування!</h3>
+            <p id="overdue-message" class="text-gray-700 whitespace-pre-line"></p>
+            <button id="close-overdue-modal" class="mt-4 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зрозуміло</button>
+        </div>
+    </div>
+</body>
+</html>
