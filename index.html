@@ -16,12 +16,9 @@
         let app;
         let db;
         let auth;
-        // userId спочатку встановлюється на null, оскільки він буде оновлений асинхронно Firebase Auth
         let userId = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Конфігурація імпортується з окремого файлу
-        const firebaseConfig = window.firebaseConfig;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Елементи DOM
@@ -54,6 +51,7 @@
 
         setLogLevel('debug');
 
+        // Ініціалізація Firebase та аутентифікація
         window.onload = async () => {
             try {
                 // Завантаження налаштувань з localStorage
@@ -61,25 +59,25 @@
                 deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
                 overdueHoursInput.value = overdueHours;
                 deferHoursInput.value = deferHours;
-
-                // Ініціалізація Firebase
-                if (window.firebaseConfig && Object.keys(window.firebaseConfig).length > 0) {
+                
+                // Перевіряємо, чи існує конфігурація Firebase
+                if (typeof window.firebaseConfig !== 'undefined' && Object.keys(window.firebaseConfig).length > 0) {
                     app = initializeApp(window.firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
 
-                    // Аутентифікація
+                    // onAuthStateChanged відстежує зміни статусу аутентифікації.
+                    // Це найкращий спосіб переконатися, що користувач автентифікований.
                     onAuthStateChanged(auth, async (user) => {
                         if (user) {
+                            // Користувач увійшов, використовуємо його UID
                             userId = user.uid;
                             userIdSpan.textContent = userId;
                             console.log("User authenticated:", userId);
+                            // Підписуємося на завдання, оскільки тепер у нас є дійсний userId
                             subscribeToTasks();
                         } else {
-                            userId = crypto.randomUUID();
-                            userIdSpan.textContent = userId;
-                            console.log("User not authenticated, using anonymous UUID:", userId);
-                            subscribeToTasks();
+                            // Якщо користувач не автентифікований, спробуйте увійти анонімно або з токеном
                             try {
                                 if (initialAuthToken) {
                                     await signInWithCustomToken(auth, initialAuthToken);
@@ -90,18 +88,24 @@
                                 }
                             } catch (error) {
                                 console.error("Authentication failed:", error);
+                                // У разі збою аутентифікації використовуємо тимчасовий UUID,
+                                // але в реальному додатку варто обробити цю помилку інакше
+                                userId = crypto.randomUUID();
+                                userIdSpan.textContent = userId;
+                                console.log("Authentication failed, using anonymous UUID:", userId);
+                                // Не викликаємо subscribeToTasks, оскільки воно все одно не спрацює
                             }
                         }
+                        loadingSpinner.classList.add('hidden');
                     });
                 } else {
                     console.error("Firebase config is missing. Please add your config to the script.");
                     userId = crypto.randomUUID();
                     userIdSpan.textContent = userId;
-                    // Не викликаємо subscribeToTasks, оскільки воно все одно не спрацює
+                    loadingSpinner.classList.add('hidden');
                 }
             } catch (e) {
                 console.error("Помилка ініціалізації: ", e);
-            } finally {
                 loadingSpinner.classList.add('hidden');
             }
         };
