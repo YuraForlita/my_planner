@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -19,6 +19,7 @@
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(__firebase_config);
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Елементи DOM
         const taskInput = document.getElementById('task-input');
@@ -55,40 +56,45 @@
         setLogLevel('debug');
 
         // Ініціалізація Firebase та аутентифікація
-        window.onload = async () => {
-            try {
-                overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
-                deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
-                overdueHoursInput.value = overdueHours;
-                deferHoursInput.value = deferHours;
-                
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+        try {
+            overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
+            deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
+            overdueHoursInput.value = overdueHours;
+            deferHoursInput.value = deferHours;
+            
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
 
-                onAuthStateChanged(auth, async (user) => {
-                    loadingSpinner.classList.add('hidden');
-                    if (user) {
-                        userId = user.uid;
-                        userIdSpan.textContent = userId;
-                        console.log("Користувач увійшов:", userId);
-                        authButtons.classList.add('hidden');
-                        contentSection.classList.remove('hidden');
-                        subscribeToTasks();
-                    } else {
-                        userId = null;
-                        userIdSpan.textContent = 'Немає';
-                        console.log("Користувач вийшов.");
-                        authButtons.classList.remove('hidden');
-                        contentSection.classList.add('hidden');
-                        renderTasks([]); // Очистити список завдань
-                    }
-                });
-            } catch (e) {
-                console.error("Помилка ініціалізації Firebase: ", e);
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdSpan.textContent = userId;
+                    console.log("Користувач увійшов:", userId);
+                    authButtons.classList.add('hidden');
+                    contentSection.classList.remove('hidden');
+                    subscribeToTasks();
+                } else {
+                    userId = null;
+                    userIdSpan.textContent = 'Немає';
+                    console.log("Користувач вийшов.");
+                    authButtons.classList.remove('hidden');
+                    contentSection.classList.add('hidden');
+                    renderTasks([]); // Очистити список завдань
+                }
                 loadingSpinner.classList.add('hidden');
+            });
+
+            // Виконання початкового входу за допомогою наданого токена, якщо він є
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
             }
-        };
+        } catch (e) {
+            console.error("Помилка ініціалізації Firebase: ", e);
+            loadingSpinner.classList.add('hidden');
+        }
 
         const signInWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
