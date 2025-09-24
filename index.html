@@ -18,7 +18,17 @@
         let userId = 'анонімний'; // Тимчасове значення
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // >>> ЗАМІНІТЬ ПУСТИЙ ОБ'ЄКТ НИЖЧЕ НА ВАШУ КОНФІГУРАЦІЮ FIREBASE <<<
+        const firebaseConfig = {
+        apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+        authDomain: "planer-97eb1.firebaseapp.com",
+        projectId: "planer-97eb1",
+        storageBucket: "planer-97eb1.firebasestorage.app",
+        messagingSenderId: "322073132266",
+        appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+        measurementId: "G-GB94F6MG2N"
+        };
+        // >>>>> НАПРИКЛАД: const firebaseConfig = { apiKey: "...", ... }; <<<<<
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Елементи DOM
@@ -34,10 +44,11 @@
         const overdueModal = document.getElementById('overdue-modal');
         const overdueMessage = document.getElementById('overdue-message');
         const closeOverdueModal = document.getElementById('close-overdue-modal');
-        const overdueDaysInput = document.getElementById('overdue-days-input');
-        const deferDaysInput = document.getElementById('defer-days-input');
+        const overdueHoursInput = document.getElementById('overdue-hours-input');
+        const deferHoursInput = document.getElementById('defer-hours-input');
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsSection = document.getElementById('settings-section');
+        const tasksPerPageInput = document.getElementById('tasks-per-page-input');
 
         let currentFolder = 'Всі';
         let isCompletedVisible = false;
@@ -47,6 +58,8 @@
         // Налаштування за замовчуванням
         let overdueHours = 72; // 3 дні
         let deferHours = 24; // 1 день
+        const DEFAULT_TASKS_PER_PAGE = 5;
+        let tasksPerPage = DEFAULT_TASKS_PER_PAGE;
 
         setLogLevel('debug');
 
@@ -55,8 +68,10 @@
                 // Завантаження налаштувань з localStorage
                 overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
                 deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
-                overdueDaysInput.value = overdueHours;
-                deferDaysInput.value = deferHours;
+                tasksPerPage = localStorage.getItem('tasksPerPage') ? parseInt(localStorage.getItem('tasksPerPage')) : DEFAULT_TASKS_PER_PAGE;
+                overdueHoursInput.value = overdueHours;
+                deferHoursInput.value = deferHours;
+                tasksPerPageInput.value = tasksPerPage;
 
                 // Ініціалізація Firebase
                 if (Object.keys(firebaseConfig).length > 0) {
@@ -90,10 +105,10 @@
                         }
                     });
                 } else {
-                    console.error("Firebase config is missing.");
+                    console.error("Firebase config is missing. Please add your config to the script.");
                     userId = crypto.randomUUID();
                     userIdSpan.textContent = userId;
-                    subscribeToTasks();
+                    // Не викликаємо subscribeToTasks, оскільки воно все одно не спрацює
                 }
             } catch (e) {
                 console.error("Помилка ініціалізації: ", e);
@@ -190,6 +205,11 @@
 
         const renderTaskList = (tasks, listElement) => {
             listElement.innerHTML = '';
+            if (tasks.length === 0) {
+                listElement.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань у цій секції.</p>`;
+                return;
+            }
+
             tasks.forEach(task => {
                 const taskItem = document.createElement('div');
                 let cardColorClass = 'bg-white';
@@ -213,12 +233,9 @@
 
                 const linkRegex = /(https?:\/\/[^\s]+)/g;
                 const taskTextWithLinks = task.text.replace(linkRegex, (url) => {
-                    // Check if the URL is an image URL
                     const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
                     const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
 
-                    // If it's a direct image URL, handle it separately.
-                    // Otherwise, wrap it in an anchor tag.
                     if (isImage) {
                          return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
                     } else {
@@ -363,18 +380,17 @@
             overdueModal.classList.add('hidden');
         });
         settingsToggle.addEventListener('click', toggleSettings);
-        overdueDaysInput.addEventListener('input', (e) => {
+        overdueHoursInput.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             overdueHours = value > 0 ? value : 1;
             localStorage.setItem('overdueHours', overdueHours);
             subscribeToTasks(); // Оновлюємо відображення
         });
-        deferDaysInput.addEventListener('input', (e) => {
+        deferHoursInput.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             deferHours = value > 0 ? value : 1;
             localStorage.setItem('deferHours', deferHours);
         });
-
     </script>
     <style>
         body {
@@ -443,10 +459,10 @@
             </div>
             <div id="settings-section" class="hidden">
                 <div class="flex flex-col space-y-2 mb-4">
-                    <label for="overdue-days-input" class="text-sm text-gray-600">Завдання стає "застарілим" через (годин):</label>
-                    <input type="number" id="overdue-days-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                    <label for="defer-days-input" class="text-sm text-gray-600">Відкладати завдання на (годин):</label>
-                    <input type="number" id="defer-days-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <label for="overdue-hours-input" class="text-sm text-gray-600">Завдання стає "застарілим" через (годин):</label>
+                    <input type="number" id="overdue-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <label for="defer-hours-input" class="text-sm text-gray-600">Відкладати завдання на (годин):</label>
+                    <input type="number" id="defer-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                 </div>
             </div>
         </div>
