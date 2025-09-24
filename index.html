@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мій Планувальник</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="./firebase-config.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase-об'єкти
@@ -19,7 +18,7 @@
         let userId = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const firebaseConfig = JSON.parse(__firebase_config);
 
         // Елементи DOM
         const taskInput = document.getElementById('task-input');
@@ -39,6 +38,8 @@
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsSection = document.getElementById('settings-section');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const authButtons = document.getElementById('auth-buttons');
+        const contentSection = document.getElementById('content-section');
 
         let currentFolder = 'Всі';
         let isCompletedVisible = false;
@@ -54,71 +55,62 @@
         // Ініціалізація Firebase та аутентифікація
         window.onload = async () => {
             try {
-                // Завантаження налаштувань з localStorage
                 overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
                 deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
                 overdueHoursInput.value = overdueHours;
                 deferHoursInput.value = deferHours;
                 
-                // Перевіряємо, чи існує конфігурація Firebase
-                if (typeof window.firebaseConfig !== 'undefined' && Object.keys(window.firebaseConfig).length > 0) {
-                    app = initializeApp(window.firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                    // onAuthStateChanged відстежує зміни статусу аутентифікації.
-                    // Це найкращий спосіб переконатися, що користувач автентифікований.
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            // Користувач увійшов, використовуємо його UID
-                            userId = user.uid;
-                            userIdSpan.textContent = userId;
-                            console.log("User authenticated:", userId);
-                            // Підписуємося на завдання, оскільки тепер у нас є дійсний userId
-                            subscribeToTasks();
-                        } else {
-                            // Якщо користувач не автентифікований, спробуйте увійти анонімно або з токеном
-                            try {
-                                if (initialAuthToken) {
-                                    await signInWithCustomToken(auth, initialAuthToken);
-                                    console.log("Signed in with custom token.");
-                                } else {
-                                    await signInAnonymously(auth);
-                                    console.log("Signed in anonymously.");
-                                }
-                            } catch (error) {
-                                console.error("Authentication failed:", error);
-                                // У разі збою аутентифікації використовуємо тимчасовий UUID,
-                                // але в реальному додатку варто обробити цю помилку інакше
-                                userId = crypto.randomUUID();
-                                userIdSpan.textContent = userId;
-                                console.log("Authentication failed, using anonymous UUID:", userId);
-                                // Не викликаємо subscribeToTasks, оскільки воно все одно не спрацює
-                            }
-                        }
-                        loadingSpinner.classList.add('hidden');
-                    });
-                } else {
-                    console.error("Firebase config is missing. Please add your config to the script.");
-                    userId = crypto.randomUUID();
-                    userIdSpan.textContent = userId;
+                onAuthStateChanged(auth, async (user) => {
                     loadingSpinner.classList.add('hidden');
-                }
+                    if (user) {
+                        userId = user.uid;
+                        userIdSpan.textContent = userId;
+                        console.log("Користувач увійшов:", userId);
+                        authButtons.classList.add('hidden');
+                        contentSection.classList.remove('hidden');
+                        subscribeToTasks();
+                    } else {
+                        userId = null;
+                        userIdSpan.textContent = 'Немає';
+                        console.log("Користувач вийшов.");
+                        authButtons.classList.remove('hidden');
+                        contentSection.classList.add('hidden');
+                        renderTasks([]); // Очистити список завдань
+                    }
+                });
             } catch (e) {
-                console.error("Помилка ініціалізації: ", e);
+                console.error("Помилка ініціалізації Firebase: ", e);
                 loadingSpinner.classList.add('hidden');
+            }
+        };
+
+        const signInWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Помилка входу через Google:", error);
+            }
+        };
+
+        const signOutUser = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Помилка виходу:", error);
             }
         };
 
         const subscribeToTasks = () => {
             if (!db || !userId) {
-                console.error("Firestore or user ID is not initialized.");
+                console.error("Firestore або ID користувача не ініціалізовано.");
                 return;
             }
-
             const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
-            // ВАЖЛИВО: Для orderBy вам може знадобитися створити індекс у консолі Firebase.
-            // Інакше запит може не спрацювати.
             const q = query(tasksCollection, orderBy("createdAt"));
 
             onSnapshot(q, (querySnapshot) => {
@@ -148,7 +140,6 @@
                 folderBtn.className = `px-3 py-1 rounded-full text-sm font-medium transition-colors ${currentFolder === folder ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
                 folderBtn.addEventListener('click', () => {
                     currentFolder = folder;
-                    // Оновлюємо, щоб відобразити завдання лише для цієї папки
                     subscribeToTasks(); 
                 });
                 foldersContainer.appendChild(folderBtn);
@@ -156,7 +147,6 @@
         };
 
         const renderTasks = (tasks) => {
-            // Фільтрація за папкою
             const filteredTasks = tasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
 
             const activeTasks = [];
@@ -181,7 +171,6 @@
                 }
             });
 
-            // Показати модальне вікно, якщо є прострочені завдання
             if (overdueTasks.length > 0) {
                 let overdueText = 'Ви давно не працювали над цими завданнями:';
                 overdueTasks.forEach(task => {
@@ -193,8 +182,6 @@
                 overdueModal.classList.add('hidden');
             }
 
-
-            // Рендеримо вже відфільтровані списки
             renderTaskList(activeTasks, activeTasksList);
             renderTaskList(deferredTasks, deferredTasksList);
             renderTaskList(completedTasks, completedTasksList);
@@ -267,9 +254,8 @@
         const addTask = async () => {
             const taskText = taskInput.value.trim();
             if (taskText === '') return;
-
             if (!db || !userId) {
-                console.error("Firestore or user ID is not initialized.");
+                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
                 return;
             }
 
@@ -299,7 +285,7 @@
 
         const toggleTaskStatus = async (id, status) => {
             if (!db || !userId) {
-                console.error("Firestore or user ID is not initialized.");
+                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
                 return;
             }
             try {
@@ -315,7 +301,7 @@
         
         const deferTask = async (id) => {
              if (!db || !userId) {
-                console.error("Firestore or user ID is not initialized.");
+                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
                 return;
             }
             try {
@@ -334,7 +320,7 @@
 
         const deleteTask = async (id) => {
             if (!db || !userId) {
-                console.error("Firestore or user ID is not initialized.");
+                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
                 return;
             }
             try {
@@ -381,7 +367,7 @@
             const value = parseInt(e.target.value);
             overdueHours = value > 0 ? value : 1;
             localStorage.setItem('overdueHours', overdueHours);
-            subscribeToTasks(); // Оновлюємо відображення
+            subscribeToTasks();
         });
         deferHoursInput.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
@@ -410,61 +396,76 @@
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник</h1>
             <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono"></span></p>
 
-            <!-- Кнопки для папок -->
-            <div id="folders-container" class="flex flex-wrap gap-2 mb-4">
-                <!-- Кнопки папок будуть додані сюди JS -->
+            <!-- Кнопки аутентифікації, видимі, коли користувач не увійшов -->
+            <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6">
+                <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
+                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/>
+                    </svg>
+                    <span>Увійти через Google</span>
+                </button>
             </div>
 
-            <!-- Введення нового завдання -->
-            <div class="flex items-start space-x-2 mb-6">
-                <textarea id="task-input" placeholder="Введіть нове завдання. Додайте #назва для групування, або URL зображення..." rows="3" class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
-                <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
-            </div>
+            <!-- Контент додатка, прихований, поки користувач не увійде -->
+            <div id="content-section" class="hidden">
+                 <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
 
-            <!-- Активні завдання -->
-            <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
-                <div id="active-tasks" class="space-y-3">
-                    <!-- Активні завдання будуть додані сюди JS -->
+                <!-- Кнопки для папок -->
+                <div id="folders-container" class="flex flex-wrap gap-2 mb-4">
+                    <!-- Кнопки папок будуть додані сюди JS -->
                 </div>
-            </div>
 
-            <!-- Відкладені завдання -->
-            <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
-                 <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold text-gray-700">Відкладені завдання</h2>
-                    <button id="deferred-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                <!-- Введення нового завдання -->
+                <div class="flex items-start space-x-2 mb-6">
+                    <textarea id="task-input" placeholder="Введіть нове завдання. Додайте #назва для групування, або URL зображення..." rows="3" class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                    <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
                 </div>
-                <div id="deferred-tasks" class="space-y-3 opacity-60 hidden">
-                    <!-- Відкладені завдання будуть додані сюди JS -->
-                </div>
-            </div>
 
-            <!-- Виконані завдання -->
-            <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
-                    <button id="completed-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                <!-- Активні завдання -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
+                    <div id="active-tasks" class="space-y-3">
+                        <!-- Активні завдання будуть додані сюди JS -->
+                    </div>
                 </div>
-                <div id="completed-tasks" class="space-y-3 opacity-60 hidden">
-                    <!-- Виконані завдання будуть додані сюди JS -->
+
+                <!-- Відкладені завдання -->
+                <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-xl font-bold text-gray-700">Відкладені завдання</h2>
+                        <button id="deferred-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="deferred-tasks" class="space-y-3 opacity-60 hidden">
+                        <!-- Відкладені завдання будуть додані сюди JS -->
+                    </div>
                 </div>
-            </div>
 
-        </div>
+                <!-- Виконані завдання -->
+                <div class="bg-gray-200 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
+                        <button id="completed-tasks-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="completed-tasks" class="space-y-3 opacity-60 hidden">
+                        <!-- Виконані завдання будуть додані сюди JS -->
+                    </div>
+                </div>
 
-        <!-- Налаштування -->
-        <div class="bg-white p-6 rounded-2xl shadow-xl mt-6">
-             <div class="flex items-center justify-between mb-2 cursor-pointer" id="settings-toggle-container">
-                <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
-                <button id="settings-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути налаштування</button>
-            </div>
-            <div id="settings-section" class="hidden">
-                <div class="flex flex-col space-y-2 mb-4">
-                    <label for="overdue-hours-input" class="text-sm text-gray-600">Завдання стає "застарілим" через (годин):</label>
-                    <input type="number" id="overdue-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                    <label for="defer-hours-input" class="text-sm text-gray-600">Відкладати завдання на (годин):</label>
-                    <input type="number" id="defer-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                <!-- Налаштування -->
+                <div class="bg-white p-6 rounded-2xl shadow-xl mt-6">
+                    <div class="flex items-center justify-between mb-2 cursor-pointer" id="settings-toggle-container">
+                        <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
+                        <button id="settings-toggle" class="text-sm text-indigo-600 font-semibold hover:underline">Розгорнути налаштування</button>
+                    </div>
+                    <div id="settings-section" class="hidden">
+                        <div class="flex flex-col space-y-2 mb-4">
+                            <label for="overdue-hours-input" class="text-sm text-gray-600">Завдання стає "застарілим" через (годин):</label>
+                            <input type="number" id="overdue-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <label for="defer-hours-input" class="text-sm text-gray-600">Відкладати завдання на (годин):</label>
+                            <input type="number" id="defer-hours-input" min="1" class="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
