@@ -5,386 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мій Планувальник</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase-об'єкти
-        let app;
-        let db;
-        let auth;
-        let userId = null;
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // Елементи DOM
-        const taskInput = document.getElementById('task-input');
-        const addTaskButton = document.getElementById('add-task-btn');
-        const activeTasksList = document.getElementById('active-tasks');
-        const deferredTasksList = document.getElementById('deferred-tasks');
-        const completedTasksList = document.getElementById('completed-tasks');
-        const userIdSpan = document.getElementById('user-id-span');
-        const foldersContainer = document.getElementById('folders-container');
-        const completedTasksToggle = document.getElementById('completed-tasks-toggle');
-        const deferredTasksToggle = document.getElementById('deferred-tasks-toggle');
-        const overdueModal = document.getElementById('overdue-modal');
-        const overdueMessage = document.getElementById('overdue-message');
-        const closeOverdueModal = document.getElementById('close-overdue-modal');
-        const overdueHoursInput = document.getElementById('overdue-hours-input');
-        const deferHoursInput = document.getElementById('defer-hours-input');
-        const settingsToggle = document.getElementById('settings-toggle');
-        const settingsSection = document.getElementById('settings-section');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const authButtons = document.getElementById('auth-buttons');
-        const contentSection = document.getElementById('content-section');
-        const googleSignInButton = document.getElementById('google-signin-btn');
-        const signOutButton = document.getElementById('signout-btn');
-
-        let currentFolder = 'Всі';
-        let isCompletedVisible = false;
-        let isDeferredVisible = false;
-        let isSettingsVisible = false;
-
-        // Налаштування за замовчуванням
-        let overdueHours = 72; // 3 дні
-        let deferHours = 24; // 1 день
-
-        setLogLevel('debug');
-
-        // Ініціалізація Firebase та аутентифікація
-        try {
-            overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
-            deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
-            overdueHoursInput.value = overdueHours;
-            deferHoursInput.value = deferHours;
-            
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userIdSpan.textContent = userId;
-                    console.log("Користувач увійшов:", userId);
-                    authButtons.classList.add('hidden');
-                    contentSection.classList.remove('hidden');
-                    subscribeToTasks();
-                } else {
-                    userId = null;
-                    userIdSpan.textContent = 'Немає';
-                    console.log("Користувач вийшов.");
-                    authButtons.classList.remove('hidden');
-                    contentSection.classList.add('hidden');
-                    renderTasks([]); // Очистити список завдань
-                }
-                loadingSpinner.classList.add('hidden');
-            });
-
-            // Виконання початкового входу за допомогою наданого токена, якщо він є
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
-            }
-        } catch (e) {
-            console.error("Помилка ініціалізації Firebase: ", e);
-            loadingSpinner.classList.add('hidden');
-        }
-
-        const signInWithGoogle = async () => {
-            const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Помилка входу через Google:", error);
-            }
-        };
-
-        const signOutUser = async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error("Помилка виходу:", error);
-            }
-        };
-
-        const subscribeToTasks = () => {
-            if (!db || !userId) {
-                console.error("Firestore або ID користувача не ініціалізовано.");
-                return;
-            }
-            const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
-            const q = query(tasksCollection, orderBy("createdAt"));
-
-            onSnapshot(q, (querySnapshot) => {
-                const allTasks = [];
-                const folders = new Set(['Всі']);
-                
-                querySnapshot.forEach((doc) => {
-                    const task = { id: doc.id, ...doc.data() };
-                    allTasks.push(task);
-                    if (task.folder) {
-                        folders.add(task.folder);
-                    }
-                });
-
-                renderFolders(Array.from(folders));
-                renderTasks(allTasks);
-            }, (error) => {
-                console.error("Помилка отримання даних:", error);
-            });
-        };
-
-        const renderFolders = (folders) => {
-            foldersContainer.innerHTML = '';
-            folders.forEach(folder => {
-                const folderBtn = document.createElement('button');
-                folderBtn.textContent = `#${folder}`;
-                folderBtn.className = `px-3 py-1 rounded-full text-sm font-medium transition-colors ${currentFolder === folder ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
-                folderBtn.addEventListener('click', () => {
-                    currentFolder = folder;
-                    subscribeToTasks(); 
-                });
-                foldersContainer.appendChild(folderBtn);
-            });
-        };
-
-        const renderTasks = (tasks) => {
-            const filteredTasks = tasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
-
-            const activeTasks = [];
-            const deferredTasks = [];
-            const completedTasks = [];
-            const overdueTasks = [];
-
-            const now = new Date().getTime();
-
-            filteredTasks.forEach(task => {
-                if (task.completed) {
-                    completedTasks.push(task);
-                } else if (task.deferredUntil && task.deferredUntil.toDate().getTime() > now) {
-                    deferredTasks.push(task);
-                } else {
-                    activeTasks.push(task);
-                    const createdAt = task.createdAt?.toDate().getTime();
-                    const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
-                    if (hoursOld > overdueHours) {
-                        overdueTasks.push(task);
-                    }
-                }
-            });
-
-            if (overdueTasks.length > 0) {
-                let overdueText = 'Ви давно не працювали над цими завданнями:';
-                overdueTasks.forEach(task => {
-                    overdueText += `\n- ${task.text}`;
-                });
-                overdueMessage.textContent = overdueText;
-                overdueModal.classList.remove('hidden');
-            } else {
-                overdueModal.classList.add('hidden');
-            }
-
-            renderTaskList(activeTasks, activeTasksList);
-            renderTaskList(deferredTasks, deferredTasksList);
-            renderTaskList(completedTasks, completedTasksList);
-        };
-
-        const renderTaskList = (tasks, listElement) => {
-            listElement.innerHTML = '';
-            if (tasks.length === 0) {
-                listElement.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань у цій секції.</p>`;
-                return;
-            }
-
-            tasks.forEach(task => {
-                const taskItem = document.createElement('div');
-                let cardColorClass = 'bg-white';
-                
-                const now = new Date().getTime();
-                const createdAt = task.createdAt?.toDate().getTime();
-                const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
-                
-                if (!task.completed && hoursOld > overdueHours) {
-                    cardColorClass = 'bg-red-200';
-                }
-
-                taskItem.className = `p-4 mb-3 rounded-xl shadow-md flex flex-col ${cardColorClass} overflow-hidden`;
-                
-                let buttonsHTML = '';
-                if (!task.completed) {
-                    buttonsHTML += `<button class="complete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">Виконано</button>`;
-                    buttonsHTML += `<button class="defer-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-sm">В роботі</button>`;
-                }
-                buttonsHTML += `<button class="delete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">Видалити</button>`;
-
-                const linkRegex = /(https?:\/\/[^\s]+)/g;
-                const taskTextWithLinks = task.text.replace(linkRegex, (url) => {
-                    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
-                    const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
-
-                    if (isImage) {
-                         return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
-                    } else {
-                        return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
-                    }
-                });
-
-                taskItem.innerHTML = `
-                    <div class="flex items-start justify-between mb-2">
-                        <span class="text-xs font-semibold text-gray-600">${task.folder ? `#${task.folder}` : ''}</span>
-                        <div class="flex-shrink-0 flex items-center">
-                            ${buttonsHTML}
-                        </div>
-                    </div>
-                    <p class="text-gray-800 whitespace-pre-wrap flex-grow">${taskTextWithLinks}</p>
-                    ${task.imageURL ? `<a href="${task.imageURL}" target="_blank" class="mt-4"><img src="${task.imageURL}" class="mt-4 rounded-lg max-w-full h-auto" alt="Зображення до завдання"></a>` : ''}
-                `;
-
-                // Обробники подій для кнопок
-                taskItem.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
-                if (taskItem.querySelector('.complete-btn')) {
-                    taskItem.querySelector('.complete-btn').addEventListener('click', () => toggleTaskStatus(task.id, true));
-                }
-                if (taskItem.querySelector('.defer-btn')) {
-                    taskItem.querySelector('.defer-btn').addEventListener('click', () => deferTask(task.id));
-                }
-
-                listElement.appendChild(taskItem);
-            });
-        };
-
-        const addTask = async () => {
-            const taskText = taskInput.value.trim();
-            if (taskText === '') return;
-            if (!db || !userId) {
-                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
-                return;
-            }
-
-            const folderMatch = taskText.match(/^#(\S+)\s*/);
-            const folder = folderMatch ? folderMatch[1] : null;
-            const cleanText = folderMatch ? taskText.substring(folderMatch[0].length) : taskText;
-            
-            const imageMatch = cleanText.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|svg|webp))/i);
-            const imageURL = imageMatch ? imageMatch[0] : null;
-            const finalCleanText = imageMatch ? cleanText.replace(imageMatch[0], '') : cleanText;
-
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), {
-                    text: finalCleanText.trim(),
-                    completed: false,
-                    createdAt: new Date(),
-                    folder: folder,
-                    imageURL: imageURL,
-                    deferredUntil: null
-                });
-                taskInput.value = '';
-                console.log("Завдання додано успішно!");
-            } catch (e) {
-                console.error("Помилка додавання завдання: ", e);
-            }
-        };
-
-        const toggleTaskStatus = async (id, status) => {
-            if (!db || !userId) {
-                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
-                return;
-            }
-            try {
-                const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
-                await updateDoc(taskRef, {
-                    completed: status
-                });
-                console.log("Статус завдання оновлено!");
-            } catch (e) {
-                console.error("Помилка оновлення статусу: ", e);
-            }
-        };
-        
-        const deferTask = async (id) => {
-             if (!db || !userId) {
-                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
-                return;
-            }
-            try {
-                const deferTime = new Date();
-                deferTime.setHours(deferTime.getHours() + deferHours);
-                
-                const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
-                await updateDoc(taskRef, {
-                    deferredUntil: deferTime
-                });
-                console.log(`Завдання відкладено на ${deferHours} годин.`);
-            } catch (e) {
-                console.error("Помилка відкладення завдання: ", e);
-            }
-        };
-
-        const deleteTask = async (id) => {
-            if (!db || !userId) {
-                console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id));
-                console.log("Завдання видалено!");
-            } catch (e) {
-                console.error("Помилка видалення завдання: ", e);
-            }
-        };
-        
-        const toggleCompletedTasks = () => {
-            isCompletedVisible = !isCompletedVisible;
-            completedTasksList.classList.toggle('hidden', !isCompletedVisible);
-            completedTasksToggle.textContent = isCompletedVisible ? 'Згорнути' : 'Розгорнути';
-        };
-
-        const toggleDeferredTasks = () => {
-            isDeferredVisible = !isDeferredVisible;
-            deferredTasksList.classList.toggle('hidden', !isDeferredVisible);
-            deferredTasksToggle.textContent = isDeferredVisible ? 'Згорнути' : 'Розгорнути';
-        };
-
-        const toggleSettings = () => {
-            isSettingsVisible = !isSettingsVisible;
-            settingsSection.classList.toggle('hidden', !isSettingsVisible);
-            settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
-        };
-
-        // Обробники подій
-        googleSignInButton.addEventListener('click', signInWithGoogle);
-        signOutButton.addEventListener('click', signOutUser);
-        addTaskButton.addEventListener('click', addTask);
-        taskInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                addTask();
-            }
-        });
-        completedTasksToggle.addEventListener('click', toggleCompletedTasks);
-        deferredTasksToggle.addEventListener('click', toggleDeferredTasks);
-        closeOverdueModal.addEventListener('click', () => {
-            overdueModal.classList.add('hidden');
-        });
-        settingsToggle.addEventListener('click', toggleSettings);
-        overdueHoursInput.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value);
-            overdueHours = value > 0 ? value : 1;
-            localStorage.setItem('overdueHours', overdueHours);
-            subscribeToTasks();
-        });
-        deferHoursInput.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value);
-            deferHours = value > 0 ? value : 1;
-            localStorage.setItem('deferHours', deferHours);
-        });
-    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -417,7 +37,7 @@
                 </button>
             </div>
 
-            <!-- Контент додатка, прихований, поки користувач не увійде -->
+            <!-- Контент додатка, прихований, поки користувач не увійшов -->
             <div id="content-section" class="hidden">
                  <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
 
@@ -489,5 +109,389 @@
             <button id="close-overdue-modal" class="mt-4 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зрозуміло</button>
         </div>
     </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.onload = function () {
+            // Firebase-об'єкти
+            let app;
+            let db;
+            let auth;
+            let userId = null;
+
+            // Змінні Canvas
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            // Елементи DOM
+            const taskInput = document.getElementById('task-input');
+            const addTaskButton = document.getElementById('add-task-btn');
+            const activeTasksList = document.getElementById('active-tasks');
+            const deferredTasksList = document.getElementById('deferred-tasks');
+            const completedTasksList = document.getElementById('completed-tasks');
+            const userIdSpan = document.getElementById('user-id-span');
+            const foldersContainer = document.getElementById('folders-container');
+            const completedTasksToggle = document.getElementById('completed-tasks-toggle');
+            const deferredTasksToggle = document.getElementById('deferred-tasks-toggle');
+            const overdueModal = document.getElementById('overdue-modal');
+            const overdueMessage = document.getElementById('overdue-message');
+            const closeOverdueModal = document.getElementById('close-overdue-modal');
+            const overdueHoursInput = document.getElementById('overdue-hours-input');
+            const deferHoursInput = document.getElementById('defer-hours-input');
+            const settingsToggle = document.getElementById('settings-toggle');
+            const settingsSection = document.getElementById('settings-section');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const authButtons = document.getElementById('auth-buttons');
+            const contentSection = document.getElementById('content-section');
+            const googleSignInButton = document.getElementById('google-signin-btn');
+            const signOutButton = document.getElementById('signout-btn');
+
+            let currentFolder = 'Всі';
+            let isCompletedVisible = false;
+            let isDeferredVisible = false;
+            let isSettingsVisible = false;
+
+            // Налаштування за замовчуванням
+            let overdueHours = 72; // 3 дні
+            let deferHours = 24; // 1 день
+
+            setLogLevel('debug');
+
+            // Ініціалізація Firebase та аутентифікація
+            try {
+                overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
+                deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
+                overdueHoursInput.value = overdueHours;
+                deferHoursInput.value = deferHours;
+                
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdSpan.textContent = userId;
+                        console.log("Користувач увійшов:", userId);
+                        authButtons.classList.add('hidden');
+                        contentSection.classList.remove('hidden');
+                        subscribeToTasks();
+                    } else {
+                        userId = null;
+                        userIdSpan.textContent = 'Немає';
+                        console.log("Користувач вийшов.");
+                        authButtons.classList.remove('hidden');
+                        contentSection.classList.add('hidden');
+                        renderTasks([]); // Очистити список завдань
+                    }
+                    loadingSpinner.classList.add('hidden');
+                });
+
+                // Виконання початкового входу за допомогою наданого токена, якщо він є
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Помилка ініціалізації Firebase: ", e);
+                loadingSpinner.classList.add('hidden');
+            }
+
+            const signInWithGoogle = async () => {
+                const provider = new GoogleAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    console.error("Помилка входу через Google:", error);
+                }
+            };
+
+            const signOutUser = async () => {
+                try {
+                    await signOut(auth);
+                } catch (error) {
+                    console.error("Помилка виходу:", error);
+                }
+            };
+
+            const subscribeToTasks = () => {
+                if (!db || !userId) {
+                    console.error("Firestore або ID користувача не ініціалізовано.");
+                    return;
+                }
+                const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
+                const q = query(tasksCollection, orderBy("createdAt"));
+
+                onSnapshot(q, (querySnapshot) => {
+                    const allTasks = [];
+                    const folders = new Set(['Всі']);
+                    
+                    querySnapshot.forEach((doc) => {
+                        const task = { id: doc.id, ...doc.data() };
+                        allTasks.push(task);
+                        if (task.folder) {
+                            folders.add(task.folder);
+                        }
+                    });
+
+                    renderFolders(Array.from(folders));
+                    renderTasks(allTasks);
+                }, (error) => {
+                    console.error("Помилка отримання даних:", error);
+                });
+            };
+
+            const renderFolders = (folders) => {
+                foldersContainer.innerHTML = '';
+                folders.forEach(folder => {
+                    const folderBtn = document.createElement('button');
+                    folderBtn.textContent = `#${folder}`;
+                    folderBtn.className = `px-3 py-1 rounded-full text-sm font-medium transition-colors ${currentFolder === folder ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+                    folderBtn.addEventListener('click', () => {
+                        currentFolder = folder;
+                        subscribeToTasks(); 
+                    });
+                    foldersContainer.appendChild(folderBtn);
+                });
+            };
+
+            const renderTasks = (tasks) => {
+                const filteredTasks = tasks.filter(task => currentFolder === 'Всі' || task.folder === currentFolder);
+
+                const activeTasks = [];
+                const deferredTasks = [];
+                const completedTasks = [];
+                const overdueTasks = [];
+
+                const now = new Date().getTime();
+
+                filteredTasks.forEach(task => {
+                    if (task.completed) {
+                        completedTasks.push(task);
+                    } else if (task.deferredUntil && task.deferredUntil.toDate().getTime() > now) {
+                        deferredTasks.push(task);
+                    } else {
+                        activeTasks.push(task);
+                        const createdAt = task.createdAt?.toDate().getTime();
+                        const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
+                        if (hoursOld > overdueHours) {
+                            overdueTasks.push(task);
+                        }
+                    }
+                });
+
+                if (overdueTasks.length > 0) {
+                    let overdueText = 'Ви давно не працювали над цими завданнями:';
+                    overdueTasks.forEach(task => {
+                        overdueText += `\n- ${task.text}`;
+                    });
+                    overdueMessage.textContent = overdueText;
+                    overdueModal.classList.remove('hidden');
+                } else {
+                    overdueModal.classList.add('hidden');
+                }
+
+                renderTaskList(activeTasks, activeTasksList);
+                renderTaskList(deferredTasks, deferredTasksList);
+                renderTaskList(completedTasks, completedTasksList);
+            };
+
+            const renderTaskList = (tasks, listElement) => {
+                listElement.innerHTML = '';
+                if (tasks.length === 0) {
+                    listElement.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань у цій секції.</p>`;
+                    return;
+                }
+
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    let cardColorClass = 'bg-white';
+                    
+                    const now = new Date().getTime();
+                    const createdAt = task.createdAt?.toDate().getTime();
+                    const hoursOld = createdAt ? (now - createdAt) / (1000 * 60 * 60) : 0;
+                    
+                    if (!task.completed && hoursOld > overdueHours) {
+                        cardColorClass = 'bg-red-200';
+                    }
+
+                    taskItem.className = `p-4 mb-3 rounded-xl shadow-md flex flex-col ${cardColorClass} overflow-hidden`;
+                    
+                    let buttonsHTML = '';
+                    if (!task.completed) {
+                        buttonsHTML += `<button class="complete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">Виконано</button>`;
+                        buttonsHTML += `<button class="defer-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-sm">В роботі</button>`;
+                    }
+                    buttonsHTML += `<button class="delete-btn ml-2 px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">Видалити</button>`;
+
+                    const linkRegex = /(https?:\/\/[^\s]+)/g;
+                    const taskTextWithLinks = task.text.replace(linkRegex, (url) => {
+                        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
+                        const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
+
+                        if (isImage) {
+                            return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">[Зображення]</a>`;
+                        } else {
+                            return `<a href="${url}" target="_blank" class="text-blue-500 hover:underline break-all">${url}</a>`;
+                        }
+                    });
+
+                    taskItem.innerHTML = `
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-xs font-semibold text-gray-600">${task.folder ? `#${task.folder}` : ''}</span>
+                            <div class="flex-shrink-0 flex items-center">
+                                ${buttonsHTML}
+                            </div>
+                        </div>
+                        <p class="text-gray-800 whitespace-pre-wrap flex-grow">${taskTextWithLinks}</p>
+                        ${task.imageURL ? `<a href="${task.imageURL}" target="_blank" class="mt-4"><img src="${task.imageURL}" class="mt-4 rounded-lg max-w-full h-auto" alt="Зображення до завдання"></a>` : ''}
+                    `;
+
+                    // Обробники подій для кнопок
+                    taskItem.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
+                    if (taskItem.querySelector('.complete-btn')) {
+                        taskItem.querySelector('.complete-btn').addEventListener('click', () => toggleTaskStatus(task.id, true));
+                    }
+                    if (taskItem.querySelector('.defer-btn')) {
+                        taskItem.querySelector('.defer-btn').addEventListener('click', () => deferTask(task.id));
+                    }
+
+                    listElement.appendChild(taskItem);
+                });
+            };
+
+            const addTask = async () => {
+                const taskText = taskInput.value.trim();
+                if (taskText === '') return;
+                if (!db || !userId) {
+                    console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
+                    return;
+                }
+
+                const folderMatch = taskText.match(/^#(\S+)\s*/);
+                const folder = folderMatch ? folderMatch[1] : null;
+                const cleanText = folderMatch ? taskText.substring(folderMatch[0].length) : taskText;
+                
+                const imageMatch = cleanText.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|svg|webp))/i);
+                const imageURL = imageMatch ? imageMatch[0] : null;
+                const finalCleanText = imageMatch ? cleanText.replace(imageMatch[0], '') : cleanText;
+
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), {
+                        text: finalCleanText.trim(),
+                        completed: false,
+                        createdAt: new Date(),
+                        folder: folder,
+                        imageURL: imageURL,
+                        deferredUntil: null
+                    });
+                    taskInput.value = '';
+                    console.log("Завдання додано успішно!");
+                } catch (e) {
+                    console.error("Помилка додавання завдання: ", e);
+                }
+            };
+
+            const toggleTaskStatus = async (id, status) => {
+                if (!db || !userId) {
+                    console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
+                    return;
+                }
+                try {
+                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
+                    await updateDoc(taskRef, {
+                        completed: status
+                    });
+                    console.log("Статус завдання оновлено!");
+                } catch (e) {
+                    console.error("Помилка оновлення статусу: ", e);
+                }
+            };
+            
+            const deferTask = async (id) => {
+                if (!db || !userId) {
+                    console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
+                    return;
+                }
+                try {
+                    const deferTime = new Date();
+                    deferTime.setHours(deferTime.getHours() + deferHours);
+                    
+                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
+                    await updateDoc(taskRef, {
+                        deferredUntil: deferTime
+                    });
+                    console.log(`Завдання відкладено на ${deferHours} годин.`);
+                } catch (e) {
+                    console.error("Помилка відкладення завдання: ", e);
+                }
+            };
+
+            const deleteTask = async (id) => {
+                if (!db || !userId) {
+                    console.error("Firestore або ID користувача не ініціалізовано. Увійдіть у систему.");
+                    return;
+                }
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id));
+                    console.log("Завдання видалено!");
+                } catch (e) {
+                    console.error("Помилка видалення завдання: ", e);
+                }
+            };
+            
+            const toggleCompletedTasks = () => {
+                isCompletedVisible = !isCompletedVisible;
+                completedTasksList.classList.toggle('hidden', !isCompletedVisible);
+                completedTasksToggle.textContent = isCompletedVisible ? 'Згорнути' : 'Розгорнути';
+            };
+
+            const toggleDeferredTasks = () => {
+                isDeferredVisible = !isDeferredVisible;
+                deferredTasksList.classList.toggle('hidden', !isDeferredVisible);
+                deferredTasksToggle.textContent = isDeferredVisible ? 'Згорнути' : 'Розгорнути';
+            };
+
+            const toggleSettings = () => {
+                isSettingsVisible = !isSettingsVisible;
+                settingsSection.classList.toggle('hidden', !isSettingsVisible);
+                settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
+            };
+
+            // Обробники подій
+            googleSignInButton.addEventListener('click', signInWithGoogle);
+            signOutButton.addEventListener('click', signOutUser);
+            addTaskButton.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addTask();
+                }
+            });
+            completedTasksToggle.addEventListener('click', toggleCompletedTasks);
+            deferredTasksToggle.addEventListener('click', toggleDeferredTasks);
+            closeOverdueModal.addEventListener('click', () => {
+                overdueModal.classList.add('hidden');
+            });
+            settingsToggle.addEventListener('click', toggleSettings);
+            overdueHoursInput.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                overdueHours = value > 0 ? value : 1;
+                localStorage.setItem('overdueHours', overdueHours);
+                subscribeToTasks();
+            });
+            deferHoursInput.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                deferHours = value > 0 ? value : 1;
+                localStorage.setItem('deferHours', deferHours);
+            });
+        };
+    </script>
 </body>
 </html>
