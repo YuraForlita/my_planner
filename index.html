@@ -28,7 +28,7 @@
 
             <!-- Повідомлення про помилку -->
             <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4">
-                Сталася помилка ініціалізації. Будь ласка, спробуйте ще раз.
+                Сталася помилка ініціалізації. Будь ласка, переконайтеся, що конфігурація Firebase додана.
             </div>
 
             <!-- Кнопки аутентифікації, видимі, коли користувач не увійшов -->
@@ -121,22 +121,27 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Цей console.log допоможе визначити, де відбувається помилка
-        console.log("Сценарій завантажено і починається виконання.");
-        
         window.onload = function () {
-            // Firebase-об'єкти
             let app;
             let db;
             let auth;
             let userId = null;
+            
+            // ВСТАВТЕ ВАШУ КОНФІГУРАЦІЮ FIREBASE ТУТ
+            // Знайдіть її в налаштуваннях вашого проекту Firebase.
+            const firebaseConfig = {
+                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+                authDomain: "planer-97eb1.firebaseapp.com",
+                projectId: "planer-97eb1",
+                storageBucket: "planer-97eb1.firebasestorage.app",
+                messagingSenderId: "322073132266",
+                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+                measurementId: "G-GB94F6MG2N"
+                };
 
-            // Змінні Canvas
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-            // Елементи DOM
             const taskInput = document.getElementById('task-input');
             const addTaskButton = document.getElementById('add-task-btn');
             const activeTasksList = document.getElementById('active-tasks');
@@ -165,13 +170,18 @@
             let isDeferredVisible = false;
             let isSettingsVisible = false;
 
-            // Налаштування за замовчуванням
-            let overdueHours = 72; // 3 дні
-            let deferHours = 24; // 1 день
+            let overdueHours = 72;
+            let deferHours = 24;
 
             setLogLevel('debug');
 
-            // Ініціалізація Firebase та аутентифікація
+            if (Object.keys(firebaseConfig).length === 0 || firebaseConfig.apiKey === "AIzaSyC...") {
+                console.error("Firebase config is not defined. Cannot initialize.");
+                if (errorMessage) errorMessage.classList.remove('hidden');
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
+                return;
+            }
+            
             try {
                 if (overdueHoursInput) {
                     overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
@@ -180,13 +190,6 @@
                 if (deferHoursInput) {
                     deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
                     deferHoursInput.value = deferHours;
-                }
-
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.error("Firebase config is not defined. Cannot initialize.");
-                    errorMessage.classList.remove('hidden');
-                    loadingSpinner.classList.add('hidden');
-                    return;
                 }
                 
                 app = initializeApp(firebaseConfig);
@@ -207,12 +210,11 @@
                         console.log("Користувач вийшов.");
                         if (authButtons) authButtons.classList.remove('hidden');
                         if (contentSection) contentSection.classList.add('hidden');
-                        renderTasks([]); // Очистити список завдань
+                        renderTasks([]);
                     }
                     if (loadingSpinner) loadingSpinner.classList.add('hidden');
                 });
 
-                // Виконання початкового входу за допомогою наданого токена, якщо він є
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
@@ -377,7 +379,6 @@
                         ${task.imageURL ? `<a href="${task.imageURL}" target="_blank" class="mt-4"><img src="${task.imageURL}" class="mt-4 rounded-lg max-w-full h-auto" alt="Зображення до завдання"></a>` : ''}
                     `;
 
-                    // Обробники подій для кнопок
                     taskItem.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
                     if (taskItem.querySelector('.complete-btn')) {
                         taskItem.querySelector('.complete-btn').addEventListener('click', () => toggleTaskStatus(task.id, true));
@@ -488,7 +489,6 @@
                 if (settingsToggle) settingsToggle.textContent = isSettingsVisible ? 'Згорнути налаштування' : 'Налаштування';
             };
 
-            // Обробники подій
             if (googleSignInButton) googleSignInButton.addEventListener('click', signInWithGoogle);
             if (signOutButton) signOutButton.addEventListener('click', signOutUser);
             if (addTaskButton) addTaskButton.addEventListener('click', addTask);
