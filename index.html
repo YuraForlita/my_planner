@@ -51,12 +51,48 @@
                     <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
                     <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
                 </div>
-
-                <!-- Список завдань -->
+                
+                <!-- Розділ "Активні завдання" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">Мої завдання</h2>
-                    <div id="tasks-list" class="space-y-3">
-                        <!-- Завдання будуть додані сюди JS -->
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
+                    <div id="active-tasks-list" class="space-y-3">
+                        <!-- Активні завдання будуть додані сюди JS -->
+                        <p class="text-gray-500 text-center italic">Завантаження...</p>
+                    </div>
+                </div>
+
+                <!-- Розділ "Відкладені завдання" -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Відкладені завдання</h2>
+                        <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="deferred-tasks-list" class="space-y-3 hidden">
+                        <!-- Відкладені завдання будуть додані сюди JS -->
+                        <p class="text-gray-500 text-center italic">Немає відкладених завдань.</p>
+                    </div>
+                </div>
+
+                <!-- Розділ "Виконані завдання" -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
+                        <button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="completed-tasks-list" class="space-y-3 hidden">
+                        <!-- Виконані завдання будуть додані сюди JS -->
+                        <p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>
+                    </div>
+                </div>
+
+                <!-- Розділ "Налаштування" -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
+                        <button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="settings-content" class="hidden">
+                        <p class="text-gray-500 italic text-center">Цей розділ готовий до майбутніх налаштувань.</p>
                     </div>
                 </div>
             </div>
@@ -77,24 +113,23 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
             setLogLevel('debug');
-
+            
             // ВСТАВТЕ ВАШУ КОНФІГУРАЦІЮ FIREBASE ТУТ
-            // Знайдіть її в налаштуваннях вашого проекту Firebase.
             const firebaseConfig = {
-            apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-            authDomain: "planer-97eb1.firebaseapp.com",
-            projectId: "planer-97eb1",
-            storageBucket: "planer-97eb1.firebasestorage.app",
-            messagingSenderId: "322073132266",
-            appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-            measurementId: "G-GB94F6MG2N"
-            };
+                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+                authDomain: "planer-97eb1.firebaseapp.com",
+                projectId: "planer-97eb1",
+                storageBucket: "planer-97eb1.firebasestorage.app",
+                messagingSenderId: "322073132266",
+                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+                measurementId: "G-GB94F6MG2N"
+                };
 
 
             // Перевіряємо, чи була конфігурація додана користувачем
@@ -112,7 +147,6 @@
             // Елементи DOM
             const taskInput = document.getElementById('task-input');
             const addTaskButton = document.getElementById('add-task-btn');
-            const tasksList = document.getElementById('tasks-list');
             const userIdSpan = document.getElementById('user-id-span');
             const loadingSpinner = document.getElementById('loading-spinner');
             const authButtons = document.getElementById('auth-buttons');
@@ -122,6 +156,15 @@
             const confirmModal = document.getElementById('confirm-modal');
             const confirmDeleteButton = document.getElementById('delete-btn');
             const cancelDeleteButton = document.getElementById('cancel-btn');
+
+            const activeTasksList = document.getElementById('active-tasks-list');
+            const deferredTasksList = document.getElementById('deferred-tasks-list');
+            const completedTasksList = document.getElementById('completed-tasks-list');
+
+            const deferredToggleBtn = document.getElementById('deferred-toggle-btn');
+            const completedToggleBtn = document.getElementById('completed-toggle-btn');
+            const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+            const settingsContent = document.getElementById('settings-content');
 
             let userId = null;
             let currentTaskIdToDelete = null;
@@ -142,7 +185,9 @@
                     console.log("Користувач вийшов.");
                     authButtons.classList.remove('hidden');
                     contentSection.classList.add('hidden');
-                    tasksList.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити свої завдання.</p>`;
+                    activeTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити свої завдання.</p>`;
+                    deferredTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає відкладених завдань.</p>`;
+                    completedTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>`;
                 }
             });
 
@@ -174,44 +219,101 @@
                 const q = query(tasksCollection, orderBy("createdAt", "desc"));
 
                 onSnapshot(q, (querySnapshot) => {
-                    const tasks = [];
+                    const activeTasks = [];
+                    const deferredTasks = [];
+                    const completedTasks = [];
+                    
                     querySnapshot.forEach((doc) => {
-                        tasks.push({ id: doc.id, ...doc.data() });
+                        const task = { id: doc.id, ...doc.data() };
+                        if (task.status === 'completed') {
+                            completedTasks.push(task);
+                        } else if (task.status === 'deferred') {
+                            deferredTasks.push(task);
+                        } else {
+                            activeTasks.push(task);
+                        }
                     });
-                    renderTasks(tasks);
+
+                    renderTasks(activeTasks, activeTasksList, 'active');
+                    renderTasks(deferredTasks, deferredTasksList, 'deferred');
+                    renderTasks(completedTasks, completedTasksList, 'completed');
+
                 }, (error) => {
                     console.error("Помилка отримання даних:", error);
                 });
             };
 
-            // Відображення завдань
-            const renderTasks = (tasks) => {
-                tasksList.innerHTML = '';
+            // Відображення завдань у відповідних списках
+            const renderTasks = (tasks, listElement, status) => {
+                listElement.innerHTML = '';
                 if (tasks.length === 0) {
-                    tasksList.innerHTML = `<p class="text-gray-500 text-center italic">У вас немає завдань.</p>`;
+                    let message = '';
+                    if (status === 'active') {
+                        message = 'Немає активних завдань.';
+                    } else if (status === 'deferred') {
+                        message = 'Немає відкладених завдань.';
+                    } else if (status === 'completed') {
+                        message = 'Немає виконаних завдань.';
+                    }
+                    listElement.innerHTML = `<p class="text-gray-500 text-center italic">${message}</p>`;
                     return;
                 }
 
                 tasks.forEach(task => {
                     const taskItem = document.createElement('div');
-                    taskItem.className = `p-4 rounded-xl shadow-md flex items-center justify-between ${task.completed ? 'bg-green-100' : 'bg-white'}`;
+                    taskItem.className = `p-4 rounded-xl shadow-md flex items-center justify-between bg-white`;
                     
-                    taskItem.innerHTML = `
-                        <p class="text-gray-800 flex-grow mr-4 ${task.completed ? 'line-through text-gray-500' : ''}">${task.text}</p>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
+                    let buttonsHTML = '';
+                    if (status === 'active') {
+                        buttonsHTML = `
                             <button class="complete-btn px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">
-                                ${task.completed ? 'Відмінити' : 'Виконано'}
+                                Виконано
                             </button>
+                            <button class="defer-btn px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-sm">
+                                Відкласти
+                            </button>
+                        `;
+                    } else if (status === 'deferred') {
+                        buttonsHTML = `
+                            <button class="active-btn px-3 py-1 rounded-full text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
+                                Активувати
+                            </button>
+                            <button class="complete-btn px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">
+                                Виконано
+                            </button>
+                        `;
+                    } else if (status === 'completed') {
+                        buttonsHTML = `
+                            <button class="active-btn px-3 py-1 rounded-full text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
+                                Активувати
+                            </button>
+                        `;
+                    }
+
+                    taskItem.innerHTML = `
+                        <p class="text-gray-800 flex-grow mr-4">${task.text}</p>
+                        <div class="flex-shrink-0 flex items-center space-x-2">
+                            ${buttonsHTML}
                             <button class="delete-btn px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">
                                 Видалити
                             </button>
                         </div>
                     `;
 
-                    taskItem.querySelector('.complete-btn').addEventListener('click', () => toggleTaskStatus(task.id, !task.completed));
+                    // Додаємо обробники подій для кнопок
+                    if (status === 'active') {
+                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
+                        taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
+                    } else if (status === 'deferred') {
+                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
+                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
+                    } else if (status === 'completed') {
+                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
+                    }
+
                     taskItem.querySelector('.delete-btn').addEventListener('click', () => showConfirmModal(task.id));
                     
-                    tasksList.appendChild(taskItem);
+                    listElement.appendChild(taskItem);
                 });
             };
             
@@ -223,8 +325,8 @@
                 try {
                     await addDoc(collection(db, `artifacts/gemini-todo/users/${userId}/tasks`), {
                         text: taskText,
-                        completed: false,
-                        createdAt: new Date(),
+                        status: 'active', // Завжди починаємо з активного статусу
+                        createdAt: serverTimestamp(),
                     });
                     taskInput.value = '';
                     console.log("Завдання додано успішно!");
@@ -233,12 +335,12 @@
                 }
             };
             
-            // Зміна статусу завдання
-            const toggleTaskStatus = async (id, status) => {
+            // Оновлення статусу завдання
+            const updateTaskStatus = async (id, newStatus) => {
                 if (!userId) return;
                 try {
                     const taskRef = doc(db, `artifacts/gemini-todo/users/${userId}/tasks`, id);
-                    await updateDoc(taskRef, { completed: status });
+                    await updateDoc(taskRef, { status: newStatus });
                     console.log("Статус завдання оновлено!");
                 } catch (e) {
                     console.error("Помилка оновлення статусу: ", e);
@@ -269,6 +371,13 @@
                 }
             };
 
+            // Функції для розгортання/згортання розділів
+            const toggleSection = (element, button) => {
+                const isHidden = element.classList.contains('hidden');
+                element.classList.toggle('hidden');
+                button.textContent = isHidden ? 'Згорнути' : 'Розгорнути';
+            };
+
             // Обробники подій
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -281,6 +390,10 @@
             });
             confirmDeleteButton.addEventListener('click', deleteTask);
             cancelDeleteButton.addEventListener('click', hideConfirmModal);
+
+            deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
+            completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
+            settingsToggleBtn.addEventListener('click', () => toggleSection(settingsContent, settingsToggleBtn));
         };
     </script>
 </body>
