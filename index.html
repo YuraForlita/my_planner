@@ -121,6 +121,9 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Цей console.log допоможе визначити, де відбувається помилка
+        console.log("Сценарій завантажено і починається виконання.");
+        
         window.onload = function () {
             // Firebase-об'єкти
             let app;
