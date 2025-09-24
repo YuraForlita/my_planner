@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мій Планувальник</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="./firebase-config.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -19,17 +20,8 @@
         let userId = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // >>> ЗАМІНІТЬ ПУСТИЙ ОБ'ЄКТ НИЖЧЕ НА ВАШУ КОНФІГУРАЦІЮ FIREBASE <<<
-        const firebaseConfig = {
-            apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-            authDomain: "planer-97eb1.firebaseapp.com",
-            projectId: "planer-97eb1",
-            storageBucket: "planer-97eb1.firebasestorage.app",
-            messagingSenderId: "322073132266",
-            appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-            measurementId: "G-GB94F6MG2N"
-        };
-        // >>>>> НАПРИКЛАД: const firebaseConfig = { apiKey: "...", ... }; <<<<<
+        // Конфігурація імпортується з окремого файлу
+        const firebaseConfig = window.firebaseConfig;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Елементи DOM
@@ -117,8 +109,8 @@
         };
 
         const subscribeToTasks = () => {
-            if (!db) {
-                console.error("Firestore is not initialized.");
+            if (!db || !userId) {
+                console.error("Firestore or user ID is not initialized.");
                 return;
             }
 
@@ -274,8 +266,8 @@
             const taskText = taskInput.value.trim();
             if (taskText === '') return;
 
-            if (!db) {
-                console.error("Firestore is not initialized.");
+            if (!db || !userId) {
+                console.error("Firestore or user ID is not initialized.");
                 return;
             }
 
@@ -304,8 +296,8 @@
         };
 
         const toggleTaskStatus = async (id, status) => {
-            if (!db) {
-                console.error("Firestore is not initialized.");
+            if (!db || !userId) {
+                console.error("Firestore or user ID is not initialized.");
                 return;
             }
             try {
@@ -320,8 +312,8 @@
         };
         
         const deferTask = async (id) => {
-             if (!db) {
-                console.error("Firestore is not initialized.");
+             if (!db || !userId) {
+                console.error("Firestore or user ID is not initialized.");
                 return;
             }
             try {
@@ -339,8 +331,8 @@
         };
 
         const deleteTask = async (id) => {
-            if (!db) {
-                console.error("Firestore is not initialized.");
+            if (!db || !userId) {
+                console.error("Firestore or user ID is not initialized.");
                 return;
             }
             try {
