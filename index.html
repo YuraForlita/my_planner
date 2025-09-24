@@ -244,7 +244,9 @@
                     return;
                 }
                 const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
-                const q = query(tasksCollection, orderBy("createdAt"));
+                // Примітка: для сортування за 'createdAt' (orderBy) потрібно створити індекс у консолі Firebase.
+                // Щоб додаток працював відразу, ми тимчасово прибрали сортування.
+                const q = query(tasksCollection);
 
                 onSnapshot(q, (querySnapshot) => {
                     const allTasks = [];
