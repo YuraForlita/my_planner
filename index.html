@@ -41,7 +41,7 @@
         const deferHoursInput = document.getElementById('defer-hours-input');
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsSection = document.getElementById('settings-section');
-        const tasksPerPageInput = document.getElementById('tasks-per-page-input');
+        const loadingSpinner = document.getElementById('loading-spinner');
 
         let currentFolder = 'Всі';
         let isCompletedVisible = false;
@@ -51,8 +51,6 @@
         // Налаштування за замовчуванням
         let overdueHours = 72; // 3 дні
         let deferHours = 24; // 1 день
-        const DEFAULT_TASKS_PER_PAGE = 5;
-        let tasksPerPage = DEFAULT_TASKS_PER_PAGE;
 
         setLogLevel('debug');
 
@@ -61,14 +59,12 @@
                 // Завантаження налаштувань з localStorage
                 overdueHours = localStorage.getItem('overdueHours') ? parseInt(localStorage.getItem('overdueHours')) : 72;
                 deferHours = localStorage.getItem('deferHours') ? parseInt(localStorage.getItem('deferHours')) : 24;
-                tasksPerPage = localStorage.getItem('tasksPerPage') ? parseInt(localStorage.getItem('tasksPerPage')) : DEFAULT_TASKS_PER_PAGE;
                 overdueHoursInput.value = overdueHours;
                 deferHoursInput.value = deferHours;
-                tasksPerPageInput.value = tasksPerPage;
 
                 // Ініціалізація Firebase
-                if (Object.keys(firebaseConfig).length > 0) {
-                    app = initializeApp(firebaseConfig);
+                if (window.firebaseConfig && Object.keys(window.firebaseConfig).length > 0) {
+                    app = initializeApp(window.firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
 
@@ -105,6 +101,8 @@
                 }
             } catch (e) {
                 console.error("Помилка ініціалізації: ", e);
+            } finally {
+                loadingSpinner.classList.add('hidden');
             }
         };
 
@@ -398,6 +396,11 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+    <!-- Спінер завантаження -->
+    <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
+    </div>
+
     <div class="max-w-xl w-full">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник</h1>
