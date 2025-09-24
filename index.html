@@ -15,7 +15,8 @@
         let app;
         let db;
         let auth;
-        let userId = 'анонімний'; // Тимчасове значення
+        // userId спочатку встановлюється на null, оскільки він буде оновлений асинхронно Firebase Auth
+        let userId = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         // >>> ЗАМІНІТЬ ПУСТИЙ ОБ'ЄКТ НИЖЧЕ НА ВАШУ КОНФІГУРАЦІЮ FIREBASE <<<
