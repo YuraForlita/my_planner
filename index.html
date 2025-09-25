@@ -13,6 +13,12 @@
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.5);
         }
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
@@ -40,6 +46,17 @@
                     </div>
                 </div>
             </div>
+             <!-- Модальне вікно для перегляду/редагування завдання -->
+            <div id="view-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
+                    <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
+                    <textarea id="edit-task-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4" rows="8"></textarea>
+                    <div class="flex justify-end space-x-2">
+                        <button id="save-edit-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
+                        <button id="cancel-edit-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Кнопки аутентифікації -->
             <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
@@ -57,9 +74,9 @@
                  <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
 
                 <!-- Введення нового завдання -->
-                <div class="flex items-start space-x-2 mb-6">
-                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
-                    <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
+                <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                    <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
                 </div>
                 
                 <!-- Розділ "Активні завдання" -->
@@ -141,33 +158,28 @@
         window.onload = function () {
             setLogLevel('debug');
             
-            // Заміна Firebase конфігурації глобальними змінними
             const firebaseConfig = {
-            apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-            authDomain: "planer-97eb1.firebaseapp.com",
-            projectId: "planer-97eb1",
-            storageBucket: "planer-97eb1.firebasestorage.app",
-            messagingSenderId: "322073132266",
-            appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-            measurementId: "G-GB94F6MG2N"
+                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+                authDomain: "planer-97eb1.firebaseapp.com",
+                projectId: "planer-97eb1",
+                storageBucket: "planer-97eb1.firebasestorage.app",
+                messagingSenderId: "322073132266",
+                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+                measurementId: "G-GB94F6MG2N"
             };
-
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-            // Перевіряємо, чи була конфігурація додана
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyC...") {
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('error-message').classList.remove('hidden');
                 return;
             }
 
-            // Ініціалізуємо Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
 
-            // Елементи DOM
             const taskInput = document.getElementById('task-input');
             const addTaskButton = document.getElementById('add-task-btn');
             const userIdSpan = document.getElementById('user-id-span');
@@ -199,13 +211,18 @@
             const notificationMessage = document.getElementById('notification-message');
             const closeNotificationBtn = document.getElementById('close-notification-btn');
 
+            const viewEditModal = document.getElementById('view-edit-modal');
+            const editTaskInput = document.getElementById('edit-task-input');
+            const saveEditBtn = document.getElementById('save-edit-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            let currentTaskToEdit = null;
+
             let userId = null;
             let currentTaskIdToDelete = null;
             let deferredDurationHours = 24;
             let staleDurationHours = 72;
             let lastUpdateTimes = {};
 
-            // Обробка зміни стану аутентифікації
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
                 if (user) {
@@ -228,7 +245,6 @@
                 }
             });
 
-            // Вхід через Google
             const signInWithGoogle = async () => {
                 const provider = new GoogleAuthProvider();
                 try {
@@ -238,7 +254,6 @@
                 }
             };
 
-            // Вихід
             const signOutUser = async () => {
                 try {
                     await signOut(auth);
@@ -247,20 +262,16 @@
                 }
             };
             
-             // Відображення модального вікна сповіщень
             const showNotification = (title, message) => {
                 notificationTitle.textContent = title;
                 notificationMessage.textContent = message;
                 notificationModal.classList.remove('hidden');
             };
 
-            // Приховування модального вікна сповіщень
             const hideNotification = () => {
                 notificationModal.classList.add('hidden');
             };
 
-
-            // Функція для завантаження налаштувань
             const loadSettings = async () => {
                 if (!userId) return;
                 try {
@@ -283,7 +294,6 @@
                 }
             };
 
-            // Підписка на оновлення завдань
             const subscribeToTasks = () => {
                 if (!db || !userId) {
                     return;
@@ -299,7 +309,6 @@
                     querySnapshot.forEach(async (doc) => {
                         const task = { id: doc.id, ...doc.data() };
                         
-                        // Перевірка відкладених завдань, щоб повернути їх в активні, якщо час минув
                         if (task.status === 'deferred' && task.deferredAt) {
                             const deferredTime = task.deferredAt.toMillis();
                             const now = Date.now();
@@ -310,11 +319,10 @@
                                 console.log(`Завдання "${task.text}" повертається до активних.`);
                                 await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
                                 showNotification('Завдання повернуто', `Завдання "${task.text}" було автоматично повернуто до активних.`);
-                                return; // Зупиняємо, щоб уникнути додавання в списки
+                                return;
                             }
                         }
 
-                         // Перевірка застарілих завдань
                          if (task.status === 'active' && task.lastUpdatedAt) {
                             const lastUpdateTime = task.lastUpdatedAt.toMillis();
                             const now = Date.now();
@@ -345,7 +353,6 @@
                 });
             };
 
-            // Відображення завдань у відповідних списках
             const renderTasks = (tasks, listElement, status) => {
                 listElement.innerHTML = '';
                 if (tasks.length === 0) {
@@ -367,8 +374,8 @@
                     if (status === 'active' && task.isStale) {
                          bgColor = 'bg-red-100 border border-red-500';
                     }
-                    taskItem.className = `p-4 rounded-xl shadow-md flex items-center justify-between ${bgColor}`;
-                    
+                    taskItem.className = `p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between ${bgColor} space-y-2 sm:space-y-0`;
+
                     let buttonsHTML = '';
                     if (status === 'active') {
                         buttonsHTML = `
@@ -395,10 +402,18 @@
                             </button>
                         `;
                     }
+                    
+                    if (status === 'active' && task.isStale) {
+                         buttonsHTML += `
+                            <button class="prolong-btn px-3 py-1 rounded-full text-sm font-semibold bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-sm">
+                                Продовжити
+                            </button>
+                         `;
+                    }
 
                     taskItem.innerHTML = `
-                        <p class="text-gray-800 flex-grow mr-4">${task.text}</p>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
+                        <p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2" data-task-id="${task.id}">${task.text}</p>
+                        <div class="flex-shrink-0 flex flex-wrap justify-end space-x-2 space-y-2 mt-2 sm:mt-0">
                             ${buttonsHTML}
                             <button class="delete-btn px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">
                                 Видалити
@@ -406,10 +421,13 @@
                         </div>
                     `;
 
-                    // Додаємо обробники подій для кнопок
+                    taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     if (status === 'active') {
                         taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
                         taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
+                        if (task.isStale) {
+                             taskItem.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
+                        }
                     } else if (status === 'deferred') {
                         taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
                         taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
@@ -423,7 +441,6 @@
                 });
             };
             
-            // Додавання нового завдання
             const addTask = async () => {
                 const taskText = taskInput.value.trim();
                 if (taskText === '' || !userId) return;
@@ -431,9 +448,9 @@
                 try {
                     await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), {
                         text: taskText,
-                        status: 'active', // Завжди починаємо з активного статусу
+                        status: 'active',
                         createdAt: serverTimestamp(),
-                        lastUpdatedAt: serverTimestamp(), // Додаємо час створення/оновлення
+                        lastUpdatedAt: serverTimestamp(),
                         isStale: false
                     });
                     taskInput.value = '';
@@ -443,7 +460,6 @@
                 }
             };
             
-            // Оновлення статусу завдання
             const updateTaskStatus = async (id, newStatus) => {
                 if (!userId) return;
                 try {
@@ -451,7 +467,7 @@
                     
                     let updateData = { 
                         status: newStatus,
-                        lastUpdatedAt: serverTimestamp(), // Оновлюємо час при кожній зміні статусу
+                        lastUpdatedAt: serverTimestamp(),
                         isStale: false
                     };
 
@@ -468,7 +484,20 @@
                 }
             };
             
-            // Збереження налаштувань
+            const prolongTask = async (id) => {
+                if (!userId) return;
+                try {
+                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
+                    await updateDoc(taskRef, {
+                        lastUpdatedAt: serverTimestamp(),
+                        isStale: false
+                    });
+                    showNotification('Завдання продовжено', 'Час "життя" завдання було продовжено.');
+                } catch (e) {
+                    console.error("Помилка продовження завдання:", e);
+                }
+            };
+
             const saveSettings = async () => {
                 if (!userId) return;
                 const newDeferredDuration = parseInt(deferredDurationInput.value, 10);
@@ -501,19 +530,16 @@
                 }
             };
 
-            // Показати модальне вікно для підтвердження
             const showConfirmModal = (taskId) => {
                 currentTaskIdToDelete = taskId;
                 confirmModal.classList.remove('hidden');
             };
 
-            // Приховати модальне вікно
             const hideConfirmModal = () => {
                 confirmModal.classList.add('hidden');
                 currentTaskIdToDelete = null;
             };
 
-            // Видалення завдання
             const deleteTask = async () => {
                 if (!userId || !currentTaskIdToDelete) return;
                 try {
@@ -524,28 +550,63 @@
                     console.error("Помилка видалення завдання: ", e);
                 }
             };
+            
+            const showViewEditModal = (task) => {
+                currentTaskToEdit = task;
+                editTaskInput.value = task.text;
+                viewEditModal.classList.remove('hidden');
+            };
 
-            // Функції для розгортання/згортання розділів
+            const hideViewEditModal = () => {
+                viewEditModal.classList.add('hidden');
+                currentTaskToEdit = null;
+            };
+
+            const saveEditedTask = async () => {
+                if (!userId || !currentTaskToEdit) return;
+                const newText = editTaskInput.value.trim();
+                if (newText === '') {
+                     hideViewEditModal();
+                     return;
+                }
+                try {
+                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id);
+                    await updateDoc(taskRef, {
+                        text: newText,
+                        lastUpdatedAt: serverTimestamp()
+                    });
+                    console.log("Завдання відредаговано!");
+                    hideViewEditModal();
+                } catch (e) {
+                    console.error("Помилка редагування завдання: ", e);
+                }
+            };
+
+
             const toggleSection = (element, button) => {
                 const isHidden = element.classList.contains('hidden');
                 element.classList.toggle('hidden');
                 button.textContent = isHidden ? 'Згорнути' : 'Розгорнути';
             };
 
-            // Обробники подій
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
             addTaskButton.addEventListener('click', addTask);
-            taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
+            
+            taskInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     addTask();
                 }
             });
+            
             confirmDeleteButton.addEventListener('click', deleteTask);
             cancelDeleteButton.addEventListener('click', hideConfirmModal);
             saveSettingsBtn.addEventListener('click', saveSettings);
             closeNotificationBtn.addEventListener('click', hideNotification);
+
+            saveEditBtn.addEventListener('click', saveEditedTask);
+            cancelEditBtn.addEventListener('click', hideViewEditModal);
 
             deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
             completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
