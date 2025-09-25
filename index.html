@@ -20,8 +20,16 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        .icon-btn {
-            @apply w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm transition-colors;
+        /* Стили для кнопки-меню с тремя точками */
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 10;
+            min-width: 150px;
+        }
+        .task-actions {
+            position: relative;
         }
     </style>
 </head>
@@ -378,88 +386,87 @@
                     if (status === 'active' && task.isStale) {
                          bgColor = 'bg-red-100 border border-red-500';
                     }
-                    taskItem.className = `p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between ${bgColor} space-y-2 sm:space-y-0`;
+                    taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${bgColor} space-x-2`;
 
                     let buttonsHTML = '';
-                    if (status === 'active') {
+                    if (status === 'completed') {
                         buttonsHTML = `
-                            <button class="complete-btn icon-btn bg-green-500 hover:bg-green-600" title="Виконано">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                            </button>
-                            <button class="defer-btn icon-btn bg-yellow-500 hover:bg-yellow-600" title="В роботу">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5M12 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
+                            <button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">Активувати</button>
                         `;
-                    } else if (status === 'deferred') {
+                    } else {
                         buttonsHTML = `
-                            <button class="active-btn icon-btn bg-blue-500 hover:bg-blue-600" title="Активувати">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348l-6.195 6.195M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5" />
-                                </svg>
-                            </button>
-                            <button class="complete-btn icon-btn bg-green-500 hover:bg-green-600" title="Виконано">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                            </button>
-                        `;
-                    } else if (status === 'completed') {
-                        buttonsHTML = `
-                            <button class="active-btn icon-btn bg-blue-500 hover:bg-blue-600" title="Активувати">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348l-6.195 6.195M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5" />
-                                </svg>
-                            </button>
+                            <button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Виконано</button>
+                            <div class="task-actions relative">
+                                <button class="more-options-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">...</button>
+                                <div class="dropdown-menu absolute hidden right-0 mt-2 py-1 bg-white rounded-md shadow-lg border border-gray-200">
+                                    <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                                    <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
+                                </div>
+                            </div>
                         `;
                     }
                     
                     if (status === 'active' && task.isStale) {
-                         buttonsHTML += `
-                            <button class="prolong-btn icon-btn bg-purple-500 hover:bg-purple-600" title="Продовжити">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348l-6.195 6.195M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5" />
-                                </svg>
-                            </button>
-                         `;
+                        // We need to add 'prolong' button to the dropdown menu, but let's just make it visible for simplicity now
+                        if (status !== 'completed') {
+                            buttonsHTML = `
+                                <button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Виконано</button>
+                                <div class="task-actions relative">
+                                    <button class="more-options-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">...</button>
+                                    <div class="dropdown-menu absolute hidden right-0 mt-2 py-1 bg-white rounded-md shadow-lg border border-gray-200">
+                                        <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                                        <button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>
+                                        <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
-
-                    buttonsHTML += `
-                        <button class="delete-btn icon-btn bg-red-500 hover:bg-red-600" title="Видалити">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    `;
 
                     taskItem.innerHTML = `
                         <p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2" data-task-id="${task.id}">${task.text}</p>
-                        <div class="flex-shrink-0 flex flex-wrap justify-end space-x-2 space-y-2 mt-2 sm:mt-0">
+                        <div class="flex-shrink-0 flex items-center space-x-2">
                             ${buttonsHTML}
                         </div>
                     `;
-
-                    taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
-                    if (status === 'active') {
-                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
-                        taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
-                        if (task.isStale) {
-                             taskItem.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
+                    
+                    if (status !== 'completed') {
+                        const moreOptionsBtn = taskItem.querySelector('.more-options-btn');
+                        const dropdownMenu = taskItem.querySelector('.dropdown-menu');
+                        if (moreOptionsBtn && dropdownMenu) {
+                            moreOptionsBtn.addEventListener('click', (event) => {
+                                event.stopPropagation(); // Prevents document click from closing it immediately
+                                dropdownMenu.classList.toggle('hidden');
+                            });
+                            document.addEventListener('click', (event) => {
+                                if (!taskItem.contains(event.target)) {
+                                    dropdownMenu.classList.add('hidden');
+                                }
+                            });
                         }
-                    } else if (status === 'deferred') {
-                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
-                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
-                    } else if (status === 'completed') {
-                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
                     }
 
-                    taskItem.querySelector('.delete-btn').addEventListener('click', () => showConfirmModal(task.id));
+
+                    taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
+                    
+                    if (taskItem.querySelector('.complete-btn')) {
+                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
+                    }
+                    if (taskItem.querySelector('.defer-btn')) {
+                        taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
+                    }
+                    if (taskItem.querySelector('.prolong-btn')) {
+                        taskItem.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
+                    }
+                    if (taskItem.querySelector('.active-btn')) {
+                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
+                    }
+                    if (taskItem.querySelector('.delete-btn')) {
+                        taskItem.querySelector('.delete-btn').addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            showConfirmModal(task.id);
+                        });
+                    }
                     
                     listElement.appendChild(taskItem);
                 });
@@ -580,61 +587,70 @@
                 editTaskInput.value = task.text;
                 viewEditModal.classList.remove('hidden');
             };
-
+            
             const hideViewEditModal = () => {
                 viewEditModal.classList.add('hidden');
                 currentTaskToEdit = null;
             };
-
+            
             const saveEditedTask = async () => {
                 if (!userId || !currentTaskToEdit) return;
                 const newText = editTaskInput.value.trim();
                 if (newText === '') {
-                     hideViewEditModal();
-                     return;
+                    showNotification('Помилка', 'Текст завдання не може бути порожнім.');
+                    return;
                 }
+                
                 try {
                     const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id);
                     await updateDoc(taskRef, {
                         text: newText,
                         lastUpdatedAt: serverTimestamp()
                     });
-                    console.log("Завдання відредаговано!");
+                    console.log("Завдання оновлено!");
                     hideViewEditModal();
+                    showNotification('Завдання оновлено', 'Текст завдання було успішно змінено.');
                 } catch (e) {
-                    console.error("Помилка редагування завдання: ", e);
+                    console.error("Помилка оновлення завдання:", e);
+                    showNotification('Помилка', 'Не вдалося оновити завдання.');
                 }
             };
 
-
-            const toggleSection = (element, button) => {
-                const isHidden = element.classList.contains('hidden');
-                element.classList.toggle('hidden');
-                button.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
-            };
-
+            // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
             addTaskButton.addEventListener('click', addTask);
-            
-            taskInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    addTask();
-                }
-            });
-            
             confirmDeleteButton.addEventListener('click', deleteTask);
             cancelDeleteButton.addEventListener('click', hideConfirmModal);
-            saveSettingsBtn.addEventListener('click', saveSettings);
             closeNotificationBtn.addEventListener('click', hideNotification);
-
             saveEditBtn.addEventListener('click', saveEditedTask);
             cancelEditBtn.addEventListener('click', hideViewEditModal);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            
+            deferredToggleBtn.addEventListener('click', () => {
+                const isHidden = deferredTasksList.classList.toggle('hidden');
+                deferredToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
+            });
 
-            deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
-            completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
-            settingsToggleBtn.addEventListener('click', () => toggleSection(settingsContent, settingsToggleBtn));
+            completedToggleBtn.addEventListener('click', () => {
+                const isHidden = completedTasksList.classList.toggle('hidden');
+                completedToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
+            });
+            
+            settingsToggleBtn.addEventListener('click', () => {
+                const isHidden = settingsContent.classList.toggle('hidden');
+                settingsToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
+            });
+            
+            const __initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (__initial_auth_token) {
+                 signInWithCustomToken(auth, __initial_auth_token).catch(err => {
+                    console.error("Помилка входу за допомогою кастомного токену:", err);
+                    signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
+                });
+            } else {
+                 signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
+            }
         };
     </script>
 </body>
