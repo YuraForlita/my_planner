@@ -20,7 +20,6 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        /* Стили для кнопки-меню с тремя точками */
         .dropdown-menu {
             position: absolute;
             right: 0;
@@ -42,13 +41,14 @@
     <div class="max-w-xl w-full">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник Завдань</h1>
-            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono">Немає</span></p>
+            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono break-all">Немає</span></p>
 
             <!-- Повідомлення про помилку -->
             <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4">
                 Сталася помилка ініціалізації. Будь ласка, переконайтеся, що конфігурація Firebase додана.
             </div>
-             <!-- Модальне вікно для сповіщень -->
+
+            <!-- Модальне вікно для сповіщень -->
             <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
                     <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
@@ -58,7 +58,8 @@
                     </div>
                 </div>
             </div>
-             <!-- Модальне вікно для перегляду/редагування завдання -->
+
+            <!-- Модальне вікно для перегляду/редагування завдання -->
             <div id="view-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
@@ -66,6 +67,46 @@
                     <div class="flex justify-end space-x-2">
                         <button id="save-edit-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
                         <button id="cancel-edit-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальне вікно для підтвердження видалення -->
+            <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+                    <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
+                    <p class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це завдання?</p>
+                    <div class="flex justify-end space-x-2">
+                        <button id="cancel-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+                        <button id="delete-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальне вікно для додавання друга -->
+            <div id="add-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+                    <h3 class="text-lg font-bold mb-2 text-gray-800">Додати друга</h3>
+                    <input type="text" id="friend-name-input" placeholder="Ім'я друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="friend-id-input" placeholder="ID друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex justify-end space-x-2">
+                        <button id="save-friend-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
+                        <button id="cancel-friend-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальне вікно для призначення завдання -->
+            <div id="assign-task-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
+                    <h3 class="text-lg font-bold mb-2 text-gray-800">Призначити завдання</h3>
+                    <select id="friend-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Виберіть друга</option>
+                    </select>
+                    <textarea id="assign-task-input" placeholder="Введіть завдання для друга..." rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4"></textarea>
+                    <div class="flex justify-end space-x-2">
+                        <button id="send-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Відправити</button>
+                        <button id="cancel-assign-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
                     </div>
                 </div>
             </div>
@@ -83,19 +124,27 @@
 
             <!-- Контент додатка -->
             <div id="content-section" class="hidden">
-                 <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
+                <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
 
                 <!-- Введення нового завдання -->
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
                     <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
                     <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
+                    <button id="assign-task-open-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors shadow-md">Призначити</button>
+                </div>
+
+                <!-- Розділ "Вхідні завдання" -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6" id="incoming-tasks-section">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
+                    <div id="incoming-tasks-list" class="space-y-3">
+                        <p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>
+                    </div>
                 </div>
                 
                 <!-- Розділ "Активні завдання" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
                     <div id="active-tasks-list" class="space-y-3">
-                        <!-- Активні завдання будуть додані сюди JS -->
                         <p class="text-gray-500 text-center italic">Завантаження...</p>
                     </div>
                 </div>
@@ -107,7 +156,6 @@
                         <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
                     <div id="deferred-tasks-list" class="space-y-3 hidden">
-                        <!-- Завдання "В роботі" будуть додані сюди JS -->
                         <p class="text-gray-500 text-center italic">Немає завдань в роботі.</p>
                     </div>
                 </div>
@@ -119,12 +167,11 @@
                         <button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
                     <div id="completed-tasks-list" class="space-y-3 hidden">
-                        <!-- Виконані завдання будуть додані сюди JS -->
                         <p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>
                     </div>
                 </div>
 
-                <!-- Розділ "Налаштування" -->
+                 <!-- Розділ "Налаштування" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
@@ -145,18 +192,22 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Модальне вікно для підтвердження видалення -->
-    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
-            <p class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це завдання?</p>
-            <div class="flex justify-end space-x-2">
-                <button id="cancel-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
-                <button id="delete-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
+                <!-- Розділ "Друзі" -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Друзі</h2>
+                        <button id="friends-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="friends-content" class="hidden">
+                        <div class="flex justify-end mb-4">
+                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Додати друга</button>
+                        </div>
+                        <div id="friends-list" class="space-y-3">
+                            <p class="text-gray-500 text-center italic">Немає друзів.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -164,7 +215,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
@@ -194,6 +245,7 @@
 
             const taskInput = document.getElementById('task-input');
             const addTaskButton = document.getElementById('add-task-btn');
+            const assignTaskOpenBtn = document.getElementById('assign-task-open-btn');
             const userIdSpan = document.getElementById('user-id-span');
             const loadingSpinner = document.getElementById('loading-spinner');
             const authButtons = document.getElementById('auth-buttons');
@@ -203,37 +255,48 @@
             const confirmModal = document.getElementById('confirm-modal');
             const confirmDeleteButton = document.getElementById('delete-btn');
             const cancelDeleteButton = document.getElementById('cancel-btn');
-
-            const activeTasksList = document.getElementById('active-tasks-list');
-            const deferredTasksList = document.getElementById('deferred-tasks-list');
-            const completedTasksList = document.getElementById('completed-tasks-list');
-
-            const deferredToggleBtn = document.getElementById('deferred-toggle-btn');
-            const completedToggleBtn = document.getElementById('completed-toggle-btn');
-            const settingsToggleBtn = document.getElementById('settings-toggle-btn');
-            const settingsContent = document.getElementById('settings-content');
-
-            const deferredDurationInput = document.getElementById('deferred-duration');
-            const staleDurationInput = document.getElementById('stale-duration');
-            const saveSettingsBtn = document.getElementById('save-settings-btn');
-            const settingsMessage = document.getElementById('settings-message');
-            
             const notificationModal = document.getElementById('notification-modal');
             const notificationTitle = document.getElementById('notification-title');
             const notificationMessage = document.getElementById('notification-message');
             const closeNotificationBtn = document.getElementById('close-notification-btn');
-
             const viewEditModal = document.getElementById('view-edit-modal');
             const editTaskInput = document.getElementById('edit-task-input');
             const saveEditBtn = document.getElementById('save-edit-btn');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
-            let currentTaskToEdit = null;
+            const activeTasksList = document.getElementById('active-tasks-list');
+            const deferredTasksList = document.getElementById('deferred-tasks-list');
+            const completedTasksList = document.getElementById('completed-tasks-list');
+            const deferredToggleBtn = document.getElementById('deferred-toggle-btn');
+            const completedToggleBtn = document.getElementById('completed-toggle-btn');
+            const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+            const settingsContent = document.getElementById('settings-content');
+            const deferredDurationInput = document.getElementById('deferred-duration');
+            const staleDurationInput = document.getElementById('stale-duration');
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const settingsMessage = document.getElementById('settings-message');
+
+            const incomingTasksSection = document.getElementById('incoming-tasks-section');
+            const incomingTasksList = document.getElementById('incoming-tasks-list');
+            const friendsToggleBtn = document.getElementById('friends-toggle-btn');
+            const friendsContent = document.getElementById('friends-content');
+            const addFriendOpenBtn = document.getElementById('add-friend-open-btn');
+            const friendsList = document.getElementById('friends-list');
+            const addFriendModal = document.getElementById('add-friend-modal');
+            const friendNameInput = document.getElementById('friend-name-input');
+            const friendIdInput = document.getElementById('friend-id-input');
+            const saveFriendBtn = document.getElementById('save-friend-btn');
+            const cancelFriendBtn = document.getElementById('cancel-friend-btn');
+            const assignTaskModal = document.getElementById('assign-task-modal');
+            const friendSelect = document.getElementById('friend-select');
+            const assignTaskInput = document.getElementById('assign-task-input');
+            const sendTaskBtn = document.getElementById('send-task-btn');
+            const cancelAssignBtn = document.getElementById('cancel-assign-btn');
 
             let userId = null;
             let currentTaskIdToDelete = null;
             let deferredDurationHours = 24;
             let staleDurationHours = 72;
-            let lastUpdateTimes = {};
+            let currentTaskToEdit = null;
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -245,6 +308,8 @@
                     contentSection.classList.remove('hidden');
                     await loadSettings();
                     subscribeToTasks();
+                    subscribeToFriends();
+                    subscribeToIncomingTasks();
                 } else {
                     userId = null;
                     userIdSpan.textContent = 'Немає';
@@ -254,6 +319,7 @@
                     activeTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити свої завдання.</p>`;
                     deferredTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань в роботі.</p>`;
                     completedTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>`;
+                    incomingTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>`;
                 }
             });
 
@@ -407,20 +473,17 @@
                     }
                     
                     if (status === 'active' && task.isStale) {
-                        // We need to add 'prolong' button to the dropdown menu, but let's just make it visible for simplicity now
-                        if (status !== 'completed') {
-                            buttonsHTML = `
-                                <button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Виконано</button>
-                                <div class="task-actions relative">
-                                    <button class="more-options-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">...</button>
-                                    <div class="dropdown-menu absolute hidden right-0 mt-2 py-1 bg-white rounded-md shadow-lg border border-gray-200">
-                                        <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
-                                        <button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>
-                                        <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
-                                    </div>
+                         buttonsHTML = `
+                            <button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Виконано</button>
+                            <div class="task-actions relative">
+                                <button class="more-options-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">...</button>
+                                <div class="dropdown-menu absolute hidden right-0 mt-2 py-1 bg-white rounded-md shadow-lg border border-gray-200">
+                                    <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                                    <button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>
+                                    <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
                                 </div>
-                            `;
-                        }
+                            </div>
+                        `;
                     }
 
                     taskItem.innerHTML = `
@@ -435,7 +498,7 @@
                         const dropdownMenu = taskItem.querySelector('.dropdown-menu');
                         if (moreOptionsBtn && dropdownMenu) {
                             moreOptionsBtn.addEventListener('click', (event) => {
-                                event.stopPropagation(); // Prevents document click from closing it immediately
+                                event.stopPropagation();
                                 dropdownMenu.classList.toggle('hidden');
                             });
                             document.addEventListener('click', (event) => {
@@ -445,7 +508,6 @@
                             });
                         }
                     }
-
 
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     
@@ -616,6 +678,189 @@
                 }
             };
 
+            const showAddFriendModal = () => {
+                friendNameInput.value = '';
+                friendIdInput.value = '';
+                addFriendModal.classList.remove('hidden');
+            };
+
+            const hideAddFriendModal = () => {
+                addFriendModal.classList.add('hidden');
+            };
+
+            const saveFriend = async () => {
+                const name = friendNameInput.value.trim();
+                const friendId = friendIdInput.value.trim();
+                if (name === '' || friendId === '') {
+                    showNotification('Помилка', 'Ім\'я та ID друга не можуть бути порожніми.');
+                    return;
+                }
+                if (friendId === userId) {
+                    showNotification('Помилка', 'Ви не можете додати себе як друга.');
+                    return;
+                }
+
+                try {
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), {
+                        name: name,
+                        userId: friendId
+                    });
+                    hideAddFriendModal();
+                    showNotification('Успіх', `Друга "${name}" додано.`);
+                } catch (e) {
+                    console.error("Помилка додавання друга:", e);
+                    showNotification('Помилка', 'Не вдалося додати друга.');
+                }
+            };
+
+            const subscribeToFriends = () => {
+                if (!userId) return;
+                const friendsRef = collection(db, `artifacts/${appId}/users/${userId}/friends`);
+                onSnapshot(friendsRef, (snapshot) => {
+                    const friends = [];
+                    snapshot.forEach(doc => friends.push(doc.data()));
+                    renderFriends(friends);
+                });
+            };
+
+            const renderFriends = (friends) => {
+                friendsList.innerHTML = '';
+                friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
+                if (friends.length === 0) {
+                    friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`;
+                    return;
+                }
+                friends.forEach(friend => {
+                    const friendItem = document.createElement('div');
+                    friendItem.className = 'p-3 rounded-lg bg-white shadow-md flex justify-between items-center';
+                    friendItem.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${friend.name}</p>
+                            <p class="text-sm text-gray-500 break-all">${friend.userId}</p>
+                        </div>
+                    `;
+                    friendsList.appendChild(friendItem);
+
+                    const option = document.createElement('option');
+                    option.value = friend.userId;
+                    option.textContent = friend.name;
+                    friendSelect.appendChild(option);
+                });
+            };
+
+            const showAssignTaskModal = () => {
+                assignTaskInput.value = '';
+                friendSelect.value = '';
+                assignTaskModal.classList.remove('hidden');
+            };
+
+            const hideAssignTaskModal = () => {
+                assignTaskModal.classList.add('hidden');
+            };
+
+            const sendAssignedTask = async () => {
+                const recipientId = friendSelect.value;
+                const taskText = assignTaskInput.value.trim();
+                if (recipientId === '' || taskText === '') {
+                    showNotification('Помилка', 'Будь ласка, виберіть друга та введіть завдання.');
+                    return;
+                }
+
+                try {
+                    // Зверніть увагу: для цієї функції правила безпеки Firebase повинні бути налаштовані
+                    // так, щоб дозволяти запис у публічну колекцію shared_tasks
+                    await addDoc(collection(db, `artifacts/${appId}/public/data/shared_tasks`), {
+                        text: taskText,
+                        senderId: userId,
+                        senderName: auth.currentUser.displayName || 'Невідомий',
+                        recipientId: recipientId,
+                        createdAt: serverTimestamp()
+                    });
+                    hideAssignTaskModal();
+                    showNotification('Успіх', 'Завдання відправлено!');
+                } catch (e) {
+                    console.error("Помилка відправлення завдання:", e);
+                    showNotification('Помилка', 'Не вдалося відправити завдання. Перевірте ID друга та правила безпеки.');
+                }
+            };
+
+            const subscribeToIncomingTasks = () => {
+                if (!userId) return;
+                const sharedTasksRef = collection(db, `artifacts/${appId}/public/data/shared_tasks`);
+                const q = query(sharedTasksRef, orderBy("createdAt", "desc"));
+
+                onSnapshot(q, (snapshot) => {
+                    const incomingTasks = [];
+                    snapshot.forEach(doc => {
+                        const task = { id: doc.id, ...doc.data() };
+                        if (task.recipientId === userId) {
+                            incomingTasks.push(task);
+                        }
+                    });
+                    renderIncomingTasks(incomingTasks);
+                });
+            };
+
+            const renderIncomingTasks = (tasks) => {
+                if (tasks.length > 0) {
+                    incomingTasksSection.classList.remove('hidden');
+                } else {
+                    incomingTasksSection.classList.add('hidden');
+                }
+                incomingTasksList.innerHTML = '';
+                if (tasks.length === 0) {
+                    incomingTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>`;
+                    return;
+                }
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 sm:space-x-2';
+                    taskItem.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p>
+                            <p class="text-gray-800 text-truncate-2">${task.text}</p>
+                        </div>
+                        <div class="flex-shrink-0 flex items-center space-x-2">
+                            <button class="accept-task-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors" data-task-id="${task.id}">Прийняти</button>
+                            <button class="decline-task-btn px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors" data-task-id="${task.id}">Відхилити</button>
+                        </div>
+                    `;
+                    incomingTasksList.appendChild(taskItem);
+                    taskItem.querySelector('.accept-task-btn').addEventListener('click', () => acceptIncomingTask(task));
+                    taskItem.querySelector('.decline-task-btn').addEventListener('click', () => declineIncomingTask(task.id));
+                });
+            };
+
+            const acceptIncomingTask = async (task) => {
+                if (!userId) return;
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), {
+                        text: task.text,
+                        status: 'active',
+                        createdAt: serverTimestamp(),
+                        lastUpdatedAt: serverTimestamp(),
+                        isStale: false,
+                        assignedBy: task.senderName
+                    });
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/shared_tasks`, task.id));
+                    showNotification('Завдання прийнято', 'Завдання додано до ваших активних завдань.');
+                } catch (e) {
+                    console.error("Помилка прийняття завдання:", e);
+                    showNotification('Помилка', 'Не вдалося прийняти завдання.');
+                }
+            };
+
+            const declineIncomingTask = async (taskId) => {
+                if (!userId) return;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/shared_tasks`, taskId));
+                    showNotification('Завдання відхилено', 'Завдання було успішно відхилено.');
+                } catch (e) {
+                    console.error("Помилка відхилення завдання:", e);
+                    showNotification('Помилка', 'Не вдалося відхилити завдання.');
+                }
+            };
+
             // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -626,21 +871,28 @@
             saveEditBtn.addEventListener('click', saveEditedTask);
             cancelEditBtn.addEventListener('click', hideViewEditModal);
             saveSettingsBtn.addEventListener('click', saveSettings);
-            
             deferredToggleBtn.addEventListener('click', () => {
                 const isHidden = deferredTasksList.classList.toggle('hidden');
                 deferredToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
             });
-
             completedToggleBtn.addEventListener('click', () => {
                 const isHidden = completedTasksList.classList.toggle('hidden');
                 completedToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
             });
-            
             settingsToggleBtn.addEventListener('click', () => {
                 const isHidden = settingsContent.classList.toggle('hidden');
                 settingsToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
             });
+            friendsToggleBtn.addEventListener('click', () => {
+                const isHidden = friendsContent.classList.toggle('hidden');
+                friendsToggleBtn.textContent = isHidden ? 'Розгорнути' : 'Згорнути';
+            });
+            addFriendOpenBtn.addEventListener('click', showAddFriendModal);
+            cancelFriendBtn.addEventListener('click', hideAddFriendModal);
+            saveFriendBtn.addEventListener('click', saveFriend);
+            assignTaskOpenBtn.addEventListener('click', showAssignTaskModal);
+            cancelAssignBtn.addEventListener('click', hideAssignTaskModal);
+            sendTaskBtn.addEventListener('click', sendAssignedTask);
             
             const __initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (__initial_auth_token) {
