@@ -215,14 +215,14 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
             setLogLevel('debug');
             
-            const firebaseConfig = {
-                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+              apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
                 authDomain: "planer-97eb1.firebaseapp.com",
                 projectId: "planer-97eb1",
                 storageBucket: "planer-97eb1.firebasestorage.app",
@@ -767,8 +767,6 @@
                 }
 
                 try {
-                    // Зверніть увагу: для цієї функції правила безпеки Firebase повинні бути налаштовані
-                    // так, щоб дозволяти запис у публічну колекцію shared_tasks
                     await addDoc(collection(db, `artifacts/${appId}/public/data/shared_tasks`), {
                         text: taskText,
                         senderId: userId,
@@ -787,15 +785,13 @@
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
                 const sharedTasksRef = collection(db, `artifacts/${appId}/public/data/shared_tasks`);
-                const q = query(sharedTasksRef, orderBy("createdAt", "desc"));
-
+                const q = query(sharedTasksRef, where("recipientId", "==", userId), orderBy("createdAt", "desc"));
+                
                 onSnapshot(q, (snapshot) => {
                     const incomingTasks = [];
                     snapshot.forEach(doc => {
                         const task = { id: doc.id, ...doc.data() };
-                        if (task.recipientId === userId) {
-                            incomingTasks.push(task);
-                        }
+                        incomingTasks.push(task);
                     });
                     renderIncomingTasks(incomingTasks);
                 });
