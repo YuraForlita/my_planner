@@ -19,6 +19,9 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .icon-btn {
+            @apply w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm transition-colors;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
@@ -379,45 +382,64 @@
                     let buttonsHTML = '';
                     if (status === 'active') {
                         buttonsHTML = `
-                            <button class="complete-btn px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">
-                                Виконано
+                            <button class="complete-btn icon-btn bg-green-500 hover:bg-green-600" title="Виконано">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
                             </button>
-                            <button class="defer-btn px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-sm">
-                                В роботу
+                            <button class="defer-btn icon-btn bg-yellow-500 hover:bg-yellow-600" title="В роботу">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 18.075L18.815 17.18c.607-.282 1.258-.29 1.865.011s1.026.837.954 1.517l-.544 2.872c-.12.637-.624.97-1.218.97h-6.73c-.594 0-1.098-.333-1.218-.97l-.544-2.872c-.072-.68.163-1.341.67-1.745l1.953-.948a.75.75 0 01.696.096l2.126 1.134zM12 18.75l-4.5 2.25M12 18.75l4.5 2.25M12 18.75l-4.5-2.25M12 18.75l4.5-2.25M12 18.75l-4.5-2.25M12 18.75l4.5-2.25M12 18.75l-4.5-2.25M12 18.75l4.5-2.25M12 18.75l-4.5-2.25"/>
+                                </svg>
                             </button>
                         `;
                     } else if (status === 'deferred') {
                         buttonsHTML = `
-                            <button class="active-btn px-3 py-1 rounded-full text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
-                                Активувати
+                            <button class="active-btn icon-btn bg-blue-500 hover:bg-blue-600" title="Активувати">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348l-6.195 6.195M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5" />
+                                </svg>
                             </button>
-                            <button class="complete-btn px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">
-                                Виконано
+                            <button class="complete-btn icon-btn bg-green-500 hover:bg-green-600" title="Виконано">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
                             </button>
                         `;
                     } else if (status === 'completed') {
                         buttonsHTML = `
-                            <button class="active-btn px-3 py-1 rounded-full text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
-                                Активувати
+                            <button class="active-btn icon-btn bg-blue-500 hover:bg-blue-600" title="Активувати">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348l-6.195 6.195M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5" />
+                                </svg>
                             </button>
                         `;
                     }
                     
                     if (status === 'active' && task.isStale) {
                          buttonsHTML += `
-                            <button class="prolong-btn px-3 py-1 rounded-full text-sm font-semibold bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-sm">
-                                Продовжити
+                            <button class="prolong-btn icon-btn bg-purple-500 hover:bg-purple-600" title="Продовжити">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4.5 4.5M12 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                             </button>
                          `;
                     }
+
+                    buttonsHTML += `
+                        <button class="delete-btn icon-btn bg-red-500 hover:bg-red-600" title="Видалити">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
 
                     taskItem.innerHTML = `
                         <p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2" data-task-id="${task.id}">${task.text}</p>
                         <div class="flex-shrink-0 flex flex-wrap justify-end space-x-2 space-y-2 mt-2 sm:mt-0">
                             ${buttonsHTML}
-                            <button class="delete-btn px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">
-                                Видалити
-                            </button>
                         </div>
                     `;
 
