@@ -843,7 +843,8 @@
                 }
 
                 try {
-                    await addDoc(collection(db, `artifacts/${appId}/public/data/shared_tasks`), {
+                    // ВИПРАВЛЕНО: Спрощено шлях
+                    await addDoc(collection(db, `artifacts/${appId}/public/shared_tasks`), {
                         text: taskText,
                         senderId: userId,
                         senderName: auth.currentUser.displayName || 'Невідомий',
@@ -865,7 +866,8 @@
 
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
-                const sharedTasksRef = collection(db, `artifacts/${appId}/public/data/shared_tasks`);
+                // ВИПРАВЛЕНО: Спрощено шлях
+                const sharedTasksRef = collection(db, `artifacts/${appId}/public/shared_tasks`);
                 const q = query(sharedTasksRef, where("recipientId", "==", userId), orderBy("createdAt", "desc"));
                 
                 onSnapshot(q, (snapshot) => {
@@ -919,7 +921,8 @@
                         isStale: false,
                         assignedBy: task.senderName
                     });
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/shared_tasks`, task.id));
+                    // ВИПРАВЛЕНО: Спрощено шлях
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/shared_tasks`, task.id));
                     showNotification('Завдання прийнято', 'Завдання додано до ваших активних завдань.');
                 } catch (e) {
                     console.error("Помилка прийняття завдання:", e);
@@ -930,7 +933,8 @@
             const declineIncomingTask = async (taskId) => {
                 if (!userId) return;
                 try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/shared_tasks`, taskId));
+                    // ВИПРАВЛЕНО: Спрощено шлях
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/shared_tasks`, taskId));
                     showNotification('Завдання відхилено', 'Завдання було успішно відхилено.');
                 } catch (e) {
                     console.error("Помилка відхилення завдання:", e);
@@ -968,7 +972,8 @@
                 }
 
                 const chatId = [userId, friend.userId].sort().join('_');
-                const chatRef = collection(db, `artifacts/${appId}/public/data/chat_messages`);
+                // ВИПРАВЛЕНО: Спрощено шлях
+                const chatRef = collection(db, `artifacts/${appId}/public/chat_messages`);
                 const q = query(chatRef, where("chatId", "==", chatId), orderBy("timestamp"));
 
                 unsubscribeFromChat = onSnapshot(q, (snapshot) => {
@@ -1009,7 +1014,8 @@
                 if (messageText === '' || !recipient) return;
 
                 const chatId = [userId, recipient.userId].sort().join('_');
-                const chatRef = collection(db, `artifacts/${appId}/public/data/chat_messages`);
+                // ВИПРАВЛЕНО: Спрощено шлях
+                const chatRef = collection(db, `artifacts/${appId}/public/chat_messages`);
 
                 try {
                     await addDoc(chatRef, {
