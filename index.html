@@ -38,7 +38,7 @@
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
     </div>
 
-    <div class="max-w-xl w-full">
+    <div id="main-content" class="max-w-xl w-full">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник Завдань</h1>
             <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono break-all">Немає</span></p>
@@ -124,7 +124,10 @@
 
             <!-- Контент додатка -->
             <div id="content-section" class="hidden">
-                <button id="signout-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
+                <div class="flex space-x-2 mb-4">
+                    <button id="chats-btn" class="w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">Чати</button>
+                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
+                </div>
 
                 <!-- Введення нового завдання -->
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
@@ -134,7 +137,7 @@
                 </div>
 
                 <!-- Розділ "Вхідні завдання" -->
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6" id="incoming-tasks-section">
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
                     <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
                     <div id="incoming-tasks-list" class="space-y-3">
                         <p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>
@@ -179,17 +182,17 @@
                     </div>
                     <div id="settings-content" class="hidden">
                          <div class="space-y-4">
-                            <div>
-                                <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
-                                <input type="number" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="24">
-                            </div>
                              <div>
-                                <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
-                                <input type="number" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="72">
-                            </div>
-                            <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Зберегти налаштування</button>
-                            <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
-                        </div>
+                                 <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
+                                 <input type="number" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="24">
+                             </div>
+                             <div>
+                                 <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
+                                 <input type="number" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="72">
+                             </div>
+                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Зберегти налаштування</button>
+                             <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
+                         </div>
                     </div>
                 </div>
 
@@ -211,6 +214,39 @@
             </div>
         </div>
     </div>
+    
+    <!-- Секція чату -->
+    <div id="chat-section" class="max-w-4xl w-full hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+             <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Назад до завдань</button>
+             <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg">
+                <!-- Список друзів для чату -->
+                <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
+                    <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
+                    <div id="chat-friends-list" class="space-y-1 p-2">
+                        <p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>
+                    </div>
+                </div>
+                <!-- Вікно чату -->
+                <div class="w-full md:w-2/3 flex flex-col">
+                    <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
+                        <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
+                    </div>
+                    <div id="chat-window" class="hidden flex-grow flex flex-col">
+                         <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
+                         <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100">
+                            <!-- Повідомлення будуть тут -->
+                         </div>
+                         <div class="p-4 bg-white border-t flex space-x-2">
+                            <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
+                            <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Надіслати</button>
+                         </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -221,19 +257,20 @@
         window.onload = function () {
             setLogLevel('debug');
             
+            // Важливо: замініть ці значення на конфігурацію вашого проєкту Firebase
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-              apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-                authDomain: "planer-97eb1.firebaseapp.com",
-                projectId: "planer-97eb1",
-                storageBucket: "planer-97eb1.firebasestorage.app",
-                messagingSenderId: "322073132266",
-                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-                measurementId: "G-GB94F6MG2N"
+                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+    authDomain: "planer-97eb1.firebaseapp.com",
+    projectId: "planer-97eb1",
+    storageBucket: "planer-97eb1.firebasestorage.app",
+    messagingSenderId: "322073132266",
+    appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+    measurementId: "G-GB94F6MG2N"
             };
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyC...") {
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('error-message').classList.remove('hidden');
                 return;
@@ -243,6 +280,7 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
 
+            const mainContent = document.getElementById('main-content');
             const taskInput = document.getElementById('task-input');
             const addTaskButton = document.getElementById('add-task-btn');
             const assignTaskOpenBtn = document.getElementById('assign-task-open-btn');
@@ -292,11 +330,28 @@
             const sendTaskBtn = document.getElementById('send-task-btn');
             const cancelAssignBtn = document.getElementById('cancel-assign-btn');
 
+            // Нові елементи для чату
+            const chatsBtn = document.getElementById('chats-btn');
+            const chatSection = document.getElementById('chat-section');
+            const backToTasksBtn = document.getElementById('back-to-tasks-btn');
+            const chatFriendsList = document.getElementById('chat-friends-list');
+            const chatWindow = document.getElementById('chat-window');
+            const chatWindowPlaceholder = document.getElementById('chat-window-placeholder');
+            const chatHeader = document.getElementById('chat-header');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatMessageInput = document.getElementById('chat-message-input');
+            const sendChatMessageBtn = document.getElementById('send-chat-message-btn');
+
             let userId = null;
             let currentTaskIdToDelete = null;
             let deferredDurationHours = 24;
             let staleDurationHours = 72;
             let currentTaskToEdit = null;
+            
+            // Стан чату
+            let selectedFriendForChat = null;
+            let unsubscribeFromChat = null;
+
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -316,6 +371,7 @@
                     console.log("Користувач вийшов.");
                     authButtons.classList.remove('hidden');
                     contentSection.classList.add('hidden');
+                    chatSection.classList.add('hidden'); // Ховаємо чат при виході
                     activeTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити свої завдання.</p>`;
                     deferredTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань в роботі.</p>`;
                     completedTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>`;
@@ -483,7 +539,7 @@
                                     <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
                                 </div>
                             </div>
-                        `;
+                         `;
                     }
 
                     taskItem.innerHTML = `
@@ -715,12 +771,17 @@
 
             const subscribeToFriends = () => {
                 if (!userId) return;
-                const friendsRef = collection(db, `artifacts/${appId}/users/${userId}/friends`);
-                onSnapshot(friendsRef, (snapshot) => {
-                    const friends = [];
-                    snapshot.forEach(doc => friends.push(doc.data()));
-                    renderFriends(friends);
-                });
+                try {
+                    const friendsRef = collection(db, `artifacts/${appId}/users/${userId}/friends`);
+                    onSnapshot(friendsRef, (snapshot) => {
+                        const friends = [];
+                        snapshot.forEach(doc => friends.push(doc.data()));
+                        renderFriends(friends);
+                        renderChatFriends(friends); // Оновлюємо список друзів у чаті
+                    });
+                } catch (e) {
+                     console.error("Помилка підписки на друзів:", e);
+                }
             };
 
             const renderFriends = (friends) => {
@@ -745,6 +806,21 @@
                     option.value = friend.userId;
                     option.textContent = friend.name;
                     friendSelect.appendChild(option);
+                });
+            };
+            
+            const renderChatFriends = (friends) => {
+                chatFriendsList.innerHTML = '';
+                 if (friends.length === 0) {
+                    chatFriendsList.innerHTML = `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>`;
+                    return;
+                }
+                friends.forEach(friend => {
+                    const friendItem = document.createElement('div');
+                    friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center space-x-3';
+                    friendItem.innerHTML = `<div class="font-semibold text-gray-800">${friend.name}</div>`;
+                    friendItem.addEventListener('click', () => selectFriendForChat(friend));
+                    chatFriendsList.appendChild(friendItem);
                 });
             };
 
@@ -774,6 +850,11 @@
                         recipientId: recipientId,
                         createdAt: serverTimestamp()
                     });
+                    
+                    // Дублюємо завдання як повідомлення в чат
+                    const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
+                    await sendChatMessage(`Я призначив вам завдання: "${taskText}"`, selectedFriend, true);
+
                     hideAssignTaskModal();
                     showNotification('Успіх', 'Завдання відправлено!');
                 } catch (e) {
@@ -857,6 +938,96 @@
                 }
             };
 
+            // Функції чату
+            const openChatView = () => {
+                mainContent.classList.add('hidden');
+                chatSection.classList.remove('hidden');
+            };
+
+            const closeChatView = () => {
+                chatSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                if (unsubscribeFromChat) {
+                    unsubscribeFromChat();
+                    unsubscribeFromChat = null;
+                }
+                selectedFriendForChat = null;
+                chatWindow.classList.add('hidden');
+                chatWindowPlaceholder.classList.remove('hidden');
+            };
+            
+            const selectFriendForChat = (friend) => {
+                selectedFriendForChat = friend;
+                chatWindowPlaceholder.classList.add('hidden');
+                chatWindow.classList.remove('hidden');
+                chatHeader.textContent = `Чат з ${friend.name}`;
+                chatMessages.innerHTML = '';
+
+                if (unsubscribeFromChat) {
+                    unsubscribeFromChat();
+                }
+
+                const chatId = [userId, friend.userId].sort().join('_');
+                const chatRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+                const q = query(chatRef, orderBy("timestamp"));
+
+                unsubscribeFromChat = onSnapshot(q, (snapshot) => {
+                    chatMessages.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        renderChatMessage(doc.data());
+                    });
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            };
+            
+            const renderChatMessage = (message) => {
+                 const msgDiv = document.createElement('div');
+                 const isSentByMe = message.senderId === userId;
+                 const isTaskMessage = message.isTask || false;
+                 
+                 let bubbleClasses = 'p-3 rounded-lg max-w-xs md:max-w-md break-words';
+                 let containerClasses = 'flex';
+                 
+                 if (isTaskMessage) {
+                     bubbleClasses += ' bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic';
+                     containerClasses += ' justify-center';
+                 } else if (isSentByMe) {
+                     bubbleClasses += ' bg-indigo-500 text-white';
+                     containerClasses += ' justify-end';
+                 } else {
+                     bubbleClasses += ' bg-gray-200 text-gray-800';
+                     containerClasses += ' justify-start';
+                 }
+                 
+                 msgDiv.className = containerClasses;
+                 msgDiv.innerHTML = `<div class="${bubbleClasses}">${message.text}</div>`;
+                 chatMessages.appendChild(msgDiv);
+            };
+
+            const sendChatMessage = async (text, recipient, isTask = false) => {
+                const messageText = text.trim();
+                if (messageText === '' || !recipient) return;
+
+                const chatId = [userId, recipient.userId].sort().join('_');
+                const chatRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+
+                try {
+                    await addDoc(chatRef, {
+                        text: messageText,
+                        senderId: userId,
+                        timestamp: serverTimestamp(),
+                        isTask: isTask
+                    });
+                    if (!isTask) {
+                         chatMessageInput.value = '';
+                    }
+                } catch(e) {
+                    console.error("Помилка відправки повідомлення: ", e);
+                    showNotification('Помилка', 'Не вдалося відправити повідомлення.');
+                }
+            };
+
+
             // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -889,12 +1060,22 @@
             assignTaskOpenBtn.addEventListener('click', showAssignTaskModal);
             cancelAssignBtn.addEventListener('click', hideAssignTaskModal);
             sendTaskBtn.addEventListener('click', sendAssignedTask);
+
+            // Нові слухачі для чату
+            chatsBtn.addEventListener('click', openChatView);
+            backToTasksBtn.addEventListener('click', closeChatView);
+            sendChatMessageBtn.addEventListener('click', () => sendChatMessage(chatMessageInput.value, selectedFriendForChat));
+            chatMessageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                     sendChatMessage(chatMessageInput.value, selectedFriendForChat);
+                }
+            });
             
-            const __initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            if (__initial_auth_token) {
-                 signInWithCustomToken(auth, __initial_auth_token).catch(err => {
-                    console.error("Помилка входу за допомогою кастомного токену:", err);
-                    signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (initialAuthToken) {
+                 signInWithCustomToken(auth, initialAuthToken).catch(err => {
+                     console.error("Помилка входу за допомогою кастомного токену:", err);
+                     signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
                 });
             } else {
                  signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
@@ -903,3 +1084,4 @@
     </script>
 </body>
 </html>
+
