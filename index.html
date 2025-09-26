@@ -259,13 +259,13 @@
             
             // Важливо: замініть ці значення на конфігурацію вашого проєкту Firebase
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-    authDomain: "planer-97eb1.firebaseapp.com",
-    projectId: "planer-97eb1",
-    storageBucket: "planer-97eb1.firebasestorage.app",
-    messagingSenderId: "322073132266",
-    appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-    measurementId: "G-GB94F6MG2N"
+                apiKey: "YOUR_API_KEY",
+                authDomain: "YOUR_AUTH_DOMAIN",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_STORAGE_BUCKET",
+                messagingSenderId: "YOUR_SENDER_ID",
+                appId: "YOUR_APP_ID",
+                measurementId: "YOUR_MEASUREMENT_ID"
             };
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -1030,7 +1030,8 @@
                     }
                 } catch(e) {
                     console.error("Помилка відправки повідомлення: ", e);
-                    showNotification('Помилка', 'Не вдалося відправити повідомлення.');
+                    // ПОКРАЩЕНО: Більш інформативне повідомлення
+                    showNotification('Помилка відправки', `Не вдалося відправити повідомлення. Перевірте консоль (F12) для деталей помилки. Можливо, є проблема з правилами безпеки Firestore.`);
                 }
             };
 
@@ -1071,10 +1072,22 @@
             // Нові слухачі для чату
             chatsBtn.addEventListener('click', openChatView);
             backToTasksBtn.addEventListener('click', closeChatView);
-            sendChatMessageBtn.addEventListener('click', () => sendChatMessage(chatMessageInput.value, selectedFriendForChat));
+            
+            // ПОКРАЩЕНО: Додано перевірку перед відправкою
+            sendChatMessageBtn.addEventListener('click', () => {
+                if (!selectedFriendForChat) {
+                    showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку, щоб почати чат.');
+                    return;
+                }
+                sendChatMessage(chatMessageInput.value, selectedFriendForChat);
+            });
             chatMessageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                     sendChatMessage(chatMessageInput.value, selectedFriendForChat);
+                    if (!selectedFriendForChat) {
+                        showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку, щоб почати чат.');
+                        return;
+                    }
+                    sendChatMessage(chatMessageInput.value, selectedFriendForChat);
                 }
             });
             
