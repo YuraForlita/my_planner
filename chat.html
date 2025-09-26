@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат з друзями</title>
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-sidebar">
+            <h2>Друзі</h2>
+            <div id="friends-list" class="friends-list"></div>
+        </div>
+        <div class="chat-main">
+            <div class="chat-header">
+                <h2 id="chat-with-name">Виберіть друга</h2>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Напишіть повідомлення...">
+                <button id="chat-send-btn">Відправити</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="chat.js"></script>
+</body>
+</html>
