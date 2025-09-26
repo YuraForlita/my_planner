@@ -968,8 +968,8 @@
                 }
 
                 const chatId = [userId, friend.userId].sort().join('_');
-                const chatRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
-                const q = query(chatRef, orderBy("timestamp"));
+                const chatRef = collection(db, `artifacts/${appId}/public/data/chat_messages`);
+                const q = query(chatRef, where("chatId", "==", chatId), orderBy("timestamp"));
 
                 unsubscribeFromChat = onSnapshot(q, (snapshot) => {
                     chatMessages.innerHTML = '';
@@ -1009,10 +1009,11 @@
                 if (messageText === '' || !recipient) return;
 
                 const chatId = [userId, recipient.userId].sort().join('_');
-                const chatRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+                const chatRef = collection(db, `artifacts/${appId}/public/data/chat_messages`);
 
                 try {
                     await addDoc(chatRef, {
+                        chatId: chatId,
                         text: messageText,
                         senderId: userId,
                         timestamp: serverTimestamp(),
