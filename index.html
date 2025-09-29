@@ -125,7 +125,10 @@
             <!-- Контент додатка -->
             <div id="content-section" class="hidden">
                 <div class="flex space-x-2 mb-4">
-                    <button id="chats-btn" class="w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">Чати</button>
+                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">
+                        Чати
+                        <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
+                    </button>
                     <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
                 </div>
 
@@ -251,7 +254,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
@@ -328,6 +331,7 @@
             const sendTaskBtn = document.getElementById('send-task-btn');
             const cancelAssignBtn = document.getElementById('cancel-assign-btn');
             const chatsBtn = document.getElementById('chats-btn');
+            const chatNotificationBadge = document.getElementById('chat-notification-badge');
             const chatSection = document.getElementById('chat-section');
             const backToTasksBtn = document.getElementById('back-to-tasks-btn');
             const chatFriendsList = document.getElementById('chat-friends-list');
@@ -357,6 +361,7 @@
                     subscribeToTasks();
                     subscribeToFriends();
                     subscribeToIncomingTasks();
+                    subscribeToUnreadCounts(); // Нова функція для лічильника
                 } else {
                     userId = null;
                     userIdSpan.textContent = 'Немає';
@@ -370,7 +375,9 @@
                 }
             });
 
-            const signInWithGoogle = async () => {
+            // ... (решта функцій signInWithGoogle, signOutUser, showNotification, hideNotification, loadSettings, etc. залишаються без змін)
+            
+             const signInWithGoogle = async () => {
                 const provider = new GoogleAuthProvider();
                 try {
                     await signInWithPopup(auth, provider);
@@ -494,7 +501,7 @@
                         if (moreOptionsBtn) {
                             moreOptionsBtn.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('hidden'); });
                         }
-                        document.addEventListener('click', e => { if (!taskItem.contains(e.target)) dropdownMenu.classList.add('hidden'); });
+                        document.addEventListener('click', e => { if (dropdownMenu && !taskItem.contains(e.target)) dropdownMenu.classList.add('hidden'); });
                     }
 
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
@@ -553,12 +560,12 @@
                     deferredDurationHours = newDeferred;
                     staleDurationHours = newStale;
                     settingsMessage.textContent = "Налаштування збережено успішно!";
-                    settingsMessage.className = 'text-sm text-center text-green-600';
-                    setTimeout(() => settingsMessage.classList.add('hidden'), 3000);
+                    settingsMessage.className = 'text-sm text-center text-green-600 visible';
+                    setTimeout(() => settingsMessage.classList.remove('visible'), 3000);
                 } catch (e) {
                     console.error("Помилка збереження налаштувань:", e);
                     settingsMessage.textContent = "Не вдалося зберегти налаштування.";
-                    settingsMessage.className = 'text-sm text-center text-red-600';
+                    settingsMessage.className = 'text-sm text-center text-red-600 visible';
                 }
             };
 
@@ -637,8 +644,11 @@
                     : '';
                 friends.forEach(friend => {
                     const friendItem = document.createElement('div');
-                    friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center space-x-3';
-                    friendItem.innerHTML = `<div class="font-semibold text-gray-800">${friend.name}</div>`;
+                    friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between';
+                    friendItem.innerHTML = `
+                        <div class="font-semibold text-gray-800 flex-grow">${friend.name}</div>
+                        <span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
+                    `;
                     friendItem.addEventListener('click', () => selectFriendForChat(friend));
                     chatFriendsList.appendChild(friendItem);
                 });
@@ -728,25 +738,94 @@
                 chatWindowPlaceholder.classList.remove('hidden');
             };
 
-            const selectFriendForChat = (friend) => {
+            const selectFriendForChat = async (friend) => {
                 selectedFriendForChat = friend;
                 chatWindowPlaceholder.classList.add('hidden');
                 chatWindow.classList.remove('hidden');
                 chatHeader.textContent = `Чат з ${friend.name}`;
                 chatMessages.innerHTML = '';
                 if (unsubscribeFromChat) unsubscribeFromChat();
-                
+
+                const participants = [userId, friend.userId].sort();
                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                 const chatRef = collection(publicDataRef, 'chat_messages');
-                const chatId = [userId, friend.userId].sort().join('_');
-                const q = query(chatRef, where("chatId", "==", chatId), orderBy("timestamp"));
+                const q = query(chatRef, where("participants", "==", participants), orderBy("timestamp"));
 
                 unsubscribeFromChat = onSnapshot(q, (snapshot) => {
                     chatMessages.innerHTML = '';
                     snapshot.docs.forEach(doc => renderChatMessage(doc.data()));
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 });
+                
+                await markMessagesAsRead(friend.userId);
             };
+            
+            const markMessagesAsRead = async (friendId) => {
+                const participants = [userId, friendId].sort();
+                const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                const chatRef = collection(publicDataRef, 'chat_messages');
+                
+                const q = query(chatRef, where("participants", "==", participants));
+                const snapshot = await getDocs(q);
+                
+                const batch = writeBatch(db);
+                snapshot.docs.forEach(doc => {
+                    const message = doc.data();
+                    if (!message.readBy.includes(userId)) {
+                         batch.update(doc.ref, { readBy: arrayUnion(userId) });
+                    }
+                });
+                await batch.commit();
+            };
+
+            const subscribeToUnreadCounts = () => {
+                 if (!userId) return;
+                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                 const chatRef = collection(publicDataRef, 'chat_messages');
+                 const q = query(chatRef, where("participants", "array-contains", userId));
+                 
+                 onSnapshot(q, (snapshot) => {
+                     const unreadCounts = {};
+                     let totalUnread = 0;
+                     
+                     snapshot.docs.forEach(doc => {
+                         const message = doc.data();
+                         if (!message.readBy.includes(userId)) {
+                             totalUnread++;
+                             const friendId = message.participants.find(id => id !== userId);
+                             if (friendId) {
+                                 unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
+                             }
+                         }
+                     });
+                     
+                     updateUnreadBadges(unreadCounts, totalUnread);
+                 });
+            };
+            
+            const updateUnreadBadges = (counts, total) => {
+                // Оновлюємо загальний лічильник
+                if (total > 0) {
+                    chatNotificationBadge.textContent = total;
+                    chatNotificationBadge.classList.remove('hidden');
+                } else {
+                    chatNotificationBadge.classList.add('hidden');
+                }
+                
+                // Оновлюємо лічильники для кожного друга
+                document.querySelectorAll('[id^="unread-count-"]').forEach(badge => {
+                    badge.classList.add('hidden');
+                });
+                
+                for (const friendId in counts) {
+                    const badge = document.getElementById(`unread-count-${friendId}`);
+                    if (badge) {
+                        badge.textContent = counts[friendId];
+                        badge.classList.remove('hidden');
+                    }
+                }
+            };
+
 
             const renderChatMessage = (message) => {
                 const msgDiv = document.createElement('div');
@@ -775,8 +854,15 @@
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                     const chatRef = collection(publicDataRef, 'chat_messages');
-                    const chatId = [userId, recipient.userId].sort().join('_');
-                    await addDoc(chatRef, { chatId, text: messageText, senderId: userId, timestamp: serverTimestamp(), isTask });
+                    const participants = [userId, recipient.userId].sort();
+                    await addDoc(chatRef, { 
+                        participants, 
+                        text: messageText, 
+                        senderId: userId, 
+                        timestamp: serverTimestamp(), 
+                        isTask,
+                        readBy: [userId] // Одразу позначаємо як прочитане відправником
+                    });
                     if (!isTask) chatMessageInput.value = '';
                 } catch (e) {
                     console.error("Помилка відправки повідомлення: ", e);
