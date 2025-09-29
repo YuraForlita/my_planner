@@ -218,19 +218,16 @@
         </div>
     </div>
     
-    <!-- Секція чату -->
     <div id="chat-section" class="max-w-4xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Назад до завдань</button>
              <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg">
-                <!-- Список друзів для чату -->
                 <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
                     <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
                     <div id="chat-friends-list" class="space-y-1 p-2">
                         <p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>
                     </div>
                 </div>
-                <!-- Вікно чату -->
                 <div class="w-full md:w-2/3 flex flex-col">
                     <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
                         <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
@@ -238,7 +235,6 @@
                     <div id="chat-window" class="hidden flex-grow flex flex-col">
                          <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
                          <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100">
-                            <!-- Повідомлення будуть тут -->
                          </div>
                          <div class="p-4 bg-white border-t flex space-x-2">
                             <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
@@ -262,12 +258,12 @@
             
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
                 apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-    authDomain: "planer-97eb1.firebaseapp.com",
-    projectId: "planer-97eb1",
-    storageBucket: "planer-97eb1.firebasestorage.app",
-    messagingSenderId: "322073132266",
-    appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-    measurementId: "G-GB94F6MG2N"
+                authDomain: "planer-97eb1.firebaseapp.com",
+                projectId: "planer-97eb1",
+                storageBucket: "planer-97eb1.firebasestorage.app",
+                messagingSenderId: "322073132266",
+                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+                measurementId: "G-GB94F6MG2N"
             };
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -349,6 +345,7 @@
             let currentTaskToEdit = null;
             let selectedFriendForChat = null;
             let unsubscribeFromChat = null;
+            let friendsCache = [];
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -361,7 +358,7 @@
                     subscribeToTasks();
                     subscribeToFriends();
                     subscribeToIncomingTasks();
-                    subscribeToUnreadCounts(); // Нова функція для лічильника
+                    subscribeToUnreadCounts();
                 } else {
                     userId = null;
                     userIdSpan.textContent = 'Немає';
@@ -374,24 +371,18 @@
                     incomingTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>`;
                 }
             });
-
-            // ... (решта функцій signInWithGoogle, signOutUser, showNotification, hideNotification, loadSettings, etc. залишаються без змін)
             
              const signInWithGoogle = async () => {
                 const provider = new GoogleAuthProvider();
                 try {
                     await signInWithPopup(auth, provider);
-                } catch (error) {
-                    console.error("Помилка входу через Google:", error);
-                }
+                } catch (error) { console.error("Помилка входу через Google:", error); }
             };
 
             const signOutUser = async () => {
                 try {
                     await signOut(auth);
-                } catch (error) {
-                    console.error("Помилка виходу:", error);
-                }
+                } catch (error) { console.error("Помилка виходу:", error); }
             };
             
             const showNotification = (title, message) => {
@@ -400,9 +391,7 @@
                 notificationModal.classList.remove('hidden');
             };
 
-            const hideNotification = () => {
-                notificationModal.classList.add('hidden');
-            };
+            const hideNotification = () => { notificationModal.classList.add('hidden'); };
 
             const loadSettings = async () => {
                 if (!userId) return;
@@ -419,9 +408,7 @@
                         deferredDurationInput.value = deferredDurationHours;
                         staleDurationInput.value = staleDurationHours;
                     }
-                } catch (e) {
-                    console.error("Помилка завантаження налаштувань:", e);
-                }
+                } catch (e) { console.error("Помилка завантаження налаштувань:", e); }
             };
 
             const subscribeToTasks = () => {
@@ -433,22 +420,16 @@
                     querySnapshot.forEach(async (doc) => {
                         const task = { id: doc.id, ...doc.data() };
                         if (task.status === 'deferred' && task.deferredAt) {
-                            const deferredTime = task.deferredAt.toMillis();
-                            const now = Date.now();
-                            const timeElapsed = now - deferredTime;
-                            const durationMillis = deferredDurationHours * 60 * 60 * 1000;
-                            if (timeElapsed >= durationMillis) {
+                            const timeElapsed = Date.now() - task.deferredAt.toMillis();
+                            if (timeElapsed >= deferredDurationHours * 3600000) {
                                 await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
                                 showNotification('Завдання повернуто', `Завдання "${task.text}" було автоматично повернуто до активних.`);
                                 return;
                             }
                         }
                         if (task.status === 'active' && task.lastUpdatedAt) {
-                            const lastUpdateTime = task.lastUpdatedAt.toMillis();
-                            const now = Date.now();
-                            const timeElapsed = now - lastUpdateTime;
-                            const staleDurationMillis = staleDurationHours * 60 * 60 * 1000;
-                            if (timeElapsed >= staleDurationMillis && !task.isStale) {
+                            const timeElapsed = Date.now() - task.lastUpdatedAt.toMillis();
+                            if (timeElapsed >= staleDurationHours * 3600000 && !task.isStale) {
                                 await updateDoc(doc.ref, { isStale: true });
                                 showNotification('Увага!', `Завдання "${task.text}" вважається застарілим.`);
                                 task.isStale = true;
@@ -498,19 +479,17 @@
                     if (status !== 'completed') {
                         const moreOptionsBtn = taskItem.querySelector('.more-options-btn');
                         const dropdownMenu = taskItem.querySelector('.dropdown-menu');
-                        if (moreOptionsBtn) {
+                        if (moreOptionsBtn && dropdownMenu) {
                             moreOptionsBtn.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('hidden'); });
+                            document.addEventListener('click', e => { if (!taskItem.contains(e.target)) dropdownMenu.classList.add('hidden'); });
                         }
-                        document.addEventListener('click', e => { if (dropdownMenu && !taskItem.contains(e.target)) dropdownMenu.classList.add('hidden'); });
                     }
-
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     if (taskItem.querySelector('.complete-btn')) taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
                     if (taskItem.querySelector('.defer-btn')) taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
                     if (taskItem.querySelector('.prolong-btn')) taskItem.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
                     if (taskItem.querySelector('.active-btn')) taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
                     if (taskItem.querySelector('.delete-btn')) taskItem.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); showConfirmModal(task.id); });
-                    
                     listElement.appendChild(taskItem);
                 });
             };
@@ -612,9 +591,9 @@
                 try {
                     const friendsRef = collection(db, `artifacts/${appId}/users/${userId}/friends`);
                     onSnapshot(friendsRef, (snapshot) => {
-                        const friends = snapshot.docs.map(doc => doc.data());
-                        renderFriends(friends);
-                        renderChatFriends(friends);
+                        friendsCache = snapshot.docs.map(doc => doc.data());
+                        renderFriends(friendsCache);
+                        renderChatFriends(friendsCache);
                     });
                 } catch (e) { console.error("Помилка підписки на друзів:", e); }
             };
@@ -761,21 +740,25 @@
             };
             
             const markMessagesAsRead = async (friendId) => {
+                 if (!userId || !friendId) return;
                 const participants = [userId, friendId].sort();
                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                 const chatRef = collection(publicDataRef, 'chat_messages');
                 
-                const q = query(chatRef, where("participants", "==", participants));
-                const snapshot = await getDocs(q);
-                
-                const batch = writeBatch(db);
-                snapshot.docs.forEach(doc => {
-                    const message = doc.data();
-                    if (!message.readBy.includes(userId)) {
-                         batch.update(doc.ref, { readBy: arrayUnion(userId) });
-                    }
-                });
-                await batch.commit();
+                const q = query(chatRef, where("participants", "==", participants), where("readBy", "not-in", [[userId]]));
+                 try {
+                    const snapshot = await getDocs(q);
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach(docSnapshot => {
+                        const message = docSnapshot.data();
+                        if (!message.readBy.includes(userId)) {
+                             batch.update(docSnapshot.ref, { readBy: arrayUnion(userId) });
+                        }
+                    });
+                    await batch.commit();
+                } catch (e) {
+                    console.error("Error marking messages as read:", e);
+                }
             };
 
             const subscribeToUnreadCounts = () => {
@@ -786,44 +769,43 @@
                  
                  onSnapshot(q, (snapshot) => {
                      const unreadCounts = {};
-                     let totalUnread = 0;
-                     
+                     const unreadSenders = new Set();
+
                      snapshot.docs.forEach(doc => {
                          const message = doc.data();
                          if (!message.readBy.includes(userId)) {
-                             totalUnread++;
                              const friendId = message.participants.find(id => id !== userId);
                              if (friendId) {
                                  unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
+                                 unreadSenders.add(friendId);
                              }
                          }
                      });
                      
-                     updateUnreadBadges(unreadCounts, totalUnread);
+                     updateUnreadBadges(unreadCounts, unreadSenders.size);
                  });
             };
             
-            const updateUnreadBadges = (counts, total) => {
-                // Оновлюємо загальний лічильник
-                if (total > 0) {
-                    chatNotificationBadge.textContent = total;
+            const updateUnreadBadges = (counts, totalSenders) => {
+                if (totalSenders > 0) {
+                    chatNotificationBadge.textContent = totalSenders;
                     chatNotificationBadge.classList.remove('hidden');
                 } else {
                     chatNotificationBadge.classList.add('hidden');
                 }
                 
-                // Оновлюємо лічильники для кожного друга
-                document.querySelectorAll('[id^="unread-count-"]').forEach(badge => {
-                    badge.classList.add('hidden');
-                });
-                
-                for (const friendId in counts) {
-                    const badge = document.getElementById(`unread-count-${friendId}`);
+                friendsCache.forEach(friend => {
+                    const badge = document.getElementById(`unread-count-${friend.userId}`);
                     if (badge) {
-                        badge.textContent = counts[friendId];
-                        badge.classList.remove('hidden');
+                        const count = counts[friend.userId];
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
                     }
-                }
+                });
             };
 
 
@@ -861,7 +843,7 @@
                         senderId: userId, 
                         timestamp: serverTimestamp(), 
                         isTask,
-                        readBy: [userId] // Одразу позначаємо як прочитане відправником
+                        readBy: [userId]
                     });
                     if (!isTask) chatMessageInput.value = '';
                 } catch (e) {
