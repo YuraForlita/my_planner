@@ -164,11 +164,11 @@
                          <div class="space-y-4">
                              <div>
                                  <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
-                                 <input type="number" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="24">
+                                 <input type="number" step="0.01" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="24">
                              </div>
                              <div>
                                  <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
-                                 <input type="number" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="72">
+                                 <input type="number" step="0.01" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="72">
                              </div>
                              <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
                              <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
@@ -206,7 +206,7 @@
                     <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
                     <div id="chat-friends-list" class="space-y-1 p-2"></div>
                 </div>
-                <div class="w-full md:w-2/3 flex flex-col">
+                <div class="w-full md:w-2/3 flex flex-col min-h-0">
                     <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
                         <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
                     </div>
@@ -541,8 +541,8 @@
 
             const saveSettings = async () => {
                 if (!userId) return;
-                const newDeferred = parseInt(deferredDurationInput.value, 10);
-                const newStale = parseInt(staleDurationInput.value, 10);
+                const newDeferred = parseFloat(deferredDurationInput.value);
+                const newStale = parseFloat(staleDurationInput.value);
                 if (isNaN(newDeferred) || newDeferred < 0 || isNaN(newStale) || newStale < 0) {
                     settingsMessage.textContent = "Будь ласка, введіть дійсні числа.";
                     settingsMessage.className = 'text-sm text-center text-red-600';
