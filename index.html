@@ -380,6 +380,12 @@
                 notificationModal.classList.add('hidden');
             };
 
+            const showPushNotification = (title, options) => {
+                if (document.hidden && Notification.permission === 'granted') {
+                    new Notification(title, options);
+                }
+            };
+
             const loadSettings = async () => {
                 if (!userId) return;
                 try {
@@ -411,6 +417,10 @@
                         if (task.status === 'deferred' && task.deferredAt) {
                             if (Date.now() - task.deferredAt.toMillis() >= deferredDurationHours * 3600000) {
                                 await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
+                                showPushNotification('Завдання повернуто до активних', {
+                                    body: `Завдання: "${task.text}"`,
+                                    icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
+                                });
                                 return;
                             }
                         }
@@ -418,6 +428,10 @@
                            if (Date.now() - task.lastUpdatedAt.toMillis() >= staleDurationHours * 3600000 && !task.isStale) {
                                 await updateDoc(doc.ref, { isStale: true });
                                 task.isStale = true;
+                                showPushNotification('Завдання стало застарілим', {
+                                    body: `Зверніть увагу на завдання: "${task.text}"`,
+                                    icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
+                                });
                             }
                         }
                         if (task.status === 'completed') completedTasks.push(task);
