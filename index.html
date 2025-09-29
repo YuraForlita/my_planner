@@ -30,9 +30,9 @@
         .task-actions {
             position: relative;
         }
-        /* Нові стилі для прокрутки */
+        
         .task-list-container {
-            max-height: 400px; /* Ви можете змінити це значення */
+            max-height: 400px;
             overflow-y: auto;
         }
     </style>
@@ -787,7 +787,7 @@
 
                      snapshot.docs.forEach(doc => {
                          const message = doc.data();
-                         if (!message.readBy.includes(userId)) {
+                         if (message.readBy && !message.readBy.includes(userId)) {
                              const friendId = message.participants.find(id => id !== userId);
                              if (friendId) {
                                  unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
