@@ -21,16 +21,12 @@
             overflow: hidden;
         }
         .dropdown-menu {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            z-index: 10;
+            z-index: 50; 
             min-width: 150px;
         }
         .task-actions {
             position: relative;
         }
-        
         .task-list-container {
             max-height: 400px;
             overflow-y: auto;
@@ -53,7 +49,7 @@
                 Сталася помилка ініціалізації. Будь ласка, переконайтеся, що конфігурація Firebase додана.
             </div>
 
-            <!-- Модальне вікно для сповіщень -->
+            <!-- Модальні вікна -->
             <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
                     <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
@@ -63,8 +59,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Модальне вікно для перегляду/редагування завдання -->
             <div id="view-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
@@ -75,8 +69,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Модальне вікно для підтвердження видалення -->
             <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
@@ -87,8 +79,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Модальне вікно для додавання друга -->
             <div id="add-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Додати друга</h3>
@@ -100,8 +90,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Модальне вікно для призначення завдання -->
             <div id="assign-task-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Призначити завдання</h3>
@@ -120,9 +108,7 @@
             <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
                 <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
                 <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/>
-                    </svg>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/></svg>
                     <span>Увійти через Google</span>
                 </button>
             </div>
@@ -137,58 +123,44 @@
                     <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
                 </div>
 
-                <!-- Введення нового завдання -->
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
                     <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
-                    <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Додати</button>
-                    <button id="assign-task-open-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors shadow-md">Призначити</button>
+                    <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Додати</button>
+                    <button id="assign-task-open-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-md">Призначити</button>
                 </div>
 
-                <!-- Розділ "Вхідні завдання" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
                     <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
-                    <div id="incoming-tasks-list" class="space-y-3">
-                        <p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>
-                    </div>
+                    <div id="incoming-tasks-list" class="space-y-3"></div>
                 </div>
                 
-                <!-- Розділ "Активні завдання" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
-                    <div id="active-tasks-list" class="space-y-3 task-list-container">
-                        <p class="text-gray-500 text-center italic">Завантаження...</p>
-                    </div>
+                    <div id="active-tasks-list" class="space-y-3 task-list-container"></div>
                 </div>
 
-                <!-- Розділ "В роботі" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold text-gray-700">В роботі</h2>
                         <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
-                    <div id="deferred-tasks-list" class="space-y-3 hidden task-list-container">
-                        <p class="text-gray-500 text-center italic">Немає завдань в роботі.</p>
-                    </div>
+                    <div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div>
                 </div>
 
-                <!-- Розділ "Виконані завдання" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
                         <button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
-                    <div id="completed-tasks-list" class="space-y-3 hidden task-list-container">
-                        <p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>
-                    </div>
+                    <div id="completed-tasks-list" class="space-y-3 hidden task-list-container"></div>
                 </div>
 
-                 <!-- Розділ "Налаштування" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
                         <button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
-                    <div id="settings-content" class="hidden">
+                    <div id="settings-content" class="hidden space-y-6">
                          <div class="space-y-4">
                              <div>
                                  <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
@@ -198,13 +170,17 @@
                                  <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
                                  <input type="number" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="72">
                              </div>
-                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Зберегти налаштування</button>
+                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
                              <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
                          </div>
+                         <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-800 mb-2">Сповіщення</h3>
+                            <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md">Увімкнути сповіщення</button>
+                            <p id="notifications-status" class="text-sm text-center text-gray-500 mt-2"></p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Розділ "Друзі" -->
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold text-gray-700">Друзі</h2>
@@ -212,11 +188,9 @@
                     </div>
                     <div id="friends-content" class="hidden">
                         <div class="flex justify-end mb-4">
-                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Додати друга</button>
+                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button>
                         </div>
-                        <div id="friends-list" class="space-y-3">
-                            <p class="text-gray-500 text-center italic">Немає друзів.</p>
-                        </div>
+                        <div id="friends-list" class="space-y-3"></div>
                     </div>
                 </div>
             </div>
@@ -226,28 +200,22 @@
     <!-- Секція чату -->
     <div id="chat-section" class="max-w-4xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
-             <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md">Назад до завдань</button>
+             <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
              <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg">
-                <!-- Список друзів для чату -->
                 <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
                     <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
-                    <div id="chat-friends-list" class="space-y-1 p-2">
-                        <p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>
-                    </div>
+                    <div id="chat-friends-list" class="space-y-1 p-2"></div>
                 </div>
-                <!-- Вікно чату -->
                 <div class="w-full md:w-2/3 flex flex-col">
                     <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
                         <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
                     </div>
                     <div id="chat-window" class="hidden flex-grow flex flex-col">
                          <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
-                         <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100">
-                            <!-- Повідомлення будуть тут -->
-                         </div>
+                         <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100"></div>
                          <div class="p-4 bg-white border-t flex space-x-2">
                             <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
-                            <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Надіслати</button>
+                            <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Надіслати</button>
                          </div>
                     </div>
                 </div>
@@ -277,7 +245,7 @@
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR_")) {
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('error-message').classList.remove('hidden');
                 return;
@@ -287,74 +255,77 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
 
-            const mainContent = document.getElementById('main-content');
-            const taskInput = document.getElementById('task-input');
-            const addTaskButton = document.getElementById('add-task-btn');
-            const assignTaskOpenBtn = document.getElementById('assign-task-open-btn');
-            const userIdSpan = document.getElementById('user-id-span');
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const authButtons = document.getElementById('auth-buttons');
-            const contentSection = document.getElementById('content-section');
-            const googleSignInButton = document.getElementById('google-signin-btn');
-            const signOutButton = document.getElementById('signout-btn');
-            const confirmModal = document.getElementById('confirm-modal');
-            const confirmDeleteButton = document.getElementById('delete-btn');
-            const cancelDeleteButton = document.getElementById('cancel-btn');
-            const notificationModal = document.getElementById('notification-modal');
-            const notificationTitle = document.getElementById('notification-title');
-            const notificationMessage = document.getElementById('notification-message');
-            const closeNotificationBtn = document.getElementById('close-notification-btn');
-            const viewEditModal = document.getElementById('view-edit-modal');
-            const editTaskInput = document.getElementById('edit-task-input');
-            const saveEditBtn = document.getElementById('save-edit-btn');
-            const cancelEditBtn = document.getElementById('cancel-edit-btn');
-            const activeTasksList = document.getElementById('active-tasks-list');
-            const deferredTasksList = document.getElementById('deferred-tasks-list');
-            const completedTasksList = document.getElementById('completed-tasks-list');
-            const deferredToggleBtn = document.getElementById('deferred-toggle-btn');
-            const completedToggleBtn = document.getElementById('completed-toggle-btn');
-            const settingsToggleBtn = document.getElementById('settings-toggle-btn');
-            const settingsContent = document.getElementById('settings-content');
-            const deferredDurationInput = document.getElementById('deferred-duration');
-            const staleDurationInput = document.getElementById('stale-duration');
-            const saveSettingsBtn = document.getElementById('save-settings-btn');
-            const settingsMessage = document.getElementById('settings-message');
-            const incomingTasksSection = document.getElementById('incoming-tasks-section');
-            const incomingTasksList = document.getElementById('incoming-tasks-list');
-            const friendsToggleBtn = document.getElementById('friends-toggle-btn');
-            const friendsContent = document.getElementById('friends-content');
-            const addFriendOpenBtn = document.getElementById('add-friend-open-btn');
-            const friendsList = document.getElementById('friends-list');
-            const addFriendModal = document.getElementById('add-friend-modal');
-            const friendNameInput = document.getElementById('friend-name-input');
-            const friendIdInput = document.getElementById('friend-id-input');
-            const saveFriendBtn = document.getElementById('save-friend-btn');
-            const cancelFriendBtn = document.getElementById('cancel-friend-btn');
-            const assignTaskModal = document.getElementById('assign-task-modal');
-            const friendSelect = document.getElementById('friend-select');
-            const assignTaskInput = document.getElementById('assign-task-input');
-            const sendTaskBtn = document.getElementById('send-task-btn');
-            const cancelAssignBtn = document.getElementById('cancel-assign-btn');
-            const chatsBtn = document.getElementById('chats-btn');
-            const chatNotificationBadge = document.getElementById('chat-notification-badge');
-            const chatSection = document.getElementById('chat-section');
-            const backToTasksBtn = document.getElementById('back-to-tasks-btn');
-            const chatFriendsList = document.getElementById('chat-friends-list');
-            const chatWindow = document.getElementById('chat-window');
-            const chatWindowPlaceholder = document.getElementById('chat-window-placeholder');
-            const chatHeader = document.getElementById('chat-header');
-            const chatMessages = document.getElementById('chat-messages');
-            const chatMessageInput = document.getElementById('chat-message-input');
-            const sendChatMessageBtn = document.getElementById('send-chat-message-btn');
+            const mainContent = document.getElementById('main-content'),
+                  taskInput = document.getElementById('task-input'),
+                  addTaskButton = document.getElementById('add-task-btn'),
+                  assignTaskOpenBtn = document.getElementById('assign-task-open-btn'),
+                  userIdSpan = document.getElementById('user-id-span'),
+                  loadingSpinner = document.getElementById('loading-spinner'),
+                  authButtons = document.getElementById('auth-buttons'),
+                  contentSection = document.getElementById('content-section'),
+                  googleSignInButton = document.getElementById('google-signin-btn'),
+                  signOutButton = document.getElementById('signout-btn'),
+                  confirmModal = document.getElementById('confirm-modal'),
+                  confirmDeleteButton = document.getElementById('delete-btn'),
+                  cancelDeleteButton = document.getElementById('cancel-btn'),
+                  notificationModal = document.getElementById('notification-modal'),
+                  notificationTitle = document.getElementById('notification-title'),
+                  notificationMessage = document.getElementById('notification-message'),
+                  closeNotificationBtn = document.getElementById('close-notification-btn'),
+                  viewEditModal = document.getElementById('view-edit-modal'),
+                  editTaskInput = document.getElementById('edit-task-input'),
+                  saveEditBtn = document.getElementById('save-edit-btn'),
+                  cancelEditBtn = document.getElementById('cancel-edit-btn'),
+                  activeTasksList = document.getElementById('active-tasks-list'),
+                  deferredTasksList = document.getElementById('deferred-tasks-list'),
+                  completedTasksList = document.getElementById('completed-tasks-list'),
+                  deferredToggleBtn = document.getElementById('deferred-toggle-btn'),
+                  completedToggleBtn = document.getElementById('completed-toggle-btn'),
+                  settingsToggleBtn = document.getElementById('settings-toggle-btn'),
+                  settingsContent = document.getElementById('settings-content'),
+                  deferredDurationInput = document.getElementById('deferred-duration'),
+                  staleDurationInput = document.getElementById('stale-duration'),
+                  saveSettingsBtn = document.getElementById('save-settings-btn'),
+                  settingsMessage = document.getElementById('settings-message'),
+                  incomingTasksSection = document.getElementById('incoming-tasks-section'),
+                  incomingTasksList = document.getElementById('incoming-tasks-list'),
+                  friendsToggleBtn = document.getElementById('friends-toggle-btn'),
+                  friendsContent = document.getElementById('friends-content'),
+                  addFriendOpenBtn = document.getElementById('add-friend-open-btn'),
+                  friendsList = document.getElementById('friends-list'),
+                  addFriendModal = document.getElementById('add-friend-modal'),
+                  friendNameInput = document.getElementById('friend-name-input'),
+                  friendIdInput = document.getElementById('friend-id-input'),
+                  saveFriendBtn = document.getElementById('save-friend-btn'),
+                  cancelFriendBtn = document.getElementById('cancel-friend-btn'),
+                  assignTaskModal = document.getElementById('assign-task-modal'),
+                  friendSelect = document.getElementById('friend-select'),
+                  assignTaskInput = document.getElementById('assign-task-input'),
+                  sendTaskBtn = document.getElementById('send-task-btn'),
+                  cancelAssignBtn = document.getElementById('cancel-assign-btn'),
+                  chatsBtn = document.getElementById('chats-btn'),
+                  chatNotificationBadge = document.getElementById('chat-notification-badge'),
+                  chatSection = document.getElementById('chat-section'),
+                  backToTasksBtn = document.getElementById('back-to-tasks-btn'),
+                  chatFriendsList = document.getElementById('chat-friends-list'),
+                  chatWindow = document.getElementById('chat-window'),
+                  chatWindowPlaceholder = document.getElementById('chat-window-placeholder'),
+                  chatHeader = document.getElementById('chat-header'),
+                  chatMessages = document.getElementById('chat-messages'),
+                  chatMessageInput = document.getElementById('chat-message-input'),
+                  sendChatMessageBtn = document.getElementById('send-chat-message-btn'),
+                  enableNotificationsBtn = document.getElementById('enable-notifications-btn'),
+                  notificationsStatus = document.getElementById('notifications-status');
 
-            let userId = null;
-            let currentTaskIdToDelete = null;
-            let deferredDurationHours = 24;
-            let staleDurationHours = 72;
-            let currentTaskToEdit = null;
-            let selectedFriendForChat = null;
-            let unsubscribeFromChat = null;
-            let friendsCache = [];
+            let userId = null,
+                currentTaskIdToDelete = null,
+                deferredDurationHours = 24,
+                staleDurationHours = 72,
+                currentTaskToEdit = null,
+                selectedFriendForChat = null,
+                unsubscribeFromChat = null,
+                friendsCache = [],
+                shownNotifications = new Set();
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -368,30 +339,35 @@
                     subscribeToFriends();
                     subscribeToIncomingTasks();
                     subscribeToUnreadCounts();
+                    checkNotificationStatus();
                 } else {
                     userId = null;
                     userIdSpan.textContent = 'Немає';
                     authButtons.classList.remove('hidden');
                     contentSection.classList.add('hidden');
                     chatSection.classList.add('hidden');
-                    activeTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити свої завдання.</p>`;
-                    deferredTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає завдань в роботі.</p>`;
-                    completedTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає виконаних завдань.</p>`;
-                    incomingTasksList.innerHTML = `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>`;
+                    ['active-tasks-list', 'deferred-tasks-list', 'completed-tasks-list', 'incoming-tasks-list'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if(el) el.innerHTML = `<p class="text-gray-500 text-center italic">Будь ласка, увійдіть, щоб побачити дані.</p>`;
+                    });
                 }
             });
             
-             const signInWithGoogle = async () => {
+            const signInWithGoogle = async () => {
                 const provider = new GoogleAuthProvider();
                 try {
                     await signInWithPopup(auth, provider);
-                } catch (error) { console.error("Помилка входу через Google:", error); }
+                } catch (error) {
+                    console.error("Помилка входу через Google:", error);
+                }
             };
 
             const signOutUser = async () => {
                 try {
                     await signOut(auth);
-                } catch (error) { console.error("Помилка виходу:", error); }
+                } catch (error) {
+                    console.error("Помилка виходу:", error);
+                }
             };
             
             const showNotification = (title, message) => {
@@ -400,7 +376,9 @@
                 notificationModal.classList.remove('hidden');
             };
 
-            const hideNotification = () => { notificationModal.classList.add('hidden'); };
+            const hideNotification = () => {
+                notificationModal.classList.add('hidden');
+            };
 
             const loadSettings = async () => {
                 if (!userId) return;
@@ -417,9 +395,11 @@
                         deferredDurationInput.value = deferredDurationHours;
                         staleDurationInput.value = staleDurationHours;
                     }
-                } catch (e) { console.error("Помилка завантаження налаштувань:", e); }
+                } catch (e) {
+                    console.error("Помилка завантаження налаштувань:", e);
+                }
             };
-
+            
             const subscribeToTasks = () => {
                 if (!db || !userId) return;
                 const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
@@ -429,18 +409,14 @@
                     querySnapshot.forEach(async (doc) => {
                         const task = { id: doc.id, ...doc.data() };
                         if (task.status === 'deferred' && task.deferredAt) {
-                            const timeElapsed = Date.now() - task.deferredAt.toMillis();
-                            if (timeElapsed >= deferredDurationHours * 3600000) {
+                            if (Date.now() - task.deferredAt.toMillis() >= deferredDurationHours * 3600000) {
                                 await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
-                                showNotification('Завдання повернуто', `Завдання "${task.text}" було автоматично повернуто до активних.`);
                                 return;
                             }
                         }
                         if (task.status === 'active' && task.lastUpdatedAt) {
-                            const timeElapsed = Date.now() - task.lastUpdatedAt.toMillis();
-                            if (timeElapsed >= staleDurationHours * 3600000 && !task.isStale) {
+                           if (Date.now() - task.lastUpdatedAt.toMillis() >= staleDurationHours * 3600000 && !task.isStale) {
                                 await updateDoc(doc.ref, { isStale: true });
-                                showNotification('Увага!', `Завдання "${task.text}" вважається застарілим.`);
                                 task.isStale = true;
                             }
                         }
@@ -451,56 +427,72 @@
                     renderTasks(activeTasks, activeTasksList, 'active');
                     renderTasks(deferredTasks, deferredTasksList, 'deferred');
                     renderTasks(completedTasks, completedTasksList, 'completed');
-                }, (error) => console.error("Помилка отримання даних:", error));
+                });
             };
 
             const renderTasks = (tasks, listElement, status) => {
                 listElement.innerHTML = '';
                 if (tasks.length === 0) {
-                    let message = 'Немає завдань.';
-                    if (status === 'active') message = 'Немає активних завдань.';
-                    else if (status === 'deferred') message = 'Немає завдань в роботі.';
-                    else if (status === 'completed') message = 'Немає виконаних завдань.';
-                    listElement.innerHTML = `<p class="text-gray-500 text-center italic">${message}</p>`;
+                    const messages = { active: 'Немає активних завдань.', deferred: 'Немає завдань в роботі.', completed: 'Немає виконаних завдань.' };
+                    listElement.innerHTML = `<p class="text-gray-500 text-center italic">${messages[status]}</p>`;
                     return;
                 }
                 tasks.forEach(task => {
                     const taskItem = document.createElement('div');
-                    let bgColor = task.isStale ? 'bg-red-100 border border-red-500' : 'bg-white';
-                    taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${bgColor} space-x-2`;
-                    let buttonsHTML = '';
-                    if (status === 'completed') {
-                        buttonsHTML = `<button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600">Активувати</button>`;
-                    } else {
-                        buttonsHTML = `<button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600">Виконано</button>
-                            <div class="task-actions relative">
-                                <button class="more-options-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400">...</button>
-                                <div class="dropdown-menu absolute hidden right-0 mt-2 py-1 bg-white rounded-md shadow-lg border">
-                                    <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
-                                    ${task.isStale ? `<button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
-                                    <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
-                                </div>
-                            </div>`;
-                    }
-                    taskItem.innerHTML = `<p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2">${task.text}</p>
-                        <div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
+                    taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${task.isStale ? 'bg-red-100' : 'bg-white'} space-x-2`;
+                    let buttonsHTML = status === 'completed' 
+                        ? `<button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600">Активувати</button>`
+                        : `<button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600">Виконано</button>
+                           <div class="task-actions relative">
+                               <button class="more-options-btn p-2 rounded-full hover:bg-gray-200">...</button>
+                           </div>`;
+
+                    taskItem.innerHTML = `<p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2">${task.text}</p><div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
                     
                     if (status !== 'completed') {
                         const moreOptionsBtn = taskItem.querySelector('.more-options-btn');
-                        const dropdownMenu = taskItem.querySelector('.dropdown-menu');
-                        if (moreOptionsBtn && dropdownMenu) {
-                            moreOptionsBtn.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('hidden'); });
-                            document.addEventListener('click', e => { if (!taskItem.contains(e.target)) dropdownMenu.classList.add('hidden'); });
-                        }
+                        moreOptionsBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            renderDropdown(task, moreOptionsBtn);
+                        });
                     }
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     if (taskItem.querySelector('.complete-btn')) taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
-                    if (taskItem.querySelector('.defer-btn')) taskItem.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
-                    if (taskItem.querySelector('.prolong-btn')) taskItem.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
                     if (taskItem.querySelector('.active-btn')) taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
-                    if (taskItem.querySelector('.delete-btn')) taskItem.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); showConfirmModal(task.id); });
                     listElement.appendChild(taskItem);
                 });
+            };
+            
+            const renderDropdown = (task, button) => {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
+
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown-menu absolute hidden bg-white rounded-md shadow-lg border py-1';
+                dropdown.innerHTML = `
+                    <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                    ${task.isStale ? `<button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
+                    <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
+                `;
+                
+                document.body.appendChild(dropdown);
+                
+                const rect = button.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = `${rect.bottom + 5}px`;
+                dropdown.style.left = `${rect.right - dropdown.offsetWidth}px`;
+                dropdown.classList.remove('hidden');
+
+                dropdown.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
+                if (task.isStale) dropdown.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
+                dropdown.querySelector('.delete-btn').addEventListener('click', () => showConfirmModal(task.id));
+
+                const hideDropdown = (e) => {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.remove();
+                        document.removeEventListener('click', hideDropdown, true);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', hideDropdown, true), 0);
             };
 
             const addTask = async () => {
@@ -652,7 +644,7 @@
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                     const sharedTasksRef = collection(publicDataRef, 'shared_tasks');
-                    await addDoc(sharedTasksRef, { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Невідомий', recipientId: recipientId, createdAt: serverTimestamp() });
+                    await addDoc(sharedTasksRef, { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Невідомий', recipientId, createdAt: serverTimestamp() });
                     const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
                     await sendChatMessage(`Я призначив вам завдання: "${taskText}"`, selectedFriend, true);
                     hideAssignTaskModal();
@@ -786,16 +778,24 @@
                      const unreadSenders = new Set();
 
                      snapshot.docs.forEach(doc => {
-                         const message = doc.data();
+                         const message = { id: doc.id, ...doc.data() };
                          if (message.readBy && !message.readBy.includes(userId)) {
                              const friendId = message.participants.find(id => id !== userId);
                              if (friendId) {
                                  unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
                                  unreadSenders.add(friendId);
+                                 
+                                 if (document.hidden && Notification.permission === 'granted' && !shownNotifications.has(message.id)) {
+                                     const friendName = friendsCache.find(f => f.userId === friendId)?.name || 'Друг';
+                                     new Notification(`Нове повідомлення від ${friendName}`, {
+                                         body: message.text,
+                                         icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
+                                     });
+                                     shownNotifications.add(message.id);
+                                 }
                              }
                          }
                      });
-                     
                      updateUnreadBadges(unreadCounts, unreadSenders.size);
                  });
             };
@@ -866,6 +866,36 @@
                 }
             };
 
+            const checkNotificationStatus = () => {
+                if (!('Notification' in window)) {
+                    notificationsStatus.textContent = "Ваш браузер не підтримує сповіщення.";
+                    enableNotificationsBtn.disabled = true;
+                    return;
+                }
+                switch(Notification.permission) {
+                    case 'granted':
+                        notificationsStatus.textContent = "Сповіщення увімкнено.";
+                        enableNotificationsBtn.textContent = "Сповіщення увімкнено";
+                        enableNotificationsBtn.disabled = true;
+                        break;
+                    case 'denied':
+                        notificationsStatus.textContent = "Сповіщення заблоковано.";
+                        enableNotificationsBtn.textContent = "Сповіщення заблоковано";
+                        enableNotificationsBtn.disabled = true;
+                        break;
+                    default:
+                        notificationsStatus.textContent = "Надайте дозвіл на показ сповіщень.";
+                }
+            };
+            
+            const requestNotificationPermission = async () => {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення про нові повідомлення." });
+                }
+                checkNotificationStatus();
+            };
+
             // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -888,6 +918,7 @@
             sendTaskBtn.addEventListener('click', sendAssignedTask);
             chatsBtn.addEventListener('click', openChatView);
             backToTasksBtn.addEventListener('click', closeChatView);
+            enableNotificationsBtn.addEventListener('click', requestNotificationPermission);
             
             const handleSendMessage = () => {
                 if (!selectedFriendForChat) {
@@ -902,7 +933,6 @@
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) {
                  signInWithCustomToken(auth, initialAuthToken).catch(err => {
-                     console.error("Помилка входу за допомогою кастомного токену:", err);
                      signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
                 });
             } else {
