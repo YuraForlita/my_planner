@@ -210,7 +210,7 @@
                     <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
                         <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
                     </div>
-                    <div id="chat-window" class="hidden flex-grow flex flex-col">
+                    <div id="chat-window" class="hidden flex-grow flex flex-col overflow-hidden">
                          <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
                          <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100"></div>
                          <div class="p-4 bg-white border-t flex space-x-2">
@@ -748,7 +748,10 @@
                 unsubscribeFromChat = onSnapshot(q, (snapshot) => {
                     chatMessages.innerHTML = '';
                     snapshot.docs.forEach(doc => renderChatMessage(doc.data()));
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    // Ensure scroll happens after DOM update
+                    setTimeout(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 0);
                 });
                 
                 await markMessagesAsRead(friend.userId);
@@ -799,9 +802,9 @@
                                  unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
                                  unreadSenders.add(friendId);
                                  
-                                 if (document.hidden && Notification.permission === 'granted' && !shownNotifications.has(message.id)) {
+                                 if (!shownNotifications.has(message.id)) {
                                      const friendName = friendsCache.find(f => f.userId === friendId)?.name || 'Друг';
-                                     new Notification(`Нове повідомлення від ${friendName}`, {
+                                      showPushNotification(`Нове повідомлення від ${friendName}`, {
                                          body: message.text,
                                          icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
                                      });
