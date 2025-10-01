@@ -31,6 +31,9 @@
             max-height: 400px;
             overflow-y: auto;
         }
+        .message-bubble:hover .delete-msg-btn {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
@@ -72,10 +75,10 @@
             <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
-                    <p class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це завдання?</p>
+                    <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це?</p>
                     <div class="flex justify-end space-x-2">
-                        <button id="cancel-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
-                        <button id="delete-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
+                        <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+                        <button class="delete-btn px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
                     </div>
                 </div>
             </div>
@@ -103,7 +106,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Модальне вікно для перегляду зображень -->
             <div id="image-viewer-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay p-4">
                 <div class="bg-white p-2 rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full h-full relative flex flex-col">
                     <button id="close-image-viewer-btn" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 leading-none text-2xl z-10">&times;</button>
@@ -244,7 +246,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
@@ -284,8 +286,9 @@
                   googleSignInButton = document.getElementById('google-signin-btn'),
                   signOutButton = document.getElementById('signout-btn'),
                   confirmModal = document.getElementById('confirm-modal'),
-                  confirmDeleteButton = document.getElementById('delete-btn'),
-                  cancelDeleteButton = document.getElementById('cancel-btn'),
+                  confirmModalMessage = document.getElementById('confirm-modal-message'),
+                  confirmDeleteButton = confirmModal.querySelector('.delete-btn'),
+                  cancelDeleteButton = confirmModal.querySelector('.cancel-btn'),
                   notificationModal = document.getElementById('notification-modal'),
                   notificationTitle = document.getElementById('notification-title'),
                   notificationMessage = document.getElementById('notification-message'),
@@ -344,7 +347,7 @@
 
 
             let userId = null,
-                currentTaskIdToDelete = null,
+                currentAction = null,
                 deferredDurationHours = 24,
                 staleDurationHours = 72,
                 currentTaskToEdit = null,
@@ -381,19 +384,11 @@
             
             const signInWithGoogle = async () => {
                 const provider = new GoogleAuthProvider();
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (error) {
-                    console.error("Помилка входу через Google:", error);
-                }
+                try { await signInWithPopup(auth, provider); } catch (error) { console.error("Помилка входу через Google:", error); }
             };
 
             const signOutUser = async () => {
-                try {
-                    await signOut(auth);
-                } catch (error) {
-                    console.error("Помилка виходу:", error);
-                }
+                try { await signOut(auth); } catch (error) { console.error("Помилка виходу:", error); }
             };
             
             const showNotification = (title, message) => {
@@ -402,14 +397,10 @@
                 notificationModal.classList.remove('hidden');
             };
 
-            const hideNotification = () => {
-                notificationModal.classList.add('hidden');
-            };
+            const hideNotification = () => { notificationModal.classList.add('hidden'); };
 
             const showPushNotification = (title, options) => {
-                if (document.hidden && Notification.permission === 'granted') {
-                    new Notification(title, options);
-                }
+                if (document.hidden && Notification.permission === 'granted') { new Notification(title, options); }
             };
 
             const loadSettings = async () => {
@@ -427,9 +418,7 @@
                         deferredDurationInput.value = deferredDurationHours;
                         staleDurationInput.value = staleDurationHours;
                     }
-                } catch (e) {
-                    console.error("Помилка завантаження налаштувань:", e);
-                }
+                } catch (e) { console.error("Помилка завантаження налаштувань:", e); }
             };
             
             const subscribeToTasks = () => {
@@ -443,10 +432,7 @@
                         if (task.status === 'deferred' && task.deferredAt) {
                             if (Date.now() - task.deferredAt.toMillis() >= deferredDurationHours * 3600000) {
                                 await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
-                                showPushNotification('Завдання повернуто до активних', {
-                                    body: `Завдання: "${task.text}"`,
-                                    icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
-                                });
+                                showPushNotification('Завдання повернуто до активних', { body: `Завдання: "${task.text}"` });
                                 return;
                             }
                         }
@@ -454,10 +440,7 @@
                            if (Date.now() - task.lastUpdatedAt.toMillis() >= staleDurationHours * 3600000 && !task.isStale) {
                                 await updateDoc(doc.ref, { isStale: true });
                                 task.isStale = true;
-                                showPushNotification('Завдання стало застарілим', {
-                                    body: `Зверніть увагу на завдання: "${task.text}"`,
-                                    icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
-                                });
+                                showPushNotification('Завдання стало застарілим', { body: `Зверніть увагу на завдання: "${task.text}"` });
                             }
                         }
                         if (task.status === 'completed') completedTasks.push(task);
@@ -490,11 +473,7 @@
                     taskItem.innerHTML = `<p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2">${task.text}</p><div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
                     
                     if (status !== 'completed') {
-                        const moreOptionsBtn = taskItem.querySelector('.more-options-btn');
-                        moreOptionsBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            renderDropdown(task, moreOptionsBtn);
-                        });
+                        taskItem.querySelector('.more-options-btn').addEventListener('click', (e) => { e.stopPropagation(); renderDropdown(task, e.currentTarget); });
                     }
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     if (taskItem.querySelector('.complete-btn')) taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
@@ -505,26 +484,27 @@
             
             const renderDropdown = (task, button) => {
                 document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
-
                 const dropdown = document.createElement('div');
                 dropdown.className = 'dropdown-menu absolute hidden bg-white rounded-md shadow-lg border py-1';
                 dropdown.innerHTML = `
-                    <button class="defer-btn w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
-                    ${task.isStale ? `<button class="prolong-btn w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
-                    <button class="delete-btn w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
+                    <button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                    ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
+                    <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
                 `;
-                
                 document.body.appendChild(dropdown);
-                
                 const rect = button.getBoundingClientRect();
                 dropdown.style.position = 'fixed';
                 dropdown.style.top = `${rect.bottom + 5}px`;
                 dropdown.style.left = `${rect.right - dropdown.offsetWidth}px`;
                 dropdown.classList.remove('hidden');
 
-                dropdown.querySelector('.defer-btn').addEventListener('click', () => updateTaskStatus(task.id, 'deferred'));
-                if (task.isStale) dropdown.querySelector('.prolong-btn').addEventListener('click', () => prolongTask(task.id));
-                dropdown.querySelector('.delete-btn').addEventListener('click', () => showConfirmModal(task.id));
+                dropdown.addEventListener('click', (e) => {
+                    const action = e.target.dataset.action;
+                    if (action === 'defer') updateTaskStatus(task.id, 'deferred');
+                    if (action === 'prolong') prolongTask(task.id);
+                    if (action === 'delete') showConfirmModal(() => deleteTask(task.id), "Ви впевнені, що хочете видалити це завдання?");
+                    dropdown.remove();
+                });
 
                 const hideDropdown = (e) => {
                     if (!dropdown.contains(e.target)) {
@@ -539,8 +519,7 @@
                 const taskText = taskInput.value.trim();
                 if (taskText === '' || !userId) return;
                 try {
-                    const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
-                    await addDoc(tasksCollection, { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false });
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false });
                     taskInput.value = '';
                 } catch (e) { console.error("Помилка додавання завдання: ", e); }
             };
@@ -559,8 +538,7 @@
             const prolongTask = async (id) => {
                 if (!userId) return;
                 try {
-                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, id);
-                    await updateDoc(taskRef, { lastUpdatedAt: serverTimestamp(), isStale: false });
+                    await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id), { lastUpdatedAt: serverTimestamp(), isStale: false });
                     showNotification('Завдання продовжено', 'Час "життя" завдання було продовжено.');
                 } catch (e) { console.error("Помилка продовження завдання:", e); }
             };
@@ -575,28 +553,41 @@
                     return;
                 }
                 try {
-                    const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`);
-                    await setDoc(settingsRef, { deferredDurationHours: newDeferred, staleDurationHours: newStale });
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`), { deferredDurationHours: newDeferred, staleDurationHours: newStale });
                     deferredDurationHours = newDeferred;
                     staleDurationHours = newStale;
                     settingsMessage.textContent = "Налаштування збережено успішно!";
                     settingsMessage.className = 'text-sm text-center text-green-600 visible';
                     setTimeout(() => settingsMessage.classList.remove('visible'), 3000);
-                } catch (e) {
-                    console.error("Помилка збереження налаштувань:", e);
-                    settingsMessage.textContent = "Не вдалося зберегти налаштування.";
-                    settingsMessage.className = 'text-sm text-center text-red-600 visible';
-                }
+                } catch (e) { console.error("Помилка збереження налаштувань:", e); }
             };
 
-            const showConfirmModal = (taskId) => { currentTaskIdToDelete = taskId; confirmModal.classList.remove('hidden'); };
-            const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentTaskIdToDelete = null; };
-            const deleteTask = async () => {
-                if (!userId || !currentTaskIdToDelete) return;
+            const showConfirmModal = (action, message) => { 
+                currentAction = action;
+                confirmModalMessage.textContent = message;
+                confirmModal.classList.remove('hidden'); 
+            };
+            const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
+            const deleteTask = async (taskId) => {
+                if (!userId || !taskId) return;
                 try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskIdToDelete));
-                    hideConfirmModal();
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId));
                 } catch (e) { console.error("Помилка видалення завдання: ", e); }
+            };
+            
+            const deleteChatMessage = async (msg) => {
+                if (!userId || !msg.id || msg.senderId !== userId) return;
+                try {
+                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                    await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id));
+                    if (msg.type === 'image' && msg.imageUrl) {
+                        const imageRef = ref(storage, msg.imageUrl);
+                        await deleteObject(imageRef);
+                    }
+                } catch (e) {
+                     console.error("Помилка видалення повідомлення:", e);
+                     showNotification('Помилка', 'Не вдалося видалити повідомлення.');
+                }
             };
 
             const showViewEditModal = (task) => { currentTaskToEdit = task; editTaskInput.value = task.text; viewEditModal.classList.remove('hidden'); };
@@ -606,11 +597,9 @@
                 const newText = editTaskInput.value.trim();
                 if (newText === '') { showNotification('Помилка', 'Текст завдання не може бути порожнім.'); return; }
                 try {
-                    const taskRef = doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id);
-                    await updateDoc(taskRef, { text: newText, lastUpdatedAt: serverTimestamp() });
+                    await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id), { text: newText, lastUpdatedAt: serverTimestamp() });
                     hideViewEditModal();
-                    showNotification('Успіх', 'Завдання оновлено.');
-                } catch (e) { console.error("Помилка оновлення завдання:", e); showNotification('Помилка', 'Не вдалося оновити завдання.'); }
+                } catch (e) { console.error("Помилка оновлення завдання:", e); }
             };
 
             const showAddFriendModal = () => { friendNameInput.value = ''; friendIdInput.value = ''; addFriendModal.classList.remove('hidden'); };
@@ -623,8 +612,7 @@
                 try {
                     await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId });
                     hideAddFriendModal();
-                    showNotification('Успіх', `Друга "${name}" додано.`);
-                } catch (e) { console.error("Помилка додавання друга:", e); showNotification('Помилка', 'Не вдалося додати друга.'); }
+                } catch (e) { console.error("Помилка додавання друга:", e); }
             };
 
             const subscribeToFriends = () => {
@@ -659,9 +647,7 @@
             };
 
             const renderChatFriends = (friends) => {
-                chatFriendsList.innerHTML = friends.length === 0 
-                    ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` 
-                    : '';
+                chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` : '';
                 friends.forEach(friend => {
                     const friendItem = document.createElement('div');
                     friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between';
@@ -686,10 +672,9 @@
                     const sharedTasksRef = collection(publicDataRef, 'shared_tasks');
                     await addDoc(sharedTasksRef, { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Невідомий', recipientId, createdAt: serverTimestamp() });
                     const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
-                    await sendChatMessage(`Я призначив вам завдання: "${taskText}"`, selectedFriend, true);
+                    await sendChatMessage(`Я призначив вам завдання: "${taskText}"`, selectedFriend, { isTask: true });
                     hideAssignTaskModal();
-                    showNotification('Успіх', 'Завдання відправлено!');
-                } catch (e) { console.error("Помилка відправлення завдання:", e); showNotification('Помилка', 'Не вдалося відправити завдання.'); }
+                } catch (e) { console.error("Помилка відправлення завдання:", e); }
             };
 
             const subscribeToIncomingTasks = () => {
@@ -705,9 +690,7 @@
 
             const renderIncomingTasks = (tasks) => {
                 incomingTasksSection.style.display = tasks.length > 0 ? 'block' : 'none';
-                incomingTasksList.innerHTML = tasks.length === 0 
-                    ? `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>` 
-                    : '';
+                incomingTasksList.innerHTML = tasks.length === 0 ? `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>` : '';
                 tasks.forEach(task => {
                     const taskItem = document.createElement('div');
                     taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 sm:space-x-2';
@@ -728,23 +711,17 @@
             const acceptIncomingTask = async (task) => {
                 if (!userId) return;
                 try {
-                    const tasksCollection = collection(db, `artifacts/${appId}/users/${userId}/tasks`);
-                    await addDoc(tasksCollection, { text: task.text, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false, assignedBy: task.senderName });
-                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    const taskToDeleteRef = doc(collection(publicDataRef, 'shared_tasks'), task.id);
-                    await deleteDoc(taskToDeleteRef);
-                    showNotification('Завдання прийнято', 'Завдання додано до ваших активних завдань.');
-                } catch (e) { console.error("Помилка прийняття завдання:", e); showNotification('Помилка', 'Не вдалося прийняти завдання.'); }
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: task.text, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false, assignedBy: task.senderName });
+                    await declineIncomingTask(task.id);
+                } catch (e) { console.error("Помилка прийняття завдання:", e); }
             };
 
             const declineIncomingTask = async (taskId) => {
                 if (!userId) return;
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    const taskToDeleteRef = doc(collection(publicDataRef, 'shared_tasks'), taskId);
-                    await deleteDoc(taskToDeleteRef);
-                    showNotification('Завдання відхилено', 'Завдання було успішно відхилено.');
-                } catch (e) { console.error("Помилка відхилення завдання:", e); showNotification('Помилка', 'Не вдалося відхилити завдання.'); }
+                    await deleteDoc(doc(collection(publicDataRef, 'shared_tasks'), taskId));
+                } catch (e) { console.error("Помилка відхилення завдання:", e); }
             };
 
             const openChatView = () => { mainContent.classList.add('hidden'); chatSection.classList.remove('hidden'); };
@@ -765,30 +742,23 @@
                 chatHeader.textContent = `Чат з ${friend.name}`;
                 chatMessages.innerHTML = '';
                 if (unsubscribeFromChat) unsubscribeFromChat();
-
                 const participants = [userId, friend.userId].sort();
                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                 const chatRef = collection(publicDataRef, 'chat_messages');
                 const q = query(chatRef, where("participants", "==", participants), orderBy("timestamp"));
-
                 unsubscribeFromChat = onSnapshot(q, (snapshot) => {
                     chatMessages.innerHTML = '';
-                    snapshot.docs.forEach(doc => renderChatMessage(doc.data()));
-                    // Ensure scroll happens after DOM update
-                    setTimeout(() => {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }, 0);
+                    snapshot.docs.forEach(doc => renderChatMessage({ id: doc.id, ...doc.data() }));
+                    setTimeout(() => { chatMessages.scrollTop = chatMessages.scrollHeight; }, 0);
                 });
-                
                 await markMessagesAsRead(friend.userId);
             };
             
             const markMessagesAsRead = async (friendId) => {
-                 if (!userId || !friendId) return;
+                if (!userId || !friendId) return;
                 const participants = [userId, friendId].sort();
                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                 const chatRef = collection(publicDataRef, 'chat_messages');
-                
                 const q = query(chatRef, where("participants", "==", participants));
                 try {
                     const snapshot = await getDocs(q);
@@ -801,13 +771,8 @@
                              updated = true;
                         }
                     });
-
-                    if (updated) {
-                       await batch.commit();
-                    }
-                } catch (e) {
-                    console.error("Помилка під час позначення повідомлень як прочитаних:", e);
-                }
+                    if (updated) await batch.commit();
+                } catch (e) { console.error("Помилка під час позначення повідомлень як прочитаних:", e); }
             };
 
             const subscribeToUnreadCounts = () => {
@@ -815,11 +780,8 @@
                  const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                  const chatRef = collection(publicDataRef, 'chat_messages');
                  const q = query(chatRef, where("participants", "array-contains", userId));
-                 
                  onSnapshot(q, (snapshot) => {
-                     const unreadCounts = {};
-                     const unreadSenders = new Set();
-
+                     const unreadCounts = {}, unreadSenders = new Set();
                      snapshot.docs.forEach(doc => {
                          const message = { id: doc.id, ...doc.data() };
                          if (message.readBy && !message.readBy.includes(userId)) {
@@ -827,13 +789,9 @@
                              if (friendId) {
                                  unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1;
                                  unreadSenders.add(friendId);
-                                 
                                  if (!shownNotifications.has(message.id)) {
                                      const friendName = friendsCache.find(f => f.userId === friendId)?.name || 'Друг';
-                                      showPushNotification(`Нове повідомлення від ${friendName}`, {
-                                         body: message.text || '[Зображення]',
-                                         icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
-                                     });
+                                      showPushNotification(`Нове повідомлення від ${friendName}`, { body: message.text || '[Зображення]' });
                                      shownNotifications.add(message.id);
                                  }
                              }
@@ -844,81 +802,67 @@
             };
             
             const updateUnreadBadges = (counts, totalSenders) => {
-                if (totalSenders > 0) {
-                    chatNotificationBadge.textContent = totalSenders;
-                    chatNotificationBadge.classList.remove('hidden');
-                } else {
-                    chatNotificationBadge.classList.add('hidden');
-                }
-                
+                chatNotificationBadge.textContent = totalSenders;
+                chatNotificationBadge.classList.toggle('hidden', totalSenders === 0);
                 friendsCache.forEach(friend => {
                     const badge = document.getElementById(`unread-count-${friend.userId}`);
                     if (badge) {
                         const count = counts[friend.userId];
-                        if (count > 0) {
-                            badge.textContent = count;
-                            badge.classList.remove('hidden');
-                        } else {
-                            badge.classList.add('hidden');
-                        }
+                        badge.textContent = count;
+                        badge.classList.toggle('hidden', !count);
                     }
                 });
             };
 
-
             const renderChatMessage = (message) => {
                 const msgDiv = document.createElement('div');
                 const isSentByMe = message.senderId === userId;
-                const isTaskMessage = message.isTask || false;
-                let bubbleClasses = 'p-3 rounded-lg max-w-xs md:max-w-md break-words';
-                let containerClasses = 'flex';
-                let contentHTML = '';
+                msgDiv.className = `flex ${isSentByMe ? 'justify-end' : 'justify-start'}`;
 
-                if (isTaskMessage) {
-                    bubbleClasses += ' bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic';
-                    containerClasses += ' justify-center';
-                    contentHTML = message.text;
+                const bubble = document.createElement('div');
+                bubble.className = `message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative group ${isSentByMe ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}`;
+                
+                if (message.isTask) {
+                    bubble.className = 'message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic mx-auto';
+                    msgDiv.className = 'flex justify-center';
+                    bubble.textContent = message.text;
                 } else if (message.type === 'image' && message.imageUrl) {
-                    bubbleClasses += isSentByMe ? ' bg-indigo-500' : ' bg-gray-200';
-                    contentHTML = `<img src="${message.imageUrl}" class="max-w-[200px] rounded-lg cursor-pointer max-h-48" onclick="showImageViewer('${message.imageUrl}')">`;
+                    const img = document.createElement('img');
+                    img.src = message.imageUrl;
+                    img.className = "max-w-[200px] rounded-lg cursor-pointer max-h-48";
+                    img.addEventListener('click', () => showImageViewer(message.imageUrl));
+                    bubble.appendChild(img);
                 } else {
-                    bubbleClasses += isSentByMe ? ' bg-indigo-500 text-white' : ' bg-gray-200 text-gray-800';
-                    contentHTML = message.text;
+                    bubble.textContent = message.text;
                 }
-                containerClasses += isSentByMe ? ' justify-end' : ' justify-start';
 
-                msgDiv.className = containerClasses;
-                msgDiv.innerHTML = `<div class="${bubbleClasses}">${contentHTML}</div>`;
+                if (isSentByMe && !message.isTask) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-msg-btn absolute top-1/2 -left-8 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-gray-300 hover:bg-red-500 text-white';
+                    deleteBtn.innerHTML = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+                    deleteBtn.addEventListener('click', () => showConfirmModal(() => deleteChatMessage(message), "Ви впевнені, що хочете видалити це повідомлення?"));
+                    bubble.appendChild(deleteBtn);
+                }
+
+                msgDiv.appendChild(bubble);
                 chatMessages.appendChild(msgDiv);
             };
-            window.showImageViewer = (url) => {
-                fullImage.src = url;
-                imageViewerModal.classList.remove('hidden');
-            };
 
-            const sendChatMessage = async (text, recipient, isTask = false, imageUrl = null) => {
+            const showImageViewer = (url) => { fullImage.src = url; imageViewerModal.classList.remove('hidden'); };
+
+            const sendChatMessage = async (options) => {
+                const { text, recipient, isTask = false, imageUrl = null } = options;
                 const messageText = text ? text.trim() : '';
                 if (messageText === '' && !imageUrl) return;
-
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                     const chatRef = collection(publicDataRef, 'chat_messages');
                     const participants = [userId, recipient.userId].sort();
                     await addDoc(chatRef, { 
-                        participants, 
-                        text: messageText, 
-                        senderId: userId, 
-                        timestamp: serverTimestamp(), 
-                        isTask,
-                        readBy: [userId],
-                        type: imageUrl ? 'image' : 'text',
-                        imageUrl: imageUrl
+                        participants, text: messageText, senderId: userId, timestamp: serverTimestamp(), isTask, readBy: [userId], type: imageUrl ? 'image' : 'text', imageUrl
                     });
                     if (!isTask) chatMessageInput.value = '';
-                } catch (e) {
-                    console.error("Помилка відправки повідомлення: ", e);
-                    showNotification('Помилка відправки', `Не вдалося відправити повідомлення. Перевірте консоль (F12).`);
-                }
+                } catch (e) { console.error("Помилка відправки повідомлення: ", e); }
             };
             
             const uploadImageAndSendMessage = (file) => {
@@ -927,22 +871,13 @@
                 const chatId = participants.join('_');
                 const storageRef = ref(storage, `chats/${chatId}/${Date.now()}-${file.name}`);
                 const uploadTask = uploadBytesResumable(storageRef, file);
-
                 uploadProgressContainer.classList.remove('hidden');
-
                 uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        uploadProgressBar.style.width = progress + '%';
-                    }, 
-                    (error) => {
-                        console.error("Помилка завантаження зображення:", error);
-                        showNotification('Помилка', 'Не вдалося завантажити зображення.');
-                        uploadProgressContainer.classList.add('hidden');
-                    }, 
+                    (snapshot) => { uploadProgressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`; }, 
+                    (error) => { console.error("Помилка завантаження:", error); uploadProgressContainer.classList.add('hidden'); }, 
                     () => {
                         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                            sendChatMessage(null, selectedFriendForChat, false, downloadURL);
+                            sendChatMessage({ recipient: selectedFriendForChat, imageUrl: downloadURL });
                             uploadProgressContainer.classList.add('hidden');
                         });
                     }
@@ -951,31 +886,19 @@
 
             const checkNotificationStatus = () => {
                 if (!('Notification' in window)) {
-                    notificationsStatus.textContent = "Ваш браузер не підтримує сповіщення.";
+                    notificationsStatus.textContent = "Браузер не підтримує сповіщення.";
                     enableNotificationsBtn.disabled = true;
                     return;
                 }
-                switch(Notification.permission) {
-                    case 'granted':
-                        notificationsStatus.textContent = "Сповіщення увімкнено.";
-                        enableNotificationsBtn.textContent = "Сповіщення увімкнено";
-                        enableNotificationsBtn.disabled = true;
-                        break;
-                    case 'denied':
-                        notificationsStatus.textContent = "Сповіщення заблоковано.";
-                        enableNotificationsBtn.textContent = "Сповіщення заблоковано";
-                        enableNotificationsBtn.disabled = true;
-                        break;
-                    default:
-                        notificationsStatus.textContent = "Надайте дозвіл на показ сповіщень.";
-                }
+                const permission = Notification.permission;
+                notificationsStatus.textContent = permission === 'granted' ? "Сповіщення увімкнено." : permission === 'denied' ? "Сповіщення заблоковано." : "Надайте дозвіл.";
+                enableNotificationsBtn.disabled = permission !== 'default';
+                enableNotificationsBtn.textContent = permission === 'default' ? "Увімкнути сповіщення" : "Статус: " + permission;
             };
             
             const requestNotificationPermission = async () => {
                 const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення." });
-                }
+                if (permission === 'granted') { new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення." }); }
                 checkNotificationStatus();
             };
 
@@ -983,7 +906,7 @@
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
             addTaskButton.addEventListener('click', addTask);
-            confirmDeleteButton.addEventListener('click', deleteTask);
+            confirmDeleteButton.addEventListener('click', () => { if (currentAction) currentAction(); hideConfirmModal(); });
             cancelDeleteButton.addEventListener('click', hideConfirmModal);
             closeNotificationBtn.addEventListener('click', hideNotification);
             saveEditBtn.addEventListener('click', saveEditedTask);
@@ -1004,29 +927,20 @@
             enableNotificationsBtn.addEventListener('click', requestNotificationPermission);
             closeImageViewerBtn.addEventListener('click', () => imageViewerModal.classList.add('hidden'));
             attachFileBtn.addEventListener('click', () => imageUploadInput.click());
-            imageUploadInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    uploadImageAndSendMessage(e.target.files[0]);
-                }
-            });
+            imageUploadInput.addEventListener('change', (e) => { if (e.target.files[0]) uploadImageAndSendMessage(e.target.files[0]); });
             
             const handleSendMessage = () => {
-                if (!selectedFriendForChat) {
-                    showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.');
-                    return;
-                }
-                sendChatMessage(chatMessageInput.value, selectedFriendForChat);
+                if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; }
+                sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat });
             };
             sendChatMessageBtn.addEventListener('click', handleSendMessage);
             chatMessageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
             
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) {
-                 signInWithCustomToken(auth, initialAuthToken).catch(err => {
-                     signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
-                });
+                 signInWithCustomToken(auth, initialAuthToken).catch(() => signInAnonymously(auth));
             } else {
-                 signInAnonymously(auth).catch(err => console.error("Помилка анонімного входу:", err));
+                 signInAnonymously(auth);
             }
         };
     </script>
