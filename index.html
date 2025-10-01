@@ -43,7 +43,7 @@
     </div>
 
     <!-- Модальні вікна (винесені на верхній рівень) -->
-    <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div id="notification-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
             <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
             <p id="notification-message" class="text-gray-700 mb-4 break-words"></p>
@@ -52,7 +52,7 @@
             </div>
         </div>
     </div>
-    <div id="view-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div id="view-edit-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
             <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
             <textarea id="edit-task-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4" rows="8"></textarea>
@@ -62,17 +62,17 @@
             </div>
         </div>
     </div>
-    <div id="confirm-modal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
+    <div id="confirm-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
-            <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це?</p>
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть дію</h3>
+            <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені?</p>
             <div class="flex justify-end space-x-2">
                 <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
                 <button class="delete-btn px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
             </div>
         </div>
     </div>
-    <div id="add-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div id="add-friend-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
             <h3 class="text-lg font-bold mb-2 text-gray-800">Додати друга</h3>
             <input type="text" id="friend-name-input" placeholder="Ім'я друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -83,7 +83,7 @@
             </div>
         </div>
     </div>
-    <div id="assign-task-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div id="assign-task-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
             <h3 class="text-lg font-bold mb-2 text-gray-800">Призначити завдання</h3>
             <select id="friend-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -96,7 +96,7 @@
             </div>
         </div>
     </div>
-    <div id="image-viewer-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay p-4">
+    <div id="image-viewer-modal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay p-4">
         <div class="bg-white p-2 rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full h-full relative flex flex-col">
             <button id="close-image-viewer-btn" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 leading-none text-2xl z-10">&times;</button>
             <img id="full-image" src="" class="w-full h-full object-contain">
@@ -107,91 +107,32 @@
         <div class="bg-white p-6 rounded-2xl shadow-xl">
             <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник Завдань</h1>
             <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono break-all">Немає</span></p>
-
-            <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4">
-                Сталася помилка ініціалізації. Будь ласка, переконайтеся, що конфігурація Firebase додана.
-            </div>
-
+            <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4"></div>
             <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
                 <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
-                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
+                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md space-x-2">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/></svg>
                     <span>Увійти через Google</span>
                 </button>
             </div>
-
             <div id="content-section" class="hidden">
                 <div class="flex space-x-2 mb-4">
-                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">
-                        Чати
-                        <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
+                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 shadow-md">
+                        Чати <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
                     </button>
-                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
+                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 shadow-md">Вийти</button>
                 </div>
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                     <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Додати</button>
                     <button id="assign-task-open-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-md">Призначити</button>
                 </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
-                    <div id="incoming-tasks-list" class="space-y-3"></div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
-                    <div id="active-tasks-list" class="space-y-3 task-list-container"></div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-700">В роботі</h2>
-                        <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
-                    </div>
-                    <div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
-                        <button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
-                    </div>
-                    <div id="completed-tasks-list" class="space-y-3 hidden task-list-container"></div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
-                        <button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
-                    </div>
-                    <div id="settings-content" class="hidden space-y-6">
-                         <div class="space-y-4">
-                             <div>
-                                 <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
-                                 <input type="number" step="0.01" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="24">
-                             </div>
-                             <div>
-                                 <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
-                                 <input type="number" step="0.01" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="72">
-                             </div>
-                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
-                             <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
-                         </div>
-                         <div class="border-t pt-4">
-                            <h3 class="text-lg font-medium text-gray-800 mb-2">Сповіщення</h3>
-                            <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md">Увімкнути сповіщення</button>
-                            <p id="notifications-status" class="text-sm text-center text-gray-500 mt-2"></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-700">Друзі</h2>
-                        <button id="friends-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
-                    </div>
-                    <div id="friends-content" class="hidden">
-                        <div class="flex justify-end mb-4">
-                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button>
-                        </div>
-                        <div id="friends-list" class="space-y-3"></div>
-                    </div>
-                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section"><h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2><div id="incoming-tasks-list" class="space-y-3"></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6"><h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2><div id="active-tasks-list" class="space-y-3 task-list-container"></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700">В роботі</h2><button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button></div><div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2><button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button></div><div id="completed-tasks-list" class="space-y-3 hidden task-list-container"></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700">Налаштування</h2><button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button></div><div id="settings-content" class="hidden space-y-6"></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700">Друзі</h2><button id="friends-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button></div><div id="friends-content" class="hidden"><div class="flex justify-end mb-4"><button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button></div><div id="friends-list" class="space-y-3"></div></div></div>
             </div>
         </div>
     </div>
@@ -201,27 +142,16 @@
         <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
              <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg">
-                <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
-                    <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
-                    <div id="chat-friends-list" class="space-y-1 p-2"></div>
-                </div>
+                <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto"><h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2><div id="chat-friends-list" class="space-y-1 p-2"></div></div>
                 <div class="w-full md:w-2/3 flex flex-col min-h-0">
-                    <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
-                        <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
-                    </div>
+                    <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center"><p class="text-gray-500">Виберіть чат</p></div>
                     <div id="chat-window" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
                          <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
                          <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100"></div>
-                         <div id="upload-progress-container" class="p-4 bg-white border-t hidden">
-                            <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                         </div>
+                         <div id="upload-progress-container" class="p-4 bg-white border-t hidden"><div class="w-full bg-gray-200 rounded-full h-2.5"><div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div></div>
                          <div class="p-4 bg-white border-t flex items-center space-x-2">
                             <input type="file" id="image-upload-input" class="hidden" accept="image/*">
-                            <button id="attach-file-btn" class="p-2 rounded-full hover:bg-gray-200">
-                                <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-                            </button>
+                            <button id="attach-file-btn" class="p-2 rounded-full hover:bg-gray-200"><svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>
                             <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
                             <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Надіслати</button>
                          </div>
@@ -237,26 +167,21 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        
         window.onload = function () {
-            setLogLevel('debug');
-            
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-                authDomain: "planer-97eb1.firebaseapp.com",
-                projectId: "planer-97eb1",
-                storageBucket: "planer-97eb1.firebasestorage.app",
-                messagingSenderId: "322073132266",
-                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-                measurementId: "G-GB94F6MG2N"
-            };
-
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+    authDomain: "planer-97eb1.firebaseapp.com",
+    projectId: "planer-97eb1",
+    storageBucket: "planer-97eb1.firebasestorage.app",
+    messagingSenderId: "322073132266",
+    appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+    measurementId: "G-GB94F6MG2N" };
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR_")) {
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('error-message').classList.remove('hidden');
+                getEl('loading-spinner').classList.add('hidden');
+                getEl('error-message').textContent = "Конфігурація Firebase не знайдена або недійсна.";
+                getEl('error-message').classList.remove('hidden');
                 return;
             }
 
@@ -501,19 +426,22 @@
             const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
             const deleteTask = async (taskId) => {
                 if (!userId || !taskId) return;
-                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання:", e); }
+                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання: ", e); }
             };
             
             const deleteChatMessage = async (msg) => {
                 if (!userId || !msg.id || msg.senderId !== userId) return;
                 try {
-                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id));
+                    const docRef = doc(db, "artifacts", appId, "public", "data", "chat_messages", msg.id);
                     if (msg.type === 'image' && msg.imageUrl) {
                         const imageRef = ref(storage, msg.imageUrl);
                         await deleteObject(imageRef);
                     }
-                } catch (e) { console.error("Помилка видалення повідомлення:", e); }
+                    await deleteDoc(docRef);
+                } catch (e) {
+                     console.error("Помилка видалення повідомлення:", e);
+                     showNotification('Помилка', 'Не вдалося видалити повідомлення.');
+                }
             };
 
             const showViewEditModal = (task) => { currentTaskToEdit = task; editTaskInput.value = task.text; viewEditModal.classList.remove('hidden'); };
@@ -521,7 +449,7 @@
             const saveEditedTask = async () => {
                 if (!userId || !currentTaskToEdit) return;
                 const newText = editTaskInput.value.trim();
-                if (newText === '') { showNotification('Помилка', 'Текст завдання не може бути порожнім.'); return; }
+                if (newText === '') { return; }
                 try {
                     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id), { text: newText, lastUpdatedAt: serverTimestamp() });
                     hideViewEditModal();
@@ -533,8 +461,7 @@
             const saveFriend = async () => {
                 const name = friendNameInput.value.trim();
                 const friendId = friendIdInput.value.trim();
-                if (name === '' || friendId === '') { return; }
-                if (friendId === userId) { return; }
+                if (name === '' || friendId === '' || friendId === userId) return;
                 try {
                     await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId });
                     hideAddFriendModal();
@@ -555,9 +482,7 @@
             const renderFriends = (friends) => {
                 friendsList.innerHTML = '';
                 friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
-                if (friends.length === 0) {
-                    friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`; return;
-                }
+                if (friends.length === 0) { friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`; return; }
                 friends.forEach(friend => {
                     friendsList.innerHTML += `<div class="p-3 rounded-lg bg-white shadow-md flex justify-between items-center"><div><p class="font-semibold text-gray-800">${friend.name}</p><p class="text-sm text-gray-500 break-all">${friend.userId}</p></div></div>`;
                     friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`;
@@ -671,7 +596,7 @@
                         }
                     });
                     await batch.commit();
-                } catch (e) { console.error("Помилка під час позначення повідомлень як прочитаних:", e); }
+                } catch (e) { console.error("Помилка позначення повідомлень як прочитаних:", e); }
             };
 
             const subscribeToUnreadCounts = () => {
