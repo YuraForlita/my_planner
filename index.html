@@ -12,7 +12,7 @@
             background-color: #f3f4f6;
         }
         .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.75);
         }
         .text-truncate-2 {
             display: -webkit-box;
@@ -101,6 +101,13 @@
                         <button id="send-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Відправити</button>
                         <button id="cancel-assign-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
                     </div>
+                </div>
+            </div>
+            <!-- Модальне вікно для перегляду зображень -->
+            <div id="image-viewer-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay p-4">
+                <div class="bg-white p-2 rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full h-full relative flex flex-col">
+                    <button id="close-image-viewer-btn" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 leading-none text-2xl z-10">&times;</button>
+                    <img id="full-image" src="" class="w-full h-full object-contain">
                 </div>
             </div>
 
@@ -213,7 +220,16 @@
                     <div id="chat-window" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
                          <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
                          <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100"></div>
-                         <div class="p-4 bg-white border-t flex space-x-2">
+                         <div id="upload-progress-container" class="p-4 bg-white border-t hidden">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                         </div>
+                         <div class="p-4 bg-white border-t flex items-center space-x-2">
+                            <input type="file" id="image-upload-input" class="hidden" accept="image/*">
+                            <button id="attach-file-btn" class="p-2 rounded-full hover:bg-gray-200">
+                                <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                            </button>
                             <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
                             <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Надіслати</button>
                          </div>
@@ -228,6 +244,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.onload = function () {
@@ -254,6 +271,7 @@
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
+            const storage = getStorage(app);
 
             const mainContent = document.getElementById('main-content'),
                   taskInput = document.getElementById('task-input'),
@@ -315,7 +333,15 @@
                   chatMessageInput = document.getElementById('chat-message-input'),
                   sendChatMessageBtn = document.getElementById('send-chat-message-btn'),
                   enableNotificationsBtn = document.getElementById('enable-notifications-btn'),
-                  notificationsStatus = document.getElementById('notifications-status');
+                  notificationsStatus = document.getElementById('notifications-status'),
+                  imageViewerModal = document.getElementById('image-viewer-modal'),
+                  fullImage = document.getElementById('full-image'),
+                  closeImageViewerBtn = document.getElementById('close-image-viewer-btn'),
+                  attachFileBtn = document.getElementById('attach-file-btn'),
+                  imageUploadInput = document.getElementById('image-upload-input'),
+                  uploadProgressContainer = document.getElementById('upload-progress-container'),
+                  uploadProgressBar = document.getElementById('upload-progress-bar');
+
 
             let userId = null,
                 currentTaskIdToDelete = null,
@@ -805,7 +831,7 @@
                                  if (!shownNotifications.has(message.id)) {
                                      const friendName = friendsCache.find(f => f.userId === friendId)?.name || 'Друг';
                                       showPushNotification(`Нове повідомлення від ${friendName}`, {
-                                         body: message.text,
+                                         body: message.text || '[Зображення]',
                                          icon: 'https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28.png'
                                      });
                                      shownNotifications.add(message.id);
@@ -846,24 +872,34 @@
                 const isTaskMessage = message.isTask || false;
                 let bubbleClasses = 'p-3 rounded-lg max-w-xs md:max-w-md break-words';
                 let containerClasses = 'flex';
+                let contentHTML = '';
+
                 if (isTaskMessage) {
                     bubbleClasses += ' bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic';
                     containerClasses += ' justify-center';
-                } else if (isSentByMe) {
-                    bubbleClasses += ' bg-indigo-500 text-white';
-                    containerClasses += ' justify-end';
+                    contentHTML = message.text;
+                } else if (message.type === 'image' && message.imageUrl) {
+                    bubbleClasses += isSentByMe ? ' bg-indigo-500' : ' bg-gray-200';
+                    contentHTML = `<img src="${message.imageUrl}" class="max-w-[200px] rounded-lg cursor-pointer max-h-48" onclick="showImageViewer('${message.imageUrl}')">`;
                 } else {
-                    bubbleClasses += ' bg-gray-200 text-gray-800';
-                    containerClasses += ' justify-start';
+                    bubbleClasses += isSentByMe ? ' bg-indigo-500 text-white' : ' bg-gray-200 text-gray-800';
+                    contentHTML = message.text;
                 }
+                containerClasses += isSentByMe ? ' justify-end' : ' justify-start';
+
                 msgDiv.className = containerClasses;
-                msgDiv.innerHTML = `<div class="${bubbleClasses}">${message.text}</div>`;
+                msgDiv.innerHTML = `<div class="${bubbleClasses}">${contentHTML}</div>`;
                 chatMessages.appendChild(msgDiv);
             };
+            window.showImageViewer = (url) => {
+                fullImage.src = url;
+                imageViewerModal.classList.remove('hidden');
+            };
 
-            const sendChatMessage = async (text, recipient, isTask = false) => {
-                const messageText = text.trim();
-                if (messageText === '' || !recipient) return;
+            const sendChatMessage = async (text, recipient, isTask = false, imageUrl = null) => {
+                const messageText = text ? text.trim() : '';
+                if (messageText === '' && !imageUrl) return;
+
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
                     const chatRef = collection(publicDataRef, 'chat_messages');
@@ -874,13 +910,43 @@
                         senderId: userId, 
                         timestamp: serverTimestamp(), 
                         isTask,
-                        readBy: [userId]
+                        readBy: [userId],
+                        type: imageUrl ? 'image' : 'text',
+                        imageUrl: imageUrl
                     });
                     if (!isTask) chatMessageInput.value = '';
                 } catch (e) {
                     console.error("Помилка відправки повідомлення: ", e);
                     showNotification('Помилка відправки', `Не вдалося відправити повідомлення. Перевірте консоль (F12).`);
                 }
+            };
+            
+            const uploadImageAndSendMessage = (file) => {
+                if (!file || !selectedFriendForChat) return;
+                const participants = [userId, selectedFriendForChat.userId].sort();
+                const chatId = participants.join('_');
+                const storageRef = ref(storage, `chats/${chatId}/${Date.now()}-${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                uploadProgressContainer.classList.remove('hidden');
+
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        uploadProgressBar.style.width = progress + '%';
+                    }, 
+                    (error) => {
+                        console.error("Помилка завантаження зображення:", error);
+                        showNotification('Помилка', 'Не вдалося завантажити зображення.');
+                        uploadProgressContainer.classList.add('hidden');
+                    }, 
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            sendChatMessage(null, selectedFriendForChat, false, downloadURL);
+                            uploadProgressContainer.classList.add('hidden');
+                        });
+                    }
+                );
             };
 
             const checkNotificationStatus = () => {
@@ -908,7 +974,7 @@
             const requestNotificationPermission = async () => {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення про нові повідомлення." });
+                    new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення." });
                 }
                 checkNotificationStatus();
             };
@@ -936,10 +1002,17 @@
             chatsBtn.addEventListener('click', openChatView);
             backToTasksBtn.addEventListener('click', closeChatView);
             enableNotificationsBtn.addEventListener('click', requestNotificationPermission);
+            closeImageViewerBtn.addEventListener('click', () => imageViewerModal.classList.add('hidden'));
+            attachFileBtn.addEventListener('click', () => imageUploadInput.click());
+            imageUploadInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    uploadImageAndSendMessage(e.target.files[0]);
+                }
+            });
             
             const handleSendMessage = () => {
                 if (!selectedFriendForChat) {
-                    showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку, щоб почати чат.');
+                    showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.');
                     return;
                 }
                 sendChatMessage(chatMessageInput.value, selectedFriendForChat);
