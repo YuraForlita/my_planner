@@ -504,24 +504,30 @@
             };
             
             const renderDropdown = (task, button) => {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
-                const dropdown = document.createElement('div');
-                dropdown.className = 'dropdown-menu absolute hidden bg-white rounded-md shadow-lg border py-1 right-0 mt-2';
-                dropdown.innerHTML = `<button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
-                    ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
-                    <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>`;
-                
-                button.parentElement.appendChild(dropdown);
-                dropdown.classList.remove('hidden');
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
+            const dropdown = document.createElement('div');
+            dropdown.className = 'dropdown-menu absolute hidden bg-white rounded-md shadow-lg border py-1';
+            dropdown.innerHTML = `<button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
+                <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>`;
+            
+            document.body.appendChild(dropdown); // Додаємо меню до тіла сторінки, а не до картки
 
-                const hideDropdown = (e) => {
-                    if (!dropdown.contains(e.target) && e.target !== button) {
-                        dropdown.remove();
-                        document.removeEventListener('click', hideDropdown, true);
-                    }
-                };
-                setTimeout(() => document.addEventListener('click', hideDropdown, true), 0);
+            const rect = button.getBoundingClientRect(); // Отримуємо координати кнопки
+            dropdown.style.position = 'fixed'; // Позиціонуємо відносно вікна браузера
+            dropdown.style.top = `${rect.bottom + 5}px`; // Встановлюємо позицію знизу від кнопки
+            dropdown.style.left = `${rect.right - dropdown.offsetWidth}px`; // Вирівнюємо по правому краю
+            dropdown.classList.remove('hidden');
+
+            // Логіка для закриття меню (без змін)
+            const hideDropdown = (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', hideDropdown, true);
+                }
             };
+            setTimeout(() => document.addEventListener('click', hideDropdown, true), 0);
+        };
 
             const addTask = async () => {
                 const taskText = taskInput.value.trim();
