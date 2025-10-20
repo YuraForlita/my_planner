@@ -34,7 +34,6 @@
         .message-bubble:hover .delete-msg-btn {
             opacity: 1;
         }
-        /* NEW: Styles for the report table */
         .report-table {
             border-spacing: 0;
             width: 100%;
@@ -87,7 +86,7 @@
             </div>
         </div>
     </div>
-    <div id="confirm-modal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
+    <div id="confirm-modal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
             <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть дію</h3>
             <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені?</p>
@@ -127,12 +126,12 @@
             <img id="full-image" src="" class="w-full h-full object-contain">
         </div>
     </div>
-    <!-- NEW: Модальне вікно для перегляду деталей завдання у звіті -->
     <div id="task-details-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
             <h3 class="text-lg font-bold mb-4 text-gray-800">Деталі завдання</h3>
             <p id="task-details-content" class="text-gray-700 mb-6 bg-gray-50 p-4 rounded-md whitespace-pre-wrap break-words"></p>
-            <div class="flex justify-end">
+            <div class="flex justify-between items-center">
+                <button id="delete-from-report-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити зі звіту</button>
                 <button id="close-task-details-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Закрити</button>
             </div>
         </div>
@@ -270,7 +269,7 @@
         </div>
     </div>
 
-    <!-- NEW: Секція Звіту (Таблиця) -->
+    <!-- Секція Звіту (Таблиця) -->
     <div id="report-section" class="max-w-7xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-from-report-btn" class="w-full md:w-auto text-center mb-6 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
@@ -366,12 +365,13 @@
                   reportBtn = getEl('report-btn'), reportSection = getEl('report-section'),
                   backToTasksFromReportBtn = getEl('back-to-tasks-from-report-btn'), reportTableBody = getEl('report-table-body'),
                   taskDetailsModal = getEl('task-details-modal'), taskDetailsContent = getEl('task-details-content'),
-                  closeTaskDetailsBtn = getEl('close-task-details-btn');
+                  closeTaskDetailsBtn = getEl('close-task-details-btn'),
+                  deleteFromReportBtn = getEl('delete-from-report-btn');
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
                 currentTaskToEdit = null, selectedFriendForChat = null, unsubscribeFromChat = null,
                 friendsCache = {}, shownNotifications = new Set(),
-                unsubscribeFromReport = null;
+                unsubscribeFromReport = null, currentReportTaskIdToDelete = null;
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -381,7 +381,7 @@
                     authButtons.classList.add('hidden');
                     contentSection.classList.remove('hidden');
                     await loadSettings();
-                    subscribeToFriends(); // Must be first to populate friendsCache
+                    subscribeToFriends(); 
                     subscribeToTasks();
                     subscribeToIncomingTasks();
                     subscribeToUnreadCounts();
@@ -494,7 +494,7 @@
                     const action = e.target.dataset.action;
                     if (action === 'defer') updateTaskStatus(task.id, 'deferred', task.originalSharedTaskId);
                     if (action === 'prolong') prolongTask(task.id);
-                    if (action === 'delete') showConfirmModal(() => deleteTask(task.id), "Видалити це завдання?", "Видалити");
+                    if (action === 'delete') showConfirmModal(() => deleteTask(task), "Видалити це завдання?", "Видалити");
                     dropdown.remove();
                 });
                 const hideDropdown = (e) => { if (!dropdown.contains(e.target)) { dropdown.remove(); document.removeEventListener('click', hideDropdown, true); } };
@@ -526,7 +526,17 @@
             const saveExpansionState = async () => { if (!userId) return; const sections = { deferred: !deferredTasksList.classList.contains('hidden'), completed: !completedTasksList.classList.contains('hidden'), settings: !settingsContent.classList.contains('hidden'), friends: !friendsContent.classList.contains('hidden') }; try { const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`); await setDoc(settingsRef, { expandedSections: sections }, { merge: true }); } catch (e) { console.error("Error saving expansion state:", e); } };
             const showConfirmModal = (action, message, buttonText) => { currentAction = action; confirmModalMessage.textContent = message; confirmDeleteButton.textContent = buttonText; confirmModal.classList.remove('hidden'); };
             const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
-            const deleteTask = async (taskId) => { if (!userId || !taskId) return; try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Error deleting task: ", e); } };
+            
+            const deleteTask = async (task) => {
+                if (!userId || !task || !task.id) return;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, task.id));
+                    if (task.originalSharedTaskId) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId));
+                    }
+                } catch (e) { console.error("Error deleting task: ", e); }
+            };
+
             const deleteChatMessage = async (msg) => { if (!userId || !msg.id || msg.senderId !== userId) return; try { const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id)); if (msg.type === 'image' && msg.imageUrl) { const imageRef = ref(storage, msg.imageUrl); await deleteObject(imageRef); } } catch (e) { console.error("Error deleting chat message:", e); } };
             const showViewEditModal = (task) => { currentTaskToEdit = task; editTaskInput.value = task.text; viewEditModal.classList.remove('hidden'); };
             const hideViewEditModal = () => { viewEditModal.classList.add('hidden'); currentTaskToEdit = null; };
@@ -582,16 +592,10 @@
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
                 const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                // FIXED: Removed orderBy to prevent index requirement, sorting is now done client-side.
                 const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"));
                 onSnapshot(q, (snapshot) => {
                     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Client-side sorting
-                    tasks.sort((a, b) => {
-                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return timeB - timeA;
-                    });
+                    tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                     renderIncomingTasks(tasks);
                 }, error => console.error("Error in incoming tasks subscription:", error));
             };
@@ -619,13 +623,13 @@
 
             const openChatView = () => { mainContent.classList.add('hidden'); chatSection.classList.remove('hidden'); };
             const closeChatView = () => { chatSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromChat) unsubscribeFromChat(); unsubscribeFromChat = null; selectedFriendForChat = null; chatWindow.classList.add('hidden'); chatWindowPlaceholder.classList.remove('hidden'); };
-            const selectFriendForChat = async (friend) => { selectedFriendForChat = friend; chatWindowPlaceholder.classList.add('hidden'); chatWindow.classList.remove('hidden'); chatHeader.textContent = `Чат з ${friend.name}`; chatMessages.innerHTML = ''; if (unsubscribeFromChat) unsubscribeFromChat(); const participants = [userId, friend.userId].sort(); const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); const q = query(collection(publicDataRef, 'chat_messages'), where("participants", "==", participants), orderBy("timestamp")); unsubscribeFromChat = onSnapshot(q, (snapshot) => { chatMessages.innerHTML = ''; snapshot.docs.forEach(doc => renderChatMessage({ id: doc.id, ...doc.data() })); setTimeout(() => { chatMessages.scrollTop = chatMessages.scrollHeight; }, 0); }, error => console.error("Chat subscription error:", error)); await markMessagesAsRead(friend.userId); };
-            const markMessagesAsRead = async (friendId) => { if (!userId || !friendId) return; const participants = [userId, friendId].sort(); const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); const q = query(collection(publicDataRef, 'chat_messages'), where("participants", "==", participants)); try { const snapshot = await getDocs(q); const batch = writeBatch(db); snapshot.docs.forEach(docSnapshot => { const message = docSnapshot.data(); if (message.readBy && !message.readBy.includes(userId)) { batch.update(docSnapshot.ref, { readBy: arrayUnion(userId) }); } }); await batch.commit(); } catch (e) { console.error("Error marking messages as read:", e); } };
-            const subscribeToUnreadCounts = () => { if (!userId) return; const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); const q = query(collection(publicDataRef, 'chat_messages'), where("participants", "array-contains", userId)); onSnapshot(q, (snapshot) => { const unreadCounts = {}, unreadSenders = new Set(); snapshot.docs.forEach(doc => { const message = { id: doc.id, ...doc.data() }; if (message.readBy && !message.readBy.includes(userId)) { const friendId = message.participants.find(id => id !== userId); if (friendId) { unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1; unreadSenders.add(friendId); if (!shownNotifications.has(message.id)) { const friendName = friendsCache[friendId]?.name || 'Друг'; showPushNotification(`Нове повідомлення від ${friendName}`, { body: message.text || '[Зображення]' }); shownNotifications.add(message.id); } } } }); updateUnreadBadges(unreadCounts, unreadSenders.size); }, error => console.error("Unread counts subscription error:", error)); };
+            const selectFriendForChat = async (friend) => { selectedFriendForChat = friend; chatWindowPlaceholder.classList.add('hidden'); chatWindow.classList.remove('hidden'); chatHeader.textContent = `Чат з ${friend.name}`; chatMessages.innerHTML = ''; if (unsubscribeFromChat) unsubscribeFromChat(); const participants = [userId, friend.userId].sort(); const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), where("participants", "==", participants), orderBy("timestamp")); unsubscribeFromChat = onSnapshot(q, (snapshot) => { chatMessages.innerHTML = ''; snapshot.docs.forEach(doc => renderChatMessage({ id: doc.id, ...doc.data() })); setTimeout(() => { chatMessages.scrollTop = chatMessages.scrollHeight; }, 0); }, error => console.error("Chat subscription error:", error)); await markMessagesAsRead(friend.userId); };
+            const markMessagesAsRead = async (friendId) => { if (!userId || !friendId) return; const participants = [userId, friendId].sort(); const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), where("participants", "==", participants)); try { const snapshot = await getDocs(q); const batch = writeBatch(db); snapshot.docs.forEach(docSnapshot => { const message = docSnapshot.data(); if (message.readBy && !message.readBy.includes(userId)) { batch.update(docSnapshot.ref, { readBy: arrayUnion(userId) }); } }); await batch.commit(); } catch (e) { console.error("Error marking messages as read:", e); } };
+            const subscribeToUnreadCounts = () => { if (!userId) return; const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), where("participants", "array-contains", userId)); onSnapshot(q, (snapshot) => { const unreadCounts = {}, unreadSenders = new Set(); snapshot.docs.forEach(doc => { const message = { id: doc.id, ...doc.data() }; if (message.readBy && !message.readBy.includes(userId)) { const friendId = message.participants.find(id => id !== userId); if (friendId) { unreadCounts[friendId] = (unreadCounts[friendId] || 0) + 1; unreadSenders.add(friendId); if (!shownNotifications.has(message.id)) { const friendName = friendsCache[friendId]?.name || 'Друг'; showPushNotification(`Нове повідомлення від ${friendName}`, { body: message.text || '[Зображення]' }); shownNotifications.add(message.id); } } } }); updateUnreadBadges(unreadCounts, unreadSenders.size); }, error => console.error("Unread counts subscription error:", error)); };
             const updateUnreadBadges = (counts, totalSenders) => { chatNotificationBadge.textContent = totalSenders; chatNotificationBadge.classList.toggle('hidden', totalSenders === 0); Object.values(friendsCache).forEach(friend => { const badge = document.getElementById(`unread-count-${friend.userId}`); if (badge) { const count = counts[friend.userId]; badge.textContent = count; badge.classList.toggle('hidden', !count); } }); };
             const renderChatMessage = (message) => { const msgDiv = document.createElement('div'); const isSentByMe = message.senderId === userId; msgDiv.className = `flex ${isSentByMe ? 'justify-end' : 'justify-start'}`; const bubble = document.createElement('div'); bubble.className = `message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative group ${isSentByMe ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}`; if (message.isTask) { bubble.className = 'message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic mx-auto'; msgDiv.className = 'flex justify-center'; bubble.textContent = message.text; } else if (message.type === 'image' && message.imageUrl) { const img = document.createElement('img'); img.src = message.imageUrl; img.className = "max-w-[200px] rounded-lg cursor-pointer max-h-48"; img.addEventListener('click', () => showImageViewer(message.imageUrl)); bubble.appendChild(img); } else { bubble.textContent = message.text; } if (isSentByMe && !message.isTask) { const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-msg-btn absolute top-1/2 -left-8 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-gray-300 hover:bg-red-500 text-white'; deleteBtn.innerHTML = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>'; deleteBtn.addEventListener('click', () => showConfirmModal(() => deleteChatMessage(message), "Видалити це повідомлення?", "Видалити")); bubble.appendChild(deleteBtn); } msgDiv.appendChild(bubble); chatMessages.appendChild(msgDiv); };
             const showImageViewer = (url) => { fullImage.src = url; imageViewerModal.classList.remove('hidden'); };
-            const sendChatMessage = async (options) => { const { text, recipient, isTask = false, imageUrl = null } = options; const messageText = text ? text.trim() : ''; if (messageText === '' && !imageUrl) return; try { const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); await addDoc(collection(publicDataRef, 'chat_messages'), { participants: [userId, recipient.userId].sort(), text: messageText, senderId: userId, timestamp: serverTimestamp(), isTask, readBy: [userId], type: imageUrl ? 'image' : 'text', imageUrl }); if (!isTask) chatMessageInput.value = ''; } catch (e) { console.error("Error sending chat message: ", e); } };
+            const sendChatMessage = async (options) => { const { text, recipient, isTask = false, imageUrl = null } = options; const messageText = text ? text.trim() : ''; if (messageText === '' && !imageUrl) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), { participants: [userId, recipient.userId].sort(), text: messageText, senderId: userId, timestamp: serverTimestamp(), isTask, readBy: [userId], type: imageUrl ? 'image' : 'text', imageUrl }); if (!isTask) chatMessageInput.value = ''; } catch (e) { console.error("Error sending chat message: ", e); } };
             const uploadImageAndSendMessage = (file) => { if (!file || !selectedFriendForChat) return; const participants = [userId, selectedFriendForChat.userId].sort(); const storageRef = ref(storage, `chats/${participants.join('_')}/${Date.now()}-${file.name}`); const uploadTask = uploadBytesResumable(storageRef, file); uploadProgressContainer.classList.remove('hidden'); uploadTask.on('state_changed', (snapshot) => { uploadProgressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`; }, (error) => { console.error("Upload error:", error); uploadProgressContainer.classList.add('hidden'); }, () => { getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => { sendChatMessage({ recipient: selectedFriendForChat, imageUrl: downloadURL }); uploadProgressContainer.classList.add('hidden'); }); }); };
             const checkNotificationStatus = () => { if (!('Notification' in window)) { notificationsStatus.textContent = "Браузер не підтримує сповіщення."; enableNotificationsBtn.disabled = true; return; } const permission = Notification.permission; notificationsStatus.textContent = permission === 'granted' ? "Сповіщення увімкнено." : permission === 'denied' ? "Сповіщення заблоковано." : "Надайте дозвіл."; enableNotificationsBtn.disabled = permission !== 'default'; };
             const requestNotificationPermission = async () => { const permission = await Notification.requestPermission(); if (permission === 'granted') { new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення." }); } checkNotificationStatus(); };
@@ -638,24 +642,18 @@
                 if (!userId) return;
                 if (unsubscribeFromReport) unsubscribeFromReport();
                 const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                // FIXED: Removed orderBy to prevent index requirement, sorting is now done client-side.
                 const q = query(sharedTasksCollection, where("senderId", "==", userId));
                 
                 unsubscribeFromReport = onSnapshot(q, (snapshot) => {
                     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     // Client-side sorting
-                    tasks.sort((a, b) => {
-                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return timeB - timeA;
-                    });
+                    tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                     renderReport(tasks);
                 }, error => console.error("Error in report subscription:", error));
             };
 
             const renderReport = (tasks) => {
                 reportTableBody.innerHTML = '';
-                if (Object.keys(friendsCache).length === 0 && tasks.length > 0) return; 
+                if (Object.keys(friendsCache).length === 0 && tasks.length > 0) { setTimeout(() => renderReport(tasks), 100); return; }
 
                 const tasksByRecipient = {};
                 tasks.forEach(task => {
@@ -678,7 +676,7 @@
                     let cellsHTML = statuses.map(status => {
                         const tasksInStatus = userTasks.filter(t => t.status === status);
                         const cardsHTML = tasksInStatus.map(task => 
-                            `<div class="report-task-card p-2 mb-2 bg-white rounded-md shadow-sm border" data-task-text="${escape(task.text)}">
+                            `<div class="report-task-card p-2 mb-2 bg-white rounded-md shadow-sm border" data-task-text="${escape(task.text)}" data-task-id="${task.id}">
                                 <p class="text-sm text-truncate-2">${task.text}</p>
                             </div>`
                         ).join('');
@@ -690,11 +688,25 @@
                 }
             };
             
-            const showTaskDetailsModal = (taskText) => {
+            const showTaskDetailsModal = (taskText, taskId) => {
                 taskDetailsContent.textContent = unescape(taskText);
+                currentReportTaskIdToDelete = taskId; 
                 taskDetailsModal.classList.remove('hidden');
             };
-            const hideTaskDetailsModal = () => taskDetailsModal.classList.add('hidden');
+            const hideTaskDetailsModal = () => {
+                taskDetailsModal.classList.add('hidden');
+                currentReportTaskIdToDelete = null; 
+            };
+            
+            const deleteSharedTaskFromReport = async () => {
+                if (!currentReportTaskIdToDelete) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', currentReportTaskIdToDelete));
+                    hideTaskDetailsModal(); 
+                } catch (e) {
+                    console.error("Error deleting task from report: ", e);
+                }
+            };
 
             // --- Event Listeners ---
             googleSignInButton.addEventListener('click', signInWithGoogle);
@@ -728,9 +740,18 @@
             backToTasksFromReportBtn.addEventListener('click', closeReportView);
             reportTableBody.addEventListener('click', (e) => {
                 const card = e.target.closest('.report-task-card');
-                if (card && card.dataset.taskText) showTaskDetailsModal(card.dataset.taskText);
+                if (card && card.dataset.taskText) {
+                    showTaskDetailsModal(card.dataset.taskText, card.dataset.taskId);
+                }
             });
             closeTaskDetailsBtn.addEventListener('click', hideTaskDetailsModal);
+            deleteFromReportBtn.addEventListener('click', () => {
+                showConfirmModal(
+                    () => deleteSharedTaskFromReport(),
+                    "Ви впевнені, що хочете назавжди видалити це завдання зі звіту? Цю дію не можна скасувати.",
+                    "Так, видалити"
+                );
+            });
 
             const handleSendMessage = () => { if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; } sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat }); };
             sendChatMessageBtn.addEventListener('click', handleSendMessage);
