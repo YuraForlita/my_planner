@@ -350,10 +350,10 @@
             const saveExpansionState = async () => {
                 if (!userId) return;
                 const sections = {
-                    deferred: !deferredTasksList.classList.contains('hidden'),
-                    completed: !completedTasksList.classList.contains('hidden'),
-                    settings: !settingsContent.classList.contains('hidden'),
-                    friends: !friendsContent.classList.contains('hidden'),
+                    deferred: !getEl('deferred-tasks-list').classList.contains('hidden'),
+                    completed: !getEl('completed-tasks-list').classList.contains('hidden'),
+                    settings: !getEl('settings-content').classList.contains('hidden'),
+                    friends: !getEl('friends-content').classList.contains('hidden'),
                 };
                 try {
                     const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`);
@@ -835,10 +835,10 @@
                 btnEl.textContent = listEl.classList.contains('hidden') ? 'Розгорнути' : 'Згорнути';
                 saveExpansionState();
             };
-            deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
-            completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
-            settingsToggleBtn.addEventListener('click', () => toggleSection(settingsContent, settingsToggleBtn));
-            friendsToggleBtn.addEventListener('click', () => toggleSection(friendsContent, friendsToggleBtn));
+            deferredToggleBtn.addEventListener('click', () => toggleSection(getEl('deferred-tasks-list'), deferredToggleBtn));
+            completedToggleBtn.addEventListener('click', () => toggleSection(getEl('completed-tasks-list'), completedToggleBtn));
+            settingsToggleBtn.addEventListener('click', () => toggleSection(getEl('settings-content'), settingsToggleBtn));
+            friendsToggleBtn.addEventListener('click', () => toggleSection(getEl('friends-content'), friendsToggleBtn));
             addFriendOpenBtn.addEventListener('click', showAddFriendModal);
             cancelFriendBtn.addEventListener('click', hideAddFriendModal);
             saveFriendBtn.addEventListener('click', saveFriend);
