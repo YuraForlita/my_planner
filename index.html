@@ -30,13 +30,14 @@
         .report-table {
             border-spacing: 0;
             width: 100%;
-            table-layout: fixed; /* Fixes column width issue */
+            table-layout: fixed;
         }
         .report-table th, .report-table td {
             border: 1px solid #e5e7eb;
             padding: 0.75rem;
             vertical-align: top;
             text-align: left;
+            word-wrap: break-word;
         }
         .report-table th {
             background-color: #f9fafb;
@@ -147,6 +148,7 @@
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
             <h3 class="text-lg font-bold mb-4 text-gray-800">Дії із завданням</h3>
             <div class="space-y-3">
+                <button id="action-activate-btn" class="w-full px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Перемістити в активні</button>
                 <button id="action-defer-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">В роботу</button>
                 <button id="action-prolong-btn" class="w-full px-4 py-2 rounded-lg bg-purple-500 text-white font-semibold hover:bg-purple-600 transition-colors hidden">Продовжити</button>
                 <button id="action-delete-btn" class="w-full px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
@@ -298,11 +300,11 @@
                 <table class="report-table min-w-[800px] md:min-w-full">
                     <thead>
                         <tr>
-                            <th class="w-1/5">Користувач</th>
-                            <th class="w-1/5">⏳ Очікує</th>
-                            <th class="w-1/5">🕐 В роботі</th>
-                            <th class="w-1/5">✅ Виконано</th>
-                            <th class="w-1/5">❌ Відхилено</th>
+                            <th class="w-[20%]">Користувач</th>
+                            <th class="w-[20%]">⏳ Очікує</th>
+                            <th class="w-[20%]">🕐 В роботі</th>
+                            <th class="w-[20%]">✅ Виконано</th>
+                            <th class="w-[20%]">❌ Відхилено</th>
                         </tr>
                     </thead>
                     <tbody id="report-table-body">
@@ -395,6 +397,7 @@
                   incomingTaskCloseBtn = getEl('incoming-task-close-btn'),
                   taskActionsModal = getEl('task-actions-modal'),
                   actionDeferBtn = getEl('action-defer-btn'),
+                  actionActivateBtn = getEl('action-activate-btn'),
                   actionProlongBtn = getEl('action-prolong-btn'),
                   actionDeleteBtn = getEl('action-delete-btn'),
                   cancelActionsBtn = getEl('cancel-actions-btn');
@@ -627,7 +630,7 @@
                     taskItem.innerHTML = `
                         <div class="flex-grow cursor-pointer min-w-0">
                             <p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p>
-                            <p class="text-gray-800 text-truncate-2 break-words">${task.text}</p>
+                            <p class="text-gray-800 break-words">${task.text}</p>
                         </div>
                         <div class="flex-shrink-0">
                             <button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Переглянути</button>
@@ -755,6 +758,7 @@
             const showTaskActionsModal = (task) => {
                 currentTaskForAction = task;
                 actionDeferBtn.classList.toggle('hidden', task.status === 'deferred');
+                actionActivateBtn.classList.toggle('hidden', task.status !== 'deferred');
                 actionProlongBtn.classList.toggle('hidden', !task.isStale);
                 taskActionsModal.classList.remove('hidden');
             };
@@ -833,6 +837,13 @@
                     hideTaskActionsModal();
                 }
             });
+            
+            actionActivateBtn.addEventListener('click', () => {
+                if(currentTaskForAction) {
+                    updateTaskStatus(currentTaskForAction.id, 'active', currentTaskForAction.originalSharedTaskId);
+                    hideTaskActionsModal();
+                }
+            });
 
             actionProlongBtn.addEventListener('click', () => {
                 if (currentTaskForAction) {
@@ -858,4 +869,3 @@
     </script>
 </body>
 </html>
-
