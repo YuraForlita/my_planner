@@ -30,6 +30,7 @@
         .report-table {
             border-spacing: 0;
             width: 100%;
+            table-layout: fixed; /* Fixes column width issue */
         }
         .report-table th, .report-table td {
             border: 1px solid #e5e7eb;
@@ -753,6 +754,7 @@
 
             const showTaskActionsModal = (task) => {
                 currentTaskForAction = task;
+                actionDeferBtn.classList.toggle('hidden', task.status === 'deferred');
                 actionProlongBtn.classList.toggle('hidden', !task.isStale);
                 taskActionsModal.classList.remove('hidden');
             };
@@ -856,3 +858,4 @@
     </script>
 </body>
 </html>
+
