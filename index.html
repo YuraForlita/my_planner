@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk" class="">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.75);
@@ -33,135 +34,195 @@
         .message-bubble:hover .delete-msg-btn {
             opacity: 1;
         }
-        /* Styles for the theme toggle */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #68D391;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #68D391;
-        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 min-h-screen p-4 flex flex-col items-center transition-colors duration-300">
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
     <!-- Спінер завантаження -->
-    <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75">
+    <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
     </div>
 
     <!-- Модальні вікна (винесені на верхній рівень) -->
-    <div id="notification-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full relative">
-            <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100"></h3>
-            <p id="notification-message" class="text-gray-700 dark:text-gray-300 mb-4 break-words"></p>
+    <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
+            <p id="notification-message" class="text-gray-700 mb-4 break-words"></p>
             <div class="flex justify-end space-x-2">
                 <button id="close-notification-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">OK</button>
             </div>
         </div>
     </div>
-    <div id="view-edit-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-lg w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">Переглянути/Редагувати завдання</h3>
-            <textarea id="edit-task-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4" rows="8"></textarea>
+    <div id="view-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
+            <textarea id="edit-task-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4" rows="8"></textarea>
             <div class="flex justify-end space-x-2">
                 <button id="save-edit-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
-                <button id="cancel-edit-btn" class="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors">Скасувати</button>
+                <button id="cancel-edit-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
     </div>
-    <div id="confirm-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">Підтвердіть дію</h3>
-            <p id="confirm-modal-message" class="text-gray-700 dark:text-gray-300 mb-4 break-words">Ви впевнені?</p>
+    <div id="confirm-modal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Підтвердіть видалення</h3>
+            <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені, що хочете видалити це?</p>
             <div class="flex justify-end space-x-2">
-                <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors">Скасувати</button>
+                <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
                 <button class="delete-btn px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
             </div>
         </div>
     </div>
-    <div id="add-friend-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">Додати друга</h3>
-            <input type="text" id="friend-name-input" placeholder="Ім'я друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <input type="text" id="friend-id-input" placeholder="ID друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <div id="add-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Додати друга</h3>
+            <input type="text" id="friend-name-input" placeholder="Ім'я друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="text" id="friend-id-input" placeholder="ID друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div class="flex justify-end space-x-2">
                 <button id="save-friend-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
-                <button id="cancel-friend-btn" class="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors">Скасувати</button>
+                <button id="cancel-friend-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
     </div>
-    <div id="assign-task-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-lg w-full relative">
-            <h3 class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">Призначити завдання</h3>
-            <select id="friend-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <div id="assign-task-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Призначити завдання</h3>
+            <select id="friend-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Виберіть друга</option>
             </select>
-            <textarea id="assign-task-input" placeholder="Введіть завдання для друга..." rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition-all resize-none mb-4"></textarea>
+            <textarea id="assign-task-input" placeholder="Введіть завдання для друга..." rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4"></textarea>
             <div class="flex justify-end space-x-2">
                 <button id="send-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Відправити</button>
-                <button id="cancel-assign-btn" class="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors">Скасувати</button>
+                <button id="cancel-assign-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
     </div>
-    <div id="image-viewer-modal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay p-4">
-        <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full h-full relative flex flex-col">
+    <div id="image-viewer-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay p-4">
+        <div class="bg-white p-2 rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full h-full relative flex flex-col">
             <button id="close-image-viewer-btn" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 leading-none text-2xl z-10">&times;</button>
             <img id="full-image" src="" class="w-full h-full object-contain">
         </div>
     </div>
 
     <div id="main-content" class="max-w-xl w-full">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl transition-colors duration-300">
-            <h1 class="text-3xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">Мій Планувальник Завдань</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono break-all">Немає</span></p>
-            <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4"></div>
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+            <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Мій Планувальник Завдань</h1>
+            <p class="text-sm text-gray-500 mb-4 text-center">ID користувача: <span id="user-id-span" class="font-mono break-all">Немає</span></p>
+
+            <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+                Сталася помилка ініціалізації. Будь ласка, переконайтеся, що конфігурація Firebase додана.
+            </div>
+
             <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
-                <p class="text-gray-500 dark:text-gray-400">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
-                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md space-x-2">
+                <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
+                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/></svg>
                     <span>Увійти через Google</span>
                 </button>
             </div>
+
             <div id="content-section" class="hidden">
                 <div class="flex space-x-2 mb-4">
-                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 shadow-md">
-                        Чати <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
+                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">
+                        Чати
+                        <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
                     </button>
-                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 shadow-md">Вийти</button>
+                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
                 </div>
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                    <textarea id="task-input" placeholder="Введіть нове завдання..." rows="3" class="w-full sm:flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
                     <button id="add-task-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Додати</button>
                     <button id="assign-task-open-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-md">Призначити</button>
                 </div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section"><h2 class="text-xl font-bold mb-4 text-gray-700 dark:text-gray-200">Вхідні завдання</h2><div id="incoming-tasks-list" class="space-y-3"></div></div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6"><h2 class="text-xl font-bold mb-4 text-gray-700 dark:text-gray-200">Активні завдання</h2><div id="active-tasks-list" class="space-y-3 task-list-container"></div></div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700 dark:text-gray-200">В роботі</h2><button id="deferred-toggle-btn" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Розгорнути</button></div><div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div></div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700 dark:text-gray-200">Виконані завдання</h2><button id="completed-toggle-btn" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Розгорнути</button></div><div id="completed-tasks-list" class="space-y-3 hidden task-list-container"></div></div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700 dark:text-gray-200">Налаштування</h2><button id="settings-toggle-btn" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Розгорнути</button></div><div id="settings-content" class="hidden space-y-6"></div></div>
-                <div class="bg-blue-50 dark:bg-slate-800 p-6 rounded-2xl shadow-inner mb-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-700 dark:text-gray-200">Друзі</h2><button id="friends-toggle-btn" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Розгорнути</button></div><div id="friends-content" class="hidden"><div class="flex justify-end mb-4"><button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button></div><div id="friends-list" class="space-y-3"></div></div></div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
+                    <div id="incoming-tasks-list" class="space-y-3"></div>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Активні завдання</h2>
+                    <div id="active-tasks-list" class="space-y-3 task-list-container"></div>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">В роботі</h2>
+                        <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Виконані завдання</h2>
+                        <button id="completed-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="completed-tasks-list" class="space-y-3 hidden task-list-container"></div>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Налаштування</h2>
+                        <button id="settings-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="settings-content" class="hidden space-y-6">
+                         <div class="space-y-4">
+                             <div>
+                                 <label for="deferred-duration" class="block text-sm font-medium text-gray-700">В роботі (годин)</label>
+                                 <input type="number" step="0.01" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="24">
+                             </div>
+                             <div>
+                                 <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
+                                 <input type="number" step="0.01" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="72">
+                             </div>
+                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
+                             <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
+                         </div>
+                         <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-800 mb-2">Сповіщення</h3>
+                            <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md">Увімкнути сповіщення</button>
+                            <p id="notifications-status" class="text-sm text-center text-gray-500 mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Друзі</h2>
+                        <button id="friends-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
+                    </div>
+                    <div id="friends-content" class="hidden">
+                        <div class="flex justify-end mb-4">
+                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button>
+                        </div>
+                        <div id="friends-list" class="space-y-3"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Секція чату -->
     <div id="chat-section" class="max-w-4xl w-full hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
-             <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg border-gray-200 dark:border-gray-700">
-                <div class="w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-l-lg overflow-y-auto"><h2 class="text-xl font-bold p-4 border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">Друзі</h2><div id="chat-friends-list" class="space-y-1 p-2"></div></div>
+             <div class="flex flex-col md:flex-row h-[70vh] border rounded-lg">
+                <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
+                    <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
+                    <div id="chat-friends-list" class="space-y-1 p-2"></div>
+                </div>
                 <div class="w-full md:w-2/3 flex flex-col min-h-0">
-                    <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center text-gray-500 dark:text-gray-400">Виберіть чат</div>
+                    <div id="chat-window-placeholder" class="flex-grow flex items-center justify-center">
+                        <p class="text-gray-500">Виберіть чат, щоб почати спілкування</p>
+                    </div>
                     <div id="chat-window" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
-                         <div id="chat-header" class="p-4 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-800 dark:text-gray-100"></div>
-                         <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100 dark:bg-gray-900"></div>
-                         <div id="upload-progress-container" class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 hidden"><div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5"><div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div></div>
-                         <div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                         <div id="chat-header" class="p-4 border-b font-bold text-gray-800"></div>
+                         <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-100"></div>
+                         <div id="upload-progress-container" class="p-4 bg-white border-t hidden">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                         </div>
+                         <div class="p-4 bg-white border-t flex items-center space-x-2">
                             <input type="file" id="image-upload-input" class="hidden" accept="image/*">
-                            <button id="attach-file-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-                                <svg class="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                            <button id="attach-file-btn" class="p-2 rounded-full hover:bg-gray-200">
+                                <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                             </button>
-                            <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
+                            <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
                             <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Надіслати</button>
                          </div>
                     </div>
@@ -176,21 +237,26 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         window.onload = function () {
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
-    authDomain: "planer-97eb1.firebaseapp.com",
-    projectId: "planer-97eb1",
-    storageBucket: "planer-97eb1.firebasestorage.app",
-    messagingSenderId: "322073132266",
-    appId: "1:322073132266:web:39a66937b3cda1c031ab93",
-    measurementId: "G-GB94F6MG2N" };
+            setLogLevel('debug');
+            
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
+                authDomain: "planer-97eb1.firebaseapp.com",
+                projectId: "planer-97eb1",
+                storageBucket: "planer-97eb1.firebasestorage.app",
+                messagingSenderId: "322073132266",
+                appId: "1:322073132266:web:39a66937b3cda1c031ab93",
+                measurementId: "G-GB94F6MG2N"
+            };
+
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR_")) {
-                getEl('loading-spinner').classList.add('hidden');
-                getEl('error-message').textContent = "Конфігурація Firebase не знайдена або недійсна.";
-                getEl('error-message').classList.remove('hidden');
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('error-message').classList.remove('hidden');
                 return;
             }
 
@@ -214,6 +280,8 @@
                   deferredTasksList = getEl('deferred-tasks-list'), completedTasksList = getEl('completed-tasks-list'),
                   deferredToggleBtn = getEl('deferred-toggle-btn'), completedToggleBtn = getEl('completed-toggle-btn'),
                   settingsToggleBtn = getEl('settings-toggle-btn'), settingsContent = getEl('settings-content'),
+                  deferredDurationInput = getEl('deferred-duration'), staleDurationInput = getEl('stale-duration'),
+                  saveSettingsBtn = getEl('save-settings-btn'), settingsMessage = getEl('settings-message'),
                   incomingTasksSection = getEl('incoming-tasks-section'), incomingTasksList = getEl('incoming-tasks-list'),
                   friendsToggleBtn = getEl('friends-toggle-btn'), friendsContent = getEl('friends-content'),
                   addFriendOpenBtn = getEl('add-friend-open-btn'), friendsList = getEl('friends-list'),
@@ -227,8 +295,8 @@
                   chatFriendsList = getEl('chat-friends-list'), chatWindow = getEl('chat-window'),
                   chatWindowPlaceholder = getEl('chat-window-placeholder'), chatHeader = getEl('chat-header'),
                   chatMessages = getEl('chat-messages'), chatMessageInput = getEl('chat-message-input'),
-                  sendChatMessageBtn = getEl('send-chat-message-btn'), 
-                  imageViewerModal = getEl('image-viewer-modal'),
+                  sendChatMessageBtn = getEl('send-chat-message-btn'), enableNotificationsBtn = getEl('enable-notifications-btn'),
+                  notificationsStatus = getEl('notifications-status'), imageViewerModal = getEl('image-viewer-modal'),
                   fullImage = getEl('full-image'), closeImageViewerBtn = getEl('close-image-viewer-btn'),
                   attachFileBtn = getEl('attach-file-btn'), imageUploadInput = getEl('image-upload-input'),
                   uploadProgressContainer = getEl('upload-progress-container'), uploadProgressBar = getEl('upload-progress-bar');
@@ -236,9 +304,6 @@
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
                 currentTaskToEdit = null, selectedFriendForChat = null, unsubscribeFromChat = null,
                 friendsCache = [], shownNotifications = new Set();
-            
-            // Render settings section content immediately
-            renderSettings();
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -252,6 +317,7 @@
                     subscribeToFriends();
                     subscribeToIncomingTasks();
                     subscribeToUnreadCounts();
+                    checkNotificationStatus();
                 } else {
                     userId = null;
                     userIdSpan.textContent = 'Немає';
@@ -281,42 +347,6 @@
                 if (document.hidden && Notification.permission === 'granted') { new Notification(title, options); }
             };
 
-            const applyTheme = (theme) => {
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-                const themeToggle = getEl('theme-toggle');
-                if (themeToggle) themeToggle.checked = theme === 'dark';
-            };
-
-            const saveThemePreference = async (theme) => {
-                if (!userId) return;
-                try {
-                    const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`);
-                    await setDoc(settingsRef, { theme }, { merge: true });
-                } catch (e) {
-                    console.error("Помилка збереження теми:", e);
-                }
-            };
-
-            const saveExpansionState = async () => {
-                if (!userId) return;
-                const sections = {
-                    deferred: !deferredTasksList.classList.contains('hidden'),
-                    completed: !completedTasksList.classList.contains('hidden'),
-                    settings: !settingsContent.classList.contains('hidden'),
-                    friends: !friendsContent.classList.contains('hidden'),
-                };
-                try {
-                    const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`);
-                    await setDoc(settingsRef, { expandedSections: sections }, { merge: true });
-                } catch (e) {
-                    console.error("Помилка збереження стану секцій:", e);
-                }
-            };
-
             const loadSettings = async () => {
                 if (!userId) return;
                 try {
@@ -326,23 +356,9 @@
                         const settings = docSnap.data();
                         deferredDurationHours = settings.deferredDurationHours || 24;
                         staleDurationHours = settings.staleDurationHours || 72;
-                        applyTheme(settings.theme || 'light');
-                        if (settings.expandedSections) {
-                            Object.entries(settings.expandedSections).forEach(([key, isExpanded]) => {
-                                const list = getEl(`${key}-tasks-list`) || getEl(`${key}-content`);
-                                const btn = getEl(`${key}-toggle-btn`);
-                                if (list && btn) {
-                                    list.classList.toggle('hidden', !isExpanded);
-                                    btn.textContent = isExpanded ? 'Згорнути' : 'Розгорнути';
-                                }
-                            });
-                        }
-                    } else {
-                         applyTheme('light');
                     }
-                    getEl('deferred-duration').value = deferredDurationHours;
-                    getEl('stale-duration').value = staleDurationHours;
-                    checkNotificationStatus();
+                    deferredDurationInput.value = deferredDurationHours;
+                    staleDurationInput.value = staleDurationHours;
                 } catch (e) { console.error("Помилка завантаження налаштувань:", e); }
             };
             
@@ -379,19 +395,19 @@
                 listElement.innerHTML = '';
                 if (tasks.length === 0) {
                     const messages = { active: 'Немає активних завдань.', deferred: 'Немає завдань в роботі.', completed: 'Немає виконаних завдань.' };
-                    listElement.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center italic">${messages[status]}</p>`;
+                    listElement.innerHTML = `<p class="text-gray-500 text-center italic">${messages[status]}</p>`;
                     return;
                 }
                 tasks.forEach(task => {
                     const taskItem = document.createElement('div');
-                    taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${task.isStale ? 'bg-red-100 dark:bg-red-900/20' : 'bg-white dark:bg-gray-700'} space-x-2`;
+                    taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${task.isStale ? 'bg-red-100' : 'bg-white'} space-x-2`;
                     let buttonsHTML = status === 'completed' 
                         ? `<button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600">Активувати</button>`
                         : `<button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600">Виконано</button>
                            <div class="task-actions relative">
-                               <button class="more-options-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200">...</button>
+                               <button class="more-options-btn p-2 rounded-full hover:bg-gray-200">...</button>
                            </div>`;
-                    taskItem.innerHTML = `<p class="text-gray-800 dark:text-gray-200 flex-grow mr-4 cursor-pointer text-truncate-2">${task.text}</p><div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
+                    taskItem.innerHTML = `<p class="text-gray-800 flex-grow mr-4 cursor-pointer text-truncate-2">${task.text}</p><div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
                     if (status !== 'completed') {
                         taskItem.querySelector('.more-options-btn').addEventListener('click', (e) => { e.stopPropagation(); renderDropdown(task, e.currentTarget); });
                     }
@@ -405,11 +421,11 @@
             const renderDropdown = (task, button) => {
                 document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
                 const dropdown = document.createElement('div');
-                dropdown.className = 'dropdown-menu absolute hidden bg-white dark:bg-gray-700 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 py-1';
+                dropdown.className = 'dropdown-menu absolute hidden bg-white rounded-md shadow-lg border py-1';
                 dropdown.innerHTML = `
-                    <button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">В роботу</button>
-                    ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-600">Продовжити</button>` : ''}
-                    <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">Видалити</button>
+                    <button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
+                    ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
+                    <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>
                 `;
                 document.body.appendChild(dropdown);
                 const rect = button.getBoundingClientRect();
@@ -461,23 +477,19 @@
 
             const saveSettings = async () => {
                 if (!userId) return;
-                const newDeferred = parseFloat(getEl('deferred-duration').value);
-                const newStale = parseFloat(getEl('stale-duration').value);
-                const isDark = getEl('theme-toggle').checked;
-                const theme = isDark ? 'dark' : 'light';
-
+                const newDeferred = parseFloat(deferredDurationInput.value);
+                const newStale = parseFloat(staleDurationInput.value);
                 if (isNaN(newDeferred) || newDeferred < 0 || isNaN(newStale) || newStale < 0) {
-                    getEl('settings-message').textContent = "Будь ласка, введіть дійсні числа.";
-                    getEl('settings-message').className = 'text-sm text-center text-red-600'; return;
+                    settingsMessage.textContent = "Будь ласка, введіть дійсні числа.";
+                    settingsMessage.className = 'text-sm text-center text-red-600'; return;
                 }
                 try {
-                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`), { deferredDurationHours: newDeferred, staleDurationHours: newStale, theme }, { merge: true });
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`), { deferredDurationHours: newDeferred, staleDurationHours: newStale });
                     deferredDurationHours = newDeferred;
                     staleDurationHours = newStale;
-                    applyTheme(theme);
-                    getEl('settings-message').textContent = "Налаштування збережено.";
-                    getEl('settings-message').className = 'text-sm text-center text-green-600 dark:text-green-400 visible';
-                    setTimeout(() => getEl('settings-message').classList.remove('visible'), 3000);
+                    settingsMessage.textContent = "Налаштування збережено.";
+                    settingsMessage.className = 'text-sm text-center text-green-600 visible';
+                    setTimeout(() => settingsMessage.classList.remove('visible'), 3000);
                 } catch (e) { console.error("Помилка збереження налаштувань:", e); }
             };
 
@@ -489,22 +501,19 @@
             const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
             const deleteTask = async (taskId) => {
                 if (!userId || !taskId) return;
-                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання: ", e); }
+                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання:", e); }
             };
             
             const deleteChatMessage = async (msg) => {
                 if (!userId || !msg.id || msg.senderId !== userId) return;
                 try {
-                    const docRef = doc(db, "artifacts", appId, "public", "data", "chat_messages", msg.id);
+                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                    await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id));
                     if (msg.type === 'image' && msg.imageUrl) {
                         const imageRef = ref(storage, msg.imageUrl);
                         await deleteObject(imageRef);
                     }
-                    await deleteDoc(docRef);
-                } catch (e) {
-                     console.error("Помилка видалення повідомлення:", e);
-                     showNotification('Помилка', 'Не вдалося видалити повідомлення.');
-                }
+                } catch (e) { console.error("Помилка видалення повідомлення:", e); }
             };
 
             const showViewEditModal = (task) => { currentTaskToEdit = task; editTaskInput.value = task.text; viewEditModal.classList.remove('hidden'); };
@@ -512,7 +521,7 @@
             const saveEditedTask = async () => {
                 if (!userId || !currentTaskToEdit) return;
                 const newText = editTaskInput.value.trim();
-                if (newText === '') { return; }
+                if (newText === '') { showNotification('Помилка', 'Текст завдання не може бути порожнім.'); return; }
                 try {
                     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, currentTaskToEdit.id), { text: newText, lastUpdatedAt: serverTimestamp() });
                     hideViewEditModal();
@@ -524,7 +533,8 @@
             const saveFriend = async () => {
                 const name = friendNameInput.value.trim();
                 const friendId = friendIdInput.value.trim();
-                if (name === '' || friendId === '' || friendId === userId) return;
+                if (name === '' || friendId === '') { return; }
+                if (friendId === userId) { return; }
                 try {
                     await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId });
                     hideAddFriendModal();
@@ -545,19 +555,21 @@
             const renderFriends = (friends) => {
                 friendsList.innerHTML = '';
                 friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
-                if (friends.length === 0) { friendsList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center italic">Немає друзів.</p>`; return; }
+                if (friends.length === 0) {
+                    friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`; return;
+                }
                 friends.forEach(friend => {
-                    friendsList.innerHTML += `<div class="p-3 rounded-lg bg-white dark:bg-gray-700 shadow-md flex justify-between items-center"><div><p class="font-semibold text-gray-800 dark:text-gray-200">${friend.name}</p><p class="text-sm text-gray-500 dark:text-gray-400 break-all">${friend.userId}</p></div></div>`;
+                    friendsList.innerHTML += `<div class="p-3 rounded-lg bg-white shadow-md flex justify-between items-center"><div><p class="font-semibold text-gray-800">${friend.name}</p><p class="text-sm text-gray-500 break-all">${friend.userId}</p></div></div>`;
                     friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`;
                 });
             };
 
             const renderChatFriends = (friends) => {
-                chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 dark:text-gray-400 text-center italic p-4">Немає друзів для чату.</p>` : '';
+                chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` : '';
                 friends.forEach(friend => {
                     const friendItem = document.createElement('div');
-                    friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 cursor-pointer flex items-center justify-between';
-                    friendItem.innerHTML = `<div class="font-semibold text-gray-800 dark:text-gray-200 flex-grow">${friend.name}</div><span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>`;
+                    friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between';
+                    friendItem.innerHTML = `<div class="font-semibold text-gray-800 flex-grow">${friend.name}</div><span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>`;
                     friendItem.addEventListener('click', () => selectFriendForChat(friend));
                     chatFriendsList.appendChild(friendItem);
                 });
@@ -588,11 +600,11 @@
 
             const renderIncomingTasks = (tasks) => {
                 incomingTasksSection.style.display = tasks.length > 0 ? 'block' : 'none';
-                incomingTasksList.innerHTML = tasks.length === 0 ? `<p class="text-gray-500 dark:text-gray-400 text-center italic">Немає вхідних завдань.</p>` : '';
+                incomingTasksList.innerHTML = tasks.length === 0 ? `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>` : '';
                 tasks.forEach(task => {
                     const taskItem = document.createElement('div');
-                    taskItem.className = 'p-4 rounded-xl shadow-md bg-white dark:bg-gray-700 flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 sm:space-x-2';
-                    taskItem.innerHTML = `<div class="flex-grow"><p class="text-sm text-gray-500 dark:text-gray-400">Від: <span class="font-semibold">${task.senderName}</span></p><p class="text-gray-800 dark:text-gray-200 text-truncate-2">${task.text}</p></div><div class="flex-shrink-0 flex items-center space-x-2"><button class="accept-task-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold">Прийняти</button><button class="decline-task-btn px-4 py-2 rounded-lg bg-red-500 text-white font-semibold">Відхилити</button></div>`;
+                    taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 sm:space-x-2';
+                    taskItem.innerHTML = `<div class="flex-grow"><p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p><p class="text-gray-800 text-truncate-2">${task.text}</p></div><div class="flex-shrink-0 flex items-center space-x-2"><button class="accept-task-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold">Прийняти</button><button class="decline-task-btn px-4 py-2 rounded-lg bg-red-500 text-white font-semibold">Відхилити</button></div>`;
                     taskItem.querySelector('.accept-task-btn').addEventListener('click', () => acceptIncomingTask(task));
                     taskItem.querySelector('.decline-task-btn').addEventListener('click', () => declineIncomingTask(task.id));
                     incomingTasksList.appendChild(taskItem);
@@ -705,13 +717,12 @@
                 const isSentByMe = message.senderId === userId;
                 msgDiv.className = `flex ${isSentByMe ? 'justify-end' : 'justify-start'}`;
                 const bubble = document.createElement('div');
-                bubble.className = `message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative group ${isSentByMe ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100'}`;
+                bubble.className = `message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative group ${isSentByMe ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}`;
                 if (message.isTask) {
                     bubble.className = 'message-bubble p-3 rounded-lg max-w-xs md:max-w-md break-words relative bg-yellow-200 text-yellow-800 border border-yellow-300 text-sm italic mx-auto';
                     msgDiv.className = 'flex justify-center';
                     bubble.textContent = message.text;
                 } else if (message.type === 'image' && message.imageUrl) {
-                    bubble.classList.remove('p-3'); // remove padding for images
                     const img = document.createElement('img');
                     img.src = message.imageUrl;
                     img.className = "max-w-[200px] rounded-lg cursor-pointer max-h-48";
@@ -722,7 +733,7 @@
                 }
                 if (isSentByMe && !message.isTask) {
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-msg-btn absolute top-1/2 -left-8 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-gray-300 dark:bg-gray-500 hover:bg-red-500 text-white';
+                    deleteBtn.className = 'delete-msg-btn absolute top-1/2 -left-8 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-gray-300 hover:bg-red-500 text-white';
                     deleteBtn.innerHTML = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
                     deleteBtn.addEventListener('click', () => showConfirmModal(() => deleteChatMessage(message), "Ви впевнені, що хочете видалити це повідомлення?"));
                     bubble.appendChild(deleteBtn);
@@ -780,43 +791,6 @@
                 checkNotificationStatus();
             };
 
-            const renderSettings = () => {
-                 settingsContent.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <label for="theme-toggle" class="text-sm font-medium text-gray-700 dark:text-gray-300">Темна тема</label>
-                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" name="theme-toggle" id="theme-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                                <label for="theme-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                            </div>
-                        </div>
-                         <div>
-                             <label for="deferred-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300">В роботі (годин)</label>
-                             <input type="number" step="0.01" id="deferred-duration" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm">
-                         </div>
-                         <div>
-                             <label for="stale-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Застаріле після (годин)</label>
-                             <input type="number" step="0.01" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm">
-                         </div>
-                         <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
-                         <p id="settings-message" class="text-sm text-center text-green-600 dark:text-green-400 hidden"></p>
-                     </div>
-                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-2">Сповіщення</h3>
-                        <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md">Увімкнути сповіщення</button>
-                        <p id="notifications-status" class="text-sm text-center text-gray-500 dark:text-gray-400 mt-2"></p>
-                    </div>`;
-                    
-                    getEl('save-settings-btn').addEventListener('click', saveSettings);
-                    getEl('enable-notifications-btn').addEventListener('click', requestNotificationPermission);
-                    const themeToggle = getEl('theme-toggle');
-                    themeToggle.addEventListener('change', () => {
-                        const theme = themeToggle.checked ? 'dark' : 'light';
-                        applyTheme(theme);
-                        saveThemePreference(theme);
-                    });
-            };
-            
             // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -826,17 +800,12 @@
             closeNotificationBtn.addEventListener('click', hideNotification);
             saveEditBtn.addEventListener('click', saveEditedTask);
             cancelEditBtn.addEventListener('click', hideViewEditModal);
-            
-            const toggleSection = (listEl, btnEl) => {
-                listEl.classList.toggle('hidden');
-                btnEl.textContent = listEl.classList.contains('hidden') ? 'Розгорнути' : 'Згорнути';
-                saveExpansionState();
-            };
-            deferredToggleBtn.addEventListener('click', () => toggleSection(deferredTasksList, deferredToggleBtn));
-            completedToggleBtn.addEventListener('click', () => toggleSection(completedTasksList, completedToggleBtn));
-            settingsToggleBtn.addEventListener('click', () => toggleSection(settingsContent, settingsToggleBtn));
-            friendsToggleBtn.addEventListener('click', () => toggleSection(friendsContent, friendsToggleBtn));
-            
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            const toggleVisibility = (el, btn) => { el.classList.toggle('hidden'); btn.textContent = el.classList.contains('hidden') ? 'Розгорнути' : 'Згорнути'; };
+            deferredToggleBtn.addEventListener('click', () => toggleVisibility(deferredTasksList, deferredToggleBtn));
+            completedToggleBtn.addEventListener('click', () => toggleVisibility(completedTasksList, completedToggleBtn));
+            settingsToggleBtn.addEventListener('click', () => toggleVisibility(settingsContent, settingsToggleBtn));
+            friendsToggleBtn.addEventListener('click', () => toggleVisibility(friendsContent, friendsToggleBtn));
             addFriendOpenBtn.addEventListener('click', showAddFriendModal);
             cancelFriendBtn.addEventListener('click', hideAddFriendModal);
             saveFriendBtn.addEventListener('click', saveFriend);
@@ -845,6 +814,7 @@
             sendTaskBtn.addEventListener('click', sendAssignedTask);
             chatsBtn.addEventListener('click', openChatView);
             backToTasksBtn.addEventListener('click', closeChatView);
+            enableNotificationsBtn.addEventListener('click', requestNotificationPermission);
             closeImageViewerBtn.addEventListener('click', () => imageViewerModal.classList.add('hidden'));
             attachFileBtn.addEventListener('click', () => imageUploadInput.click());
             imageUploadInput.addEventListener('change', (e) => { if (e.target.files[0]) uploadImageAndSendMessage(e.target.files[0]); });
