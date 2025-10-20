@@ -136,6 +136,19 @@
             </div>
         </div>
     </div>
+    <!-- Модальне вікно для перегляду вхідного завдання -->
+    <div id="view-incoming-task-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Вхідне завдання</h3>
+            <p class="text-sm text-gray-500 mb-2">Від: <span id="incoming-task-sender" class="font-semibold"></span></p>
+            <p id="incoming-task-content" class="text-gray-700 mb-6 bg-gray-50 p-4 rounded-md whitespace-pre-wrap break-words"></p>
+            <div class="flex justify-end space-x-2">
+                <button id="incoming-task-decline-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Відхилити</button>
+                <button id="incoming-task-accept-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Прийняти</button>
+                <button id="incoming-task-close-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Закрити</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Основний контент -->
     <div id="main-content" class="max-w-xl w-full">
@@ -366,12 +379,19 @@
                   backToTasksFromReportBtn = getEl('back-to-tasks-from-report-btn'), reportTableBody = getEl('report-table-body'),
                   taskDetailsModal = getEl('task-details-modal'), taskDetailsContent = getEl('task-details-content'),
                   closeTaskDetailsBtn = getEl('close-task-details-btn'),
-                  deleteFromReportBtn = getEl('delete-from-report-btn');
+                  deleteFromReportBtn = getEl('delete-from-report-btn'),
+                  viewIncomingTaskModal = getEl('view-incoming-task-modal'),
+                  incomingTaskSender = getEl('incoming-task-sender'),
+                  incomingTaskContent = getEl('incoming-task-content'),
+                  incomingTaskAcceptBtn = getEl('incoming-task-accept-btn'),
+                  incomingTaskDeclineBtn = getEl('incoming-task-decline-btn'),
+                  incomingTaskCloseBtn = getEl('incoming-task-close-btn');
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
                 currentTaskToEdit = null, selectedFriendForChat = null, unsubscribeFromChat = null,
                 friendsCache = {}, shownNotifications = new Set(),
-                unsubscribeFromReport = null, currentReportTaskIdToDelete = null;
+                unsubscribeFromReport = null, currentReportTaskIdToDelete = null,
+                currentIncomingTask = null;
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -601,9 +621,28 @@
             };
 
             const renderIncomingTasks = (tasks) => {
-                incomingTasksSection.style.display = tasks.length > 0 ? 'block' : 'none';
-                incomingTasksList.innerHTML = tasks.length === 0 ? `<p class="text-gray-500 text-center italic">Немає вхідних завдань.</p>` : '';
-                tasks.forEach(task => { const taskItem = document.createElement('div'); taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 sm:space-x-2'; taskItem.innerHTML = `<div class="flex-grow"><p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p><p class="text-gray-800 text-truncate-2">${task.text}</p></div><div class="flex-shrink-0 flex items-center space-x-2"><button class="accept-task-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold">Прийняти</button><button class="decline-task-btn px-4 py-2 rounded-lg bg-red-500 text-white font-semibold">Відхилити</button></div>`; taskItem.querySelector('.accept-task-btn').addEventListener('click', () => acceptIncomingTask(task)); taskItem.querySelector('.decline-task-btn').addEventListener('click', () => updateSharedTaskStatus(task.id, 'declined')); incomingTasksList.appendChild(taskItem); });
+                incomingTasksList.innerHTML = '';
+                if (tasks.length === 0) {
+                    incomingTasksSection.style.display = 'none';
+                    return;
+                }
+                incomingTasksSection.style.display = 'block';
+
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex items-center justify-between space-x-2';
+                    taskItem.innerHTML = `
+                        <div class="flex-grow cursor-pointer">
+                            <p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p>
+                            <p class="text-gray-800 text-truncate-2">${task.text}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Переглянути</button>
+                        </div>`;
+                    taskItem.querySelector('.view-incoming-task-btn').addEventListener('click', () => showViewIncomingTaskModal(task));
+                    taskItem.querySelector('.flex-grow').addEventListener('click', () => showViewIncomingTaskModal(task));
+                    incomingTasksList.appendChild(taskItem);
+                });
             };
 
             const acceptIncomingTask = async (task) => {
@@ -707,6 +746,18 @@
                     console.error("Error deleting task from report: ", e);
                 }
             };
+            
+            const showViewIncomingTaskModal = (task) => {
+                currentIncomingTask = task;
+                incomingTaskSender.textContent = task.senderName;
+                incomingTaskContent.textContent = task.text;
+                viewIncomingTaskModal.classList.remove('hidden');
+            };
+
+            const hideViewIncomingTaskModal = () => {
+                viewIncomingTaskModal.classList.add('hidden');
+                currentIncomingTask = null;
+            };
 
             // --- Event Listeners ---
             googleSignInButton.addEventListener('click', signInWithGoogle);
@@ -752,6 +803,22 @@
                     "Так, видалити"
                 );
             });
+            
+            incomingTaskAcceptBtn.addEventListener('click', () => {
+                if (currentIncomingTask) {
+                    acceptIncomingTask(currentIncomingTask);
+                    hideViewIncomingTaskModal();
+                }
+            });
+
+            incomingTaskDeclineBtn.addEventListener('click', () => {
+                if (currentIncomingTask) {
+                    updateSharedTaskStatus(currentIncomingTask.id, 'declined');
+                    hideViewIncomingTaskModal();
+                }
+            });
+            
+            incomingTaskCloseBtn.addEventListener('click', hideViewIncomingTaskModal);
 
             const handleSendMessage = () => { if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; } sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat }); };
             sendChatMessageBtn.addEventListener('click', handleSendMessage);
@@ -763,4 +830,3 @@
     </script>
 </body>
 </html>
-
