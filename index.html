@@ -37,6 +37,7 @@
         .report-table {
             border-spacing: 0;
             width: 100%;
+            table-layout: fixed; /* Fixes column width issue */
         }
         .report-table th, .report-table td {
             border: 1px solid #e5e7eb;
@@ -717,7 +718,7 @@
                         const tasksInStatus = userTasks.filter(t => t.status === status);
                         const cardsHTML = tasksInStatus.map(task => 
                             `<div class="report-task-card p-2 mb-2 bg-white rounded-md shadow-sm border" data-task-text="${escape(task.text)}" data-task-id="${task.id}">
-                                <p class="text-sm text-truncate-2">${task.text}</p>
+                                <p class="text-sm text-truncate-2 break-words">${task.text}</p>
                             </div>`
                         ).join('');
                         return `<td class="align-top">${cardsHTML || ''}</td>`;
@@ -831,4 +832,3 @@
     </script>
 </body>
 </html>
-
