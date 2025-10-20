@@ -37,12 +37,10 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
-    <!-- Спінер завантаження -->
     <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
     </div>
 
-    <!-- Модальні вікна (винесені на верхній рівень) -->
     <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
             <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
@@ -122,13 +120,13 @@
 
             <div id="content-section" class="hidden">
                 <div class="flex space-x-2 mb-4">
+                    <button id="report-btn" class="w-full text-center px-6 py-2 rounded-lg bg-teal-500 text-white font-semibold hover:bg-teal-600 transition-colors shadow-md">Звіт</button>
                     <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">
                         Чати
                         <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
                     </button>
                     <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
                 </div>
-                <!-- Введення нового завдання -->
                 <div class="mb-8">
                     <textarea id="task-input" placeholder="Опишіть ваше завдання тут..." rows="6" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                     <div class="flex justify-end space-x-2 mt-2">
@@ -137,7 +135,7 @@
                     </div>
                 </div>
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання</h2>
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Вхідні завдання (в очікуванні)</h2>
                     <div id="incoming-tasks-list" class="space-y-3"></div>
                 </div>
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
@@ -199,7 +197,6 @@
         </div>
     </div>
     
-    <!-- Секція чату -->
     <div id="chat-section" class="max-w-4xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
@@ -231,6 +228,15 @@
                     </div>
                 </div>
              </div>
+        </div>
+    </div>
+
+    <div id="report-section" class="max-w-4xl w-full hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+             <button id="back-to-tasks-from-report-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
+             <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Звіт по призначених завданнях</h2>
+             <div id="report-content" class="space-y-4 max-h-[75vh] overflow-y-auto">
+                </div>
         </div>
     </div>
 
@@ -302,11 +308,15 @@
                   notificationsStatus = getEl('notifications-status'), imageViewerModal = getEl('image-viewer-modal'),
                   fullImage = getEl('full-image'), closeImageViewerBtn = getEl('close-image-viewer-btn'),
                   attachFileBtn = getEl('attach-file-btn'), imageUploadInput = getEl('image-upload-input'),
-                  uploadProgressContainer = getEl('upload-progress-container'), uploadProgressBar = getEl('upload-progress-bar');
+                  uploadProgressContainer = getEl('upload-progress-container'), uploadProgressBar = getEl('upload-progress-bar'),
+                  // NEW: Елементи звіту
+                  reportBtn = getEl('report-btn'), reportSection = getEl('report-section'),
+                  backToTasksFromReportBtn = getEl('back-to-tasks-from-report-btn'), reportContent = getEl('report-content');
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
                 currentTaskToEdit = null, selectedFriendForChat = null, unsubscribeFromChat = null,
-                friendsCache = [], shownNotifications = new Set();
+                friendsCache = [], shownNotifications = new Set(),
+                unsubscribeFromReport = null; // NEW: Для відписки від звіту
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -327,6 +337,7 @@
                     authButtons.classList.remove('hidden');
                     contentSection.classList.add('hidden');
                     chatSection.classList.add('hidden');
+                    reportSection.classList.add('hidden'); // NEW: Ховаємо звіт при виході
                 }
             });
             
@@ -359,7 +370,6 @@
                         const settings = docSnap.data();
                         deferredDurationHours = settings.deferredDurationHours || 24;
                         staleDurationHours = settings.staleDurationHours || 72;
-                        // Застосовуємо збережені стани розгортання
                         if (settings.expandedSections) {
                             Object.entries(settings.expandedSections).forEach(([key, isExpanded]) => {
                                 const list = getEl(`${key}-tasks-list`) || getEl(`${key}-content`);
@@ -386,7 +396,7 @@
                         const task = { id: doc.id, ...doc.data() };
                         if (task.status === 'deferred' && task.deferredAt) {
                             if (Date.now() - task.deferredAt.toMillis() >= deferredDurationHours * 3600000) {
-                                await updateDoc(doc.ref, { status: 'active', deferredAt: null, lastUpdatedAt: serverTimestamp() });
+                                await updateTaskStatus(task.id, 'active', task.originalSharedTaskId); // MODIFIED: Передаємо ID
                                 showPushNotification('Завдання повернуто до активних', { body: `Завдання: "${task.text}"` });
                                 return;
                             }
@@ -427,8 +437,15 @@
                         taskItem.querySelector('.more-options-btn').addEventListener('click', (e) => { e.stopPropagation(); renderDropdown(task, e.currentTarget); });
                     }
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
-                    if (taskItem.querySelector('.complete-btn')) taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed'));
-                    if (taskItem.querySelector('.active-btn')) taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active'));
+                    
+                    // MODIFIED: Передаємо originalSharedTaskId в updateTaskStatus
+                    if (taskItem.querySelector('.complete-btn')) {
+                        taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed', task.originalSharedTaskId));
+                    }
+                    if (taskItem.querySelector('.active-btn')) {
+                        taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active', task.originalSharedTaskId));
+                    }
+                    
                     listElement.appendChild(taskItem);
                 });
             };
@@ -451,7 +468,8 @@
 
                 dropdown.addEventListener('click', (e) => {
                     const action = e.target.dataset.action;
-                    if (action === 'defer') updateTaskStatus(task.id, 'deferred');
+                    // MODIFIED: Передаємо originalSharedTaskId
+                    if (action === 'defer') updateTaskStatus(task.id, 'deferred', task.originalSharedTaskId);
                     if (action === 'prolong') prolongTask(task.id);
                     if (action === 'delete') showConfirmModal(() => deleteTask(task.id), "Ви впевнені, що хочете видалити це завдання?");
                     dropdown.remove();
@@ -474,12 +492,27 @@
                 } catch (e) { console.error("Помилка додавання завдання: ", e); }
             };
 
-            const updateTaskStatus = async (id, newStatus) => {
+            // MODIFIED: Функція тепер приймає originalSharedTaskId для синхронізації публічного статусу
+            const updateTaskStatus = async (id, newStatus, originalSharedTaskId = null) => {
                 if (!userId) return;
                 try {
+                    // 1. Оновлюємо приватне завдання
                     let updateData = { status: newStatus, lastUpdatedAt: serverTimestamp(), isStale: false };
                     if (newStatus === 'deferred') updateData.deferredAt = serverTimestamp();
                     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id), updateData);
+
+                    // 2. NEW: Оновлюємо публічне (shared_task) завдання, якщо воно існує
+                    if (originalSharedTaskId) {
+                        const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                        const publicTaskRef = doc(collection(publicDataRef, 'shared_tasks'), originalSharedTaskId);
+                        
+                        let publicStatus = newStatus;
+                        if (newStatus === 'active' || newStatus === 'deferred') {
+                            publicStatus = 'accepted'; // Для звіту, 'active' і 'deferred' - це 'в роботі'
+                        }
+                        
+                        await updateDoc(publicTaskRef, { status: publicStatus });
+                    }
                 } catch (e) { console.error("Помилка оновлення статусу: ", e); }
             };
 
@@ -608,23 +641,37 @@
             const showAssignTaskModal = () => { assignTaskInput.value = ''; friendSelect.value = ''; assignTaskModal.classList.remove('hidden'); };
             const hideAssignTaskModal = () => { assignTaskModal.classList.add('hidden'); };
 
+            // MODIFIED: Додаємо status: 'pending' при створенні завдання
             const sendAssignedTask = async () => {
                 const recipientId = friendSelect.value;
                 const taskText = assignTaskInput.value.trim();
                 if (recipientId === '' || taskText === '') return;
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    await addDoc(collection(publicDataRef, 'shared_tasks'), { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Анонім', recipientId, createdAt: serverTimestamp() });
+                    await addDoc(collection(publicDataRef, 'shared_tasks'), { 
+                        text: taskText, 
+                        senderId: userId, 
+                        senderName: auth.currentUser.displayName || 'Анонім', 
+                        recipientId, 
+                        createdAt: serverTimestamp(),
+                        status: 'pending' // NEW: Встановлюємо початковий статус
+                    });
                     const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
                     await sendChatMessage({ text: `Я призначив вам завдання: "${taskText}"`, recipient: selectedFriend, isTask: true });
                     hideAssignTaskModal();
                 } catch (e) { console.error("Помилка відправлення завдання:", e); }
             };
 
+            // MODIFIED: Тепер підписуємося лише на завдання зі статусом 'pending'
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
                 const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                const q = query(collection(publicDataRef, 'shared_tasks'), where("recipientId", "==", userId), orderBy("createdAt", "desc"));
+                const q = query(
+                    collection(publicDataRef, 'shared_tasks'), 
+                    where("recipientId", "==", userId), 
+                    where("status", "==", "pending"), // NEW: Фільтр
+                    orderBy("createdAt", "desc")
+                );
                 onSnapshot(q, (snapshot) => renderIncomingTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
             };
 
@@ -641,22 +688,41 @@
                 });
             };
 
+            // MODIFIED: Прийняття завдання тепер оновлює статус, а не видаляє
             const acceptIncomingTask = async (task) => {
                 if (!userId) return;
                 try {
-                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: task.text, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false, assignedBy: task.senderName });
-                    await declineIncomingTask(task.id);
+                    // 1. Додаємо в приватний список з посиланням на оригінал
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { 
+                        text: task.text, 
+                        status: 'active', 
+                        createdAt: serverTimestamp(), 
+                        lastUpdatedAt: serverTimestamp(), 
+                        isStale: false, 
+                        assignedBy: task.senderName,
+                        originalSharedTaskId: task.id // NEW: Зберігаємо ID публічного завдання
+                    });
+                    
+                    // 2. Оновлюємо статус публічного завдання
+                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                    await updateDoc(doc(collection(publicDataRef, 'shared_tasks'), task.id), {
+                        status: 'accepted'
+                    });
                 } catch (e) { console.error("Помилка прийняття завдання:", e); }
             };
 
+            // MODIFIED: Відхилення завдання тепер оновлює статус, а не видаляє
             const declineIncomingTask = async (taskId) => {
                 if (!userId) return;
                 try {
                     const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    await deleteDoc(doc(collection(publicDataRef, 'shared_tasks'), taskId));
+                    await updateDoc(doc(collection(publicDataRef, 'shared_tasks'), taskId), {
+                         status: 'declined'
+                    });
                 } catch (e) { console.error("Помилка відхилення завдання:", e); }
             };
 
+            // --- Функції Чату (без змін) ---
             const openChatView = () => { mainContent.classList.add('hidden'); chatSection.classList.remove('hidden'); };
             const closeChatView = () => {
                 chatSection.classList.add('hidden');
@@ -821,6 +887,113 @@
                 checkNotificationStatus();
             };
 
+            // --- NEW: Функції для Звіту ---
+            const openReportView = () => {
+                mainContent.classList.add('hidden');
+                reportSection.classList.remove('hidden');
+                subscribeToReport();
+            };
+
+            const closeReportView = () => {
+                reportSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                if (unsubscribeFromReport) unsubscribeFromReport();
+                unsubscribeFromReport = null;
+            };
+
+            const subscribeToReport = () => {
+                if (!userId) return;
+                if (unsubscribeFromReport) unsubscribeFromReport(); // Зупиняємо попередню підписку
+                
+                const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
+                const q = query(
+                    collection(publicDataRef, 'shared_tasks'), 
+                    where("senderId", "==", userId), // Тільки завдання, які ВІДПРАВИВ я
+                    orderBy("createdAt", "desc")
+                );
+                
+                unsubscribeFromReport = onSnapshot(q, (snapshot) => {
+                    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderReport(tasks);
+                });
+            };
+
+            const renderReport = (tasks) => {
+                reportContent.innerHTML = '';
+                if (tasks.length === 0) {
+                    reportContent.innerHTML = `<p class="text-gray-500 text-center italic">Ви ще не призначили жодного завдання.</p>`;
+                    return;
+                }
+                
+                // Групуємо завдання за одержувачем
+                const tasksByRecipient = {};
+                tasks.forEach(task => {
+                    const recipientId = task.recipientId;
+                    const friend = friendsCache.find(f => f.userId === recipientId);
+                    const recipientName = friend ? friend.name : `Невідомий (${recipientId.substring(0, 5)}...)`;
+                    
+                    if (!tasksByRecipient[recipientName]) {
+                        tasksByRecipient[recipientName] = [];
+                    }
+                    tasksByRecipient[recipientName].push(task);
+                });
+
+                // Рендеримо згруповані списки
+                for (const recipientName in tasksByRecipient) {
+                    const userTasks = tasksByRecipient[recipientName];
+                    const userBlock = document.createElement('div');
+                    userBlock.className = 'bg-blue-50 p-4 rounded-lg shadow-inner';
+                    
+                    let tasksHTML = userTasks.map(task => `
+                        <div class="p-3 rounded-md bg-white shadow flex justify-between items-center space-x-4">
+                            <p class="text-gray-800 flex-grow break-words">${task.text}</p>
+                            <span class="flex-shrink-0 font-semibold ${getStatusClass(task.status)}">
+                                ${getStatusIcon(task.status)} ${getStatusText(task.status)}
+                            </span>
+                        </div>
+                    `).join('');
+                    
+                    userBlock.innerHTML = `
+                        <h3 class="text-xl font-bold text-gray-700 mb-3">${recipientName}</h3>
+                        <div class="space-y-2">
+                            ${tasksHTML}
+                        </div>
+                    `;
+                    reportContent.appendChild(userBlock);
+                }
+            };
+            
+            const getStatusText = (status) => {
+                switch(status) {
+                    case 'pending': return 'Очікує';
+                    case 'accepted': return 'В роботі';
+                    case 'declined': return 'Відхилено';
+                    case 'completed': return 'Виконано';
+                    default: return 'Невідомо';
+                }
+            };
+
+            const getStatusIcon = (status) => {
+                switch(status) {
+                    case 'pending': return '⏳';
+                    case 'accepted': return '🕐';
+                    case 'declined': return '❌';
+                    case 'completed': return '✅';
+                    default: return '❓';
+                }
+            };
+
+            const getStatusClass = (status) => {
+                switch(status) {
+                    case 'pending': return 'text-gray-500';
+                    case 'accepted': return 'text-blue-600';
+                    case 'declined': return 'text-red-600';
+                    case 'completed': return 'text-green-600';
+                    default: return 'text-gray-400';
+                }
+            };
+            // --- Кінець функцій Звіту ---
+
             // Event Listeners
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -853,6 +1026,10 @@
             attachFileBtn.addEventListener('click', () => imageUploadInput.click());
             imageUploadInput.addEventListener('change', (e) => { if (e.target.files[0]) uploadImageAndSendMessage(e.target.files[0]); });
             
+            // NEW: Слухачі для Звіту
+            reportBtn.addEventListener('click', openReportView);
+            backToTasksFromReportBtn.addEventListener('click', closeReportView);
+
             const handleSendMessage = () => {
                 if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; }
                 sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat });
@@ -870,4 +1047,3 @@
     </script>
 </body>
 </html>
-
