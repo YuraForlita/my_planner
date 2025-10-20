@@ -305,7 +305,6 @@
         window.onload = function () {
             setLogLevel('debug');
             
-            // FIXED: Restored the correct Firebase config
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
                 apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
                 authDomain: "planer-97eb1.firebaseapp.com",
@@ -505,8 +504,7 @@
             const addTask = async () => {
                 const taskText = taskInput.value.trim();
                 if (taskText === '' || !userId) return;
-                try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false }); taskInput.value = ''; } catch (e) { console.error("Error adding task: ", e); }
-            };
+                try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false }); taskInput.value = ''; } catch (e) { console.error("Error adding task: ", e); } };
             
             const updateTaskStatus = async (id, newStatus, originalSharedTaskId = null) => {
                 if (!userId) return;
@@ -584,8 +582,18 @@
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
                 const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"), orderBy("createdAt", "desc"));
-                onSnapshot(q, (snapshot) => renderIncomingTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), error => console.error("Error in incoming tasks subscription:", error));
+                // FIXED: Removed orderBy to prevent index requirement, sorting is now done client-side.
+                const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"));
+                onSnapshot(q, (snapshot) => {
+                    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Client-side sorting
+                    tasks.sort((a, b) => {
+                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return timeB - timeA;
+                    });
+                    renderIncomingTasks(tasks);
+                }, error => console.error("Error in incoming tasks subscription:", error));
             };
 
             const renderIncomingTasks = (tasks) => {
@@ -630,10 +638,17 @@
                 if (!userId) return;
                 if (unsubscribeFromReport) unsubscribeFromReport();
                 const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                const q = query(sharedTasksCollection, where("senderId", "==", userId), orderBy("createdAt", "desc"));
+                // FIXED: Removed orderBy to prevent index requirement, sorting is now done client-side.
+                const q = query(sharedTasksCollection, where("senderId", "==", userId));
                 
                 unsubscribeFromReport = onSnapshot(q, (snapshot) => {
                     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     // Client-side sorting
+                    tasks.sort((a, b) => {
+                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return timeB - timeA;
+                    });
                     renderReport(tasks);
                 }, error => console.error("Error in report subscription:", error));
             };
