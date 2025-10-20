@@ -305,6 +305,7 @@
         window.onload = function () {
             setLogLevel('debug');
             
+            // FIXED: Restored the correct Firebase config
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
                 apiKey: "AIzaSyBu9M5MDiaWJWJXFtoOpK--KZXKRtTFZt0",
                 authDomain: "planer-97eb1.firebaseapp.com",
@@ -506,7 +507,8 @@
                 if (taskText === '' || !userId) return;
                 try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false }); taskInput.value = ''; } catch (e) { console.error("Error adding task: ", e); }
             };
-
+            
+            // FIXED: Corrected Firestore path for public tasks
             const updateTaskStatus = async (id, newStatus, originalSharedTaskId = null) => {
                 if (!userId) return;
                 try {
@@ -515,8 +517,7 @@
                     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id), updateData);
 
                     if (originalSharedTaskId) {
-                        const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                        const publicTaskRef = doc(collection(publicDataRef, 'shared_tasks'), originalSharedTaskId);
+                        const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'shared_tasks', originalSharedTaskId);
                         let publicStatus = (newStatus === 'active' || newStatus === 'deferred') ? 'accepted' : newStatus;
                         await updateDoc(publicTaskRef, { status: publicStatus });
                     }
@@ -561,23 +562,32 @@
             const showAssignTaskModal = () => { assignTaskInput.value = ''; friendSelect.value = ''; assignTaskModal.classList.remove('hidden'); };
             const hideAssignTaskModal = () => { assignTaskModal.classList.add('hidden'); };
 
+            // FIXED: Corrected Firestore path for writing shared tasks
             const sendAssignedTask = async () => {
                 const recipientId = friendSelect.value;
                 const taskText = assignTaskInput.value.trim();
                 if (recipientId === '' || taskText === '') return;
                 try {
-                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    await addDoc(collection(publicDataRef, 'shared_tasks'), { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Анонім', recipientId, createdAt: serverTimestamp(), status: 'pending' });
+                    const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                    await addDoc(sharedTasksCollection, { 
+                        text: taskText, 
+                        senderId: userId, 
+                        senderName: auth.currentUser.displayName || 'Анонім', 
+                        recipientId, 
+                        createdAt: serverTimestamp(), 
+                        status: 'pending' 
+                    });
                     const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
                     await sendChatMessage({ text: `Я призначив вам завдання: "${taskText}"`, recipient: selectedFriend, isTask: true });
                     hideAssignTaskModal();
                 } catch (e) { console.error("Error sending assigned task:", e); }
             };
             
+            // FIXED: Corrected Firestore path for reading shared tasks
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
-                const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                const q = query(collection(publicDataRef, 'shared_tasks'), where("recipientId", "==", userId), where("status", "==", "pending"), orderBy("createdAt", "desc"));
+                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"), orderBy("createdAt", "desc"));
                 onSnapshot(q, (snapshot) => renderIncomingTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), error => console.error("Error in incoming tasks subscription:", error));
             };
 
@@ -595,14 +605,14 @@
                 } catch (e) { console.error("Error accepting task:", e); }
             };
             
+            // FIXED: Corrected Firestore path for updating shared tasks
             const updateSharedTaskStatus = async (taskId, status) => {
                 try {
-                    const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                    await updateDoc(doc(collection(publicDataRef, 'shared_tasks'), taskId), { status });
+                    const taskRef = doc(db, 'artifacts', appId, 'public', 'shared_tasks', taskId);
+                    await updateDoc(taskRef, { status });
                 } catch (e) { console.error(`Error updating shared task to ${status}:`, e); }
             };
 
-            // Chat functions (mostly unchanged)
             const openChatView = () => { mainContent.classList.add('hidden'); chatSection.classList.remove('hidden'); };
             const closeChatView = () => { chatSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromChat) unsubscribeFromChat(); unsubscribeFromChat = null; selectedFriendForChat = null; chatWindow.classList.add('hidden'); chatWindowPlaceholder.classList.remove('hidden'); };
             const selectFriendForChat = async (friend) => { selectedFriendForChat = friend; chatWindowPlaceholder.classList.add('hidden'); chatWindow.classList.remove('hidden'); chatHeader.textContent = `Чат з ${friend.name}`; chatMessages.innerHTML = ''; if (unsubscribeFromChat) unsubscribeFromChat(); const participants = [userId, friend.userId].sort(); const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); const q = query(collection(publicDataRef, 'chat_messages'), where("participants", "==", participants), orderBy("timestamp")); unsubscribeFromChat = onSnapshot(q, (snapshot) => { chatMessages.innerHTML = ''; snapshot.docs.forEach(doc => renderChatMessage({ id: doc.id, ...doc.data() })); setTimeout(() => { chatMessages.scrollTop = chatMessages.scrollHeight; }, 0); }, error => console.error("Chat subscription error:", error)); await markMessagesAsRead(friend.userId); };
@@ -620,11 +630,12 @@
             const openReportView = () => { mainContent.classList.add('hidden'); reportSection.classList.remove('hidden'); subscribeToReport(); };
             const closeReportView = () => { reportSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromReport) unsubscribeFromReport(); unsubscribeFromReport = null; };
 
+            // FIXED: Corrected Firestore path for reading report data
             const subscribeToReport = () => {
                 if (!userId) return;
                 if (unsubscribeFromReport) unsubscribeFromReport();
-                const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data');
-                const q = query(collection(publicDataRef, 'shared_tasks'), where("senderId", "==", userId), orderBy("createdAt", "desc"));
+                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                const q = query(sharedTasksCollection, where("senderId", "==", userId), orderBy("createdAt", "desc"));
                 
                 unsubscribeFromReport = onSnapshot(q, (snapshot) => {
                     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -634,7 +645,7 @@
 
             const renderReport = (tasks) => {
                 reportTableBody.innerHTML = '';
-                if (Object.keys(friendsCache).length === 0 && tasks.length > 0) return; // Wait for friends to load
+                if (Object.keys(friendsCache).length === 0 && tasks.length > 0) return; 
 
                 const tasksByRecipient = {};
                 tasks.forEach(task => {
@@ -721,3 +732,4 @@
     </script>
 </body>
 </html>
+
