@@ -347,22 +347,6 @@
                 if (document.hidden && Notification.permission === 'granted') { new Notification(title, options); }
             };
 
-            const saveExpansionState = async () => {
-                if (!userId) return;
-                const sections = {
-                    deferred: !getEl('deferred-tasks-list').classList.contains('hidden'),
-                    completed: !getEl('completed-tasks-list').classList.contains('hidden'),
-                    settings: !getEl('settings-content').classList.contains('hidden'),
-                    friends: !getEl('friends-content').classList.contains('hidden'),
-                };
-                try {
-                    const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`);
-                    await setDoc(settingsRef, { expandedSections: sections }, { merge: true });
-                } catch (e) {
-                    console.error("Помилка збереження стану секцій:", e);
-                }
-            };
-
             const loadSettings = async () => {
                 if (!userId) return;
                 try {
@@ -372,23 +356,9 @@
                         const settings = docSnap.data();
                         deferredDurationHours = settings.deferredDurationHours || 24;
                         staleDurationHours = settings.staleDurationHours || 72;
-                        applyTheme(settings.theme || 'light');
-                        if (settings.expandedSections) {
-                            Object.entries(settings.expandedSections).forEach(([key, isExpanded]) => {
-                                const list = getEl(`${key}-tasks-list`) || getEl(`${key}-content`);
-                                const btn = getEl(`${key}-toggle-btn`);
-                                if (list && btn) {
-                                    list.classList.toggle('hidden', !isExpanded);
-                                    btn.textContent = isExpanded ? 'Згорнути' : 'Розгорнути';
-                                }
-                            });
-                        }
-                    } else {
-                         applyTheme('light');
                     }
-                    getEl('deferred-duration').value = deferredDurationHours;
-                    getEl('stale-duration').value = staleDurationHours;
-                    checkNotificationStatus();
+                    deferredDurationInput.value = deferredDurationHours;
+                    staleDurationInput.value = staleDurationHours;
                 } catch (e) { console.error("Помилка завантаження налаштувань:", e); }
             };
             
@@ -830,15 +800,12 @@
             closeNotificationBtn.addEventListener('click', hideNotification);
             saveEditBtn.addEventListener('click', saveEditedTask);
             cancelEditBtn.addEventListener('click', hideViewEditModal);
-            const toggleSection = (listEl, btnEl) => {
-                listEl.classList.toggle('hidden');
-                btnEl.textContent = listEl.classList.contains('hidden') ? 'Розгорнути' : 'Згорнути';
-                saveExpansionState();
-            };
-            deferredToggleBtn.addEventListener('click', () => toggleSection(getEl('deferred-tasks-list'), deferredToggleBtn));
-            completedToggleBtn.addEventListener('click', () => toggleSection(getEl('completed-tasks-list'), completedToggleBtn));
-            settingsToggleBtn.addEventListener('click', () => toggleSection(getEl('settings-content'), settingsToggleBtn));
-            friendsToggleBtn.addEventListener('click', () => toggleSection(getEl('friends-content'), friendsToggleBtn));
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            const toggleVisibility = (el, btn) => { el.classList.toggle('hidden'); btn.textContent = el.classList.contains('hidden') ? 'Розгорнути' : 'Згорнути'; };
+            deferredToggleBtn.addEventListener('click', () => toggleVisibility(deferredTasksList, deferredToggleBtn));
+            completedToggleBtn.addEventListener('click', () => toggleVisibility(completedTasksList, completedToggleBtn));
+            settingsToggleBtn.addEventListener('click', () => toggleVisibility(settingsContent, settingsToggleBtn));
+            friendsToggleBtn.addEventListener('click', () => toggleVisibility(friendsContent, friendsToggleBtn));
             addFriendOpenBtn.addEventListener('click', showAddFriendModal);
             cancelFriendBtn.addEventListener('click', hideAddFriendModal);
             saveFriendBtn.addEventListener('click', saveFriend);
