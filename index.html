@@ -508,7 +508,6 @@
                 try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: taskText, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false }); taskInput.value = ''; } catch (e) { console.error("Error adding task: ", e); }
             };
             
-            // FIXED: Corrected Firestore path for public tasks
             const updateTaskStatus = async (id, newStatus, originalSharedTaskId = null) => {
                 if (!userId) return;
                 try {
@@ -517,7 +516,7 @@
                     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id), updateData);
 
                     if (originalSharedTaskId) {
-                        const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'shared_tasks', originalSharedTaskId);
+                        const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', originalSharedTaskId);
                         let publicStatus = (newStatus === 'active' || newStatus === 'deferred') ? 'accepted' : newStatus;
                         await updateDoc(publicTaskRef, { status: publicStatus });
                     }
@@ -562,13 +561,12 @@
             const showAssignTaskModal = () => { assignTaskInput.value = ''; friendSelect.value = ''; assignTaskModal.classList.remove('hidden'); };
             const hideAssignTaskModal = () => { assignTaskModal.classList.add('hidden'); };
 
-            // FIXED: Corrected Firestore path for writing shared tasks
             const sendAssignedTask = async () => {
                 const recipientId = friendSelect.value;
                 const taskText = assignTaskInput.value.trim();
                 if (recipientId === '' || taskText === '') return;
                 try {
-                    const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                    const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
                     await addDoc(sharedTasksCollection, { 
                         text: taskText, 
                         senderId: userId, 
@@ -583,10 +581,9 @@
                 } catch (e) { console.error("Error sending assigned task:", e); }
             };
             
-            // FIXED: Corrected Firestore path for reading shared tasks
             const subscribeToIncomingTasks = () => {
                 if (!userId) return;
-                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
                 const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"), orderBy("createdAt", "desc"));
                 onSnapshot(q, (snapshot) => renderIncomingTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), error => console.error("Error in incoming tasks subscription:", error));
             };
@@ -605,10 +602,9 @@
                 } catch (e) { console.error("Error accepting task:", e); }
             };
             
-            // FIXED: Corrected Firestore path for updating shared tasks
             const updateSharedTaskStatus = async (taskId, status) => {
                 try {
-                    const taskRef = doc(db, 'artifacts', appId, 'public', 'shared_tasks', taskId);
+                    const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', taskId);
                     await updateDoc(taskRef, { status });
                 } catch (e) { console.error(`Error updating shared task to ${status}:`, e); }
             };
@@ -630,11 +626,10 @@
             const openReportView = () => { mainContent.classList.add('hidden'); reportSection.classList.remove('hidden'); subscribeToReport(); };
             const closeReportView = () => { reportSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromReport) unsubscribeFromReport(); unsubscribeFromReport = null; };
 
-            // FIXED: Corrected Firestore path for reading report data
             const subscribeToReport = () => {
                 if (!userId) return;
                 if (unsubscribeFromReport) unsubscribeFromReport();
-                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'shared_tasks');
+                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
                 const q = query(sharedTasksCollection, where("senderId", "==", userId), orderBy("createdAt", "desc"));
                 
                 unsubscribeFromReport = onSnapshot(q, (snapshot) => {
