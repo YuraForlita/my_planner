@@ -20,13 +20,6 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        .dropdown-menu {
-            z-index: 50; 
-            min-width: 150px;
-        }
-        .task-actions {
-            position: relative;
-        }
         .task-list-container {
             max-height: 400px;
             overflow-y: auto;
@@ -137,7 +130,6 @@
             </div>
         </div>
     </div>
-    <!-- Модальне вікно для перегляду вхідного завдання -->
     <div id="view-incoming-task-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative">
             <h3 class="text-lg font-bold mb-4 text-gray-800">Вхідне завдання</h3>
@@ -147,6 +139,20 @@
                 <button id="incoming-task-decline-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Відхилити</button>
                 <button id="incoming-task-accept-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Прийняти</button>
                 <button id="incoming-task-close-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Закрити</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модальне вікно для дій із завданням -->
+    <div id="task-actions-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Дії із завданням</h3>
+            <div class="space-y-3">
+                <button id="action-defer-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">В роботу</button>
+                <button id="action-prolong-btn" class="w-full px-4 py-2 rounded-lg bg-purple-500 text-white font-semibold hover:bg-purple-600 transition-colors hidden">Продовжити</button>
+                <button id="action-delete-btn" class="w-full px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
+            </div>
+            <div class="mt-6 text-right">
+                <button id="cancel-actions-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
     </div>
@@ -386,13 +392,18 @@
                   incomingTaskContent = getEl('incoming-task-content'),
                   incomingTaskAcceptBtn = getEl('incoming-task-accept-btn'),
                   incomingTaskDeclineBtn = getEl('incoming-task-decline-btn'),
-                  incomingTaskCloseBtn = getEl('incoming-task-close-btn');
+                  incomingTaskCloseBtn = getEl('incoming-task-close-btn'),
+                  taskActionsModal = getEl('task-actions-modal'),
+                  actionDeferBtn = getEl('action-defer-btn'),
+                  actionProlongBtn = getEl('action-prolong-btn'),
+                  actionDeleteBtn = getEl('action-delete-btn'),
+                  cancelActionsBtn = getEl('cancel-actions-btn');
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
                 currentTaskToEdit = null, selectedFriendForChat = null, unsubscribeFromChat = null,
                 friendsCache = {}, shownNotifications = new Set(),
                 unsubscribeFromReport = null, currentReportTaskIdToDelete = null,
-                currentIncomingTask = null;
+                currentIncomingTask = null, currentTaskForAction = null;
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -495,7 +506,7 @@
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">${buttonsHTML}</div>`;
                     
-                    if (status !== 'completed') taskItem.querySelector('.more-options-btn').addEventListener('click', (e) => { e.stopPropagation(); renderDropdown(task, e.currentTarget); });
+                    if (status !== 'completed') taskItem.querySelector('.more-options-btn').addEventListener('click', (e) => { e.stopPropagation(); showTaskActionsModal(task); });
                     taskItem.querySelector('p').addEventListener('click', () => showViewEditModal(task));
                     if (taskItem.querySelector('.complete-btn')) taskItem.querySelector('.complete-btn').addEventListener('click', () => updateTaskStatus(task.id, 'completed', task.originalSharedTaskId));
                     if (taskItem.querySelector('.active-btn')) taskItem.querySelector('.active-btn').addEventListener('click', () => updateTaskStatus(task.id, 'active', task.originalSharedTaskId));
@@ -503,39 +514,6 @@
                 });
             };
             
-            const renderDropdown = (task, button) => {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
-                const dropdown = document.createElement('div');
-                dropdown.className = 'dropdown-menu fixed hidden bg-white rounded-md shadow-lg border py-1';
-                dropdown.innerHTML = `<button data-action="defer" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">В роботу</button>
-                    ${task.isStale ? `<button data-action="prolong" class="w-full text-left px-4 py-2 text-purple-600 hover:bg-gray-100">Продовжити</button>` : ''}
-                    <button data-action="delete" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Видалити</button>`;
-                
-                dropdown.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const action = e.target.dataset.action;
-                    if (action === 'defer') updateTaskStatus(task.id, 'deferred', task.originalSharedTaskId);
-                    if (action === 'prolong') prolongTask(task.id);
-                    if (action === 'delete') showConfirmModal(() => deleteTask(task), "Видалити це завдання?", "Видалити");
-                    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
-                });
-
-                document.body.appendChild(dropdown);
-
-                const rect = button.getBoundingClientRect();
-                dropdown.style.top = `${rect.bottom + 5}px`;
-                dropdown.style.left = `${rect.right - dropdown.offsetWidth}px`;
-                dropdown.classList.remove('hidden');
-
-                const hideDropdown = (e) => {
-                    if (!dropdown.contains(e.target)) {
-                        dropdown.remove();
-                        document.removeEventListener('click', hideDropdown, true);
-                    }
-                };
-                setTimeout(() => document.addEventListener('click', hideDropdown, true), 0);
-            };
-
             const addTask = async () => {
                 const taskText = taskInput.value.trim();
                 if (taskText === '' || !userId) return;
@@ -774,6 +752,17 @@
                 currentIncomingTask = null;
             };
 
+            const showTaskActionsModal = (task) => {
+                currentTaskForAction = task;
+                actionProlongBtn.classList.toggle('hidden', !task.isStale);
+                taskActionsModal.classList.remove('hidden');
+            };
+
+            const hideTaskActionsModal = () => {
+                taskActionsModal.classList.add('hidden');
+                currentTaskForAction = null;
+            };
+
             // --- Event Listeners ---
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
@@ -835,6 +824,29 @@
             
             incomingTaskCloseBtn.addEventListener('click', hideViewIncomingTaskModal);
 
+            cancelActionsBtn.addEventListener('click', hideTaskActionsModal);
+
+            actionDeferBtn.addEventListener('click', () => {
+                if (currentTaskForAction) {
+                    updateTaskStatus(currentTaskForAction.id, 'deferred', currentTaskForAction.originalSharedTaskId);
+                    hideTaskActionsModal();
+                }
+            });
+
+            actionProlongBtn.addEventListener('click', () => {
+                if (currentTaskForAction) {
+                    prolongTask(currentTaskForAction.id);
+                    hideTaskActionsModal();
+                }
+            });
+
+            actionDeleteBtn.addEventListener('click', () => {
+                if (currentTaskForAction) {
+                    hideTaskActionsModal();
+                    showConfirmModal(() => deleteTask(currentTaskForAction), "Видалити це завдання?", "Видалити");
+                }
+            });
+
             const handleSendMessage = () => { if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; } sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat }); };
             sendChatMessageBtn.addEventListener('click', handleSendMessage);
             chatMessageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
@@ -845,4 +857,3 @@
     </script>
 </body>
 </html>
-
