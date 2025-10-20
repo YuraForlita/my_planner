@@ -149,7 +149,7 @@
                         <h2 class="text-xl font-bold text-gray-700">В роботі</h2>
                         <button id="deferred-toggle-btn" class="text-indigo-600 font-semibold hover:underline">Розгорнути</button>
                     </div>
-                    <div id="deferred-tasks-list" class="space-y-3 task-list-container"></div>
+                    <div id="deferred-tasks-list" class="space-y-3 hidden task-list-container"></div>
                 </div>
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6">
                     <div class="flex items-center justify-between mb-4">
@@ -203,7 +203,7 @@
     <div id="chat-section" class="max-w-4xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
              <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
-             <div class="flex flex-col md:flex-row h-[90vh] border rounded-lg">
+             <div class="flex flex-col md:flex-row h-[80vh] border rounded-lg">
                 <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
                     <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
                     <div id="chat-friends-list" class="space-y-1 p-2"></div>
@@ -532,7 +532,7 @@
             const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
             const deleteTask = async (taskId) => {
                 if (!userId || !taskId) return;
-                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання:", e); }
+                try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, taskId)); } catch (e) { console.error("Помилка видалення завдання: ", e); }
             };
             
             const deleteChatMessage = async (msg) => {
@@ -564,8 +564,7 @@
             const saveFriend = async () => {
                 const name = friendNameInput.value.trim();
                 const friendId = friendIdInput.value.trim();
-                if (name === '' || friendId === '') { return; }
-                if (friendId === userId) { return; }
+                if (name === '' || friendId === '' || friendId === userId) return;
                 try {
                     await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId });
                     hideAddFriendModal();
