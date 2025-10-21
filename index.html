@@ -546,11 +546,20 @@
             const deleteTask = async (task) => {
                 if (!userId || !task || !task.id) return;
                 try {
+                    // Спочатку видаляємо локальну копію завдання користувача
                     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, task.id));
+            
+                    // Якщо це завдання було призначене кимось, оновлюємо статус
+                    // головного завдання на "відхилено", замість його видалення.
+                    // Це інформує відправника.
                     if (task.originalSharedTaskId) {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId));
+                        const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId);
+                        await updateDoc(publicTaskRef, { status: 'declined' });
                     }
-                } catch (e) { console.error("Error deleting task: ", e); }
+                } catch (e) {
+                    console.error("Error processing task deletion: ", e);
+                    showNotification('Помилка', 'Не вдалося повністю видалити завдання. Спробуйте ще раз.');
+                }
             };
 
             const deleteChatMessage = async (msg) => { if (!userId || !msg.id || msg.senderId !== userId) return; try { const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id)); if (msg.type === 'image' && msg.imageUrl) { const imageRef = ref(storage, msg.imageUrl); await deleteObject(imageRef); } } catch (e) { console.error("Error deleting chat message:", e); } };
