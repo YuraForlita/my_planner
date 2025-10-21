@@ -546,12 +546,8 @@
             const deleteTask = async (task) => {
                 if (!userId || !task || !task.id) return;
                 try {
-                    // Спочатку видаляємо локальну копію завдання користувача
                     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, task.id));
             
-                    // Якщо це завдання було призначене кимось, оновлюємо статус
-                    // головного завдання на "відхилено", замість його видалення.
-                    // Це інформує відправника.
                     if (task.originalSharedTaskId) {
                         const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId);
                         await updateDoc(publicTaskRef, { status: 'declined' });
@@ -569,6 +565,16 @@
             const showAddFriendModal = () => { friendNameInput.value = ''; friendIdInput.value = ''; addFriendModal.classList.remove('hidden'); };
             const hideAddFriendModal = () => { addFriendModal.classList.add('hidden'); };
             const saveFriend = async () => { const name = friendNameInput.value.trim(); const friendId = friendIdInput.value.trim(); if (name === '' || friendId === '' || friendId === userId) return; try { await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId }); hideAddFriendModal(); } catch (e) { console.error("Error adding friend:", e); } };
+            
+            const deleteFriend = async (friendId) => {
+                if (!userId || !friendId) return;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId));
+                } catch (e) {
+                    console.error("Error deleting friend:", e);
+                    showNotification('Помилка', 'Не вдалося видалити друга.');
+                }
+            };
 
             const subscribeToFriends = () => {
                 if (!userId) return;
@@ -583,10 +589,32 @@
             };
 
             const renderFriends = (friends) => {
-                friendsList.innerHTML = ''; friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
-                if (friends.length === 0) { friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`; return; }
-                friends.forEach(friend => { friendsList.innerHTML += `<div class="p-3 rounded-lg bg-white shadow-md flex justify-between items-center"><div><p class="font-semibold text-gray-800">${friend.name}</p><p class="text-sm text-gray-500 break-all">${friend.userId}</p></div></div>`; friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`; });
+                friendsList.innerHTML = '';
+                friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
+                if (friends.length === 0) {
+                    friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`;
+                    return;
+                }
+                friends.forEach(friend => {
+                    const friendItem = document.createElement('div');
+                    friendItem.className = 'p-3 rounded-lg bg-white shadow-md flex justify-between items-center';
+                    friendItem.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${friend.name}</p>
+                            <p class="text-sm text-gray-500 break-all">${friend.userId}</p>
+                        </div>
+                        <button class="delete-friend-btn p-2 rounded-full hover:bg-red-100 text-red-500">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    `;
+                    friendItem.querySelector('.delete-friend-btn').addEventListener('click', () => {
+                        showConfirmModal(() => deleteFriend(friend.userId), `Ви впевнені, що хочете видалити ${friend.name} зі списку друзів?`, "Так, видалити");
+                    });
+                    friendsList.appendChild(friendItem);
+                    friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`;
+                });
             };
+
             const renderChatFriends = (friends) => {
                 chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` : '';
                 friends.forEach(friend => { const friendItem = document.createElement('div'); friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between'; friendItem.innerHTML = `<div class="font-semibold text-gray-800 flex-grow">${friend.name}</div><span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>`; friendItem.addEventListener('click', () => selectFriendForChat(friend)); chatFriendsList.appendChild(friendItem); });
@@ -879,3 +907,4 @@
     </script>
 </body>
 </html>
+
