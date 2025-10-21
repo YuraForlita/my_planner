@@ -854,8 +854,9 @@
 
             actionDeleteBtn.addEventListener('click', () => {
                 if (currentTaskForAction) {
+                    const taskToDelete = currentTaskForAction;
                     hideTaskActionsModal();
-                    showConfirmModal(() => deleteTask(currentTaskForAction), "Видалити це завдання?", "Видалити");
+                    showConfirmModal(() => deleteTask(taskToDelete), "Видалити це завдання?", "Видалити");
                 }
             });
 
