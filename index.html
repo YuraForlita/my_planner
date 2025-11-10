@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оновлений Планувальник Завдань</title>
+    <title>☃️ Зимовий Планувальник Завдань ☃️</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -53,9 +53,154 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
+        
+        /* === 🎄 BINTOMIE ЕФЕКТИ 🎄 === */
+
+        /* === 1. CSS для Снігопаду === */
+        #snowfall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Використовуємо 3 шари "сніжинок" (radial-gradient) і анімуємо їх */
+            background-image: 
+                radial-gradient(4px 4px at 20% 30%, #fff, transparent),
+                radial-gradient(6px 6px at 40% 60%, #fff, transparent),
+                radial-gradient(3px 3px at 50% 80%, #fff, transparent),
+                radial-gradient(4px 4px at 70% 50%, #fff, transparent),
+                radial-gradient(6px 6px at 90% 20%, #fff, transparent),
+                radial-gradient(3px 3px at 10% 70%, #fff, transparent);
+            background-size: 500px 500px;
+            animation: snowfall 10s linear infinite;
+            /* z-index: 40, щоб бути під модальними вікнами (які z-50 і вище) */
+            z-index: 40;
+            pointer-events: none; /* Дозволяє клікати "крізь" сніг */
+        }
+
+        @keyframes snowfall {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 500px 500px;
+            }
+        }
+        
+        /* === 2. CSS для "Замерзлих" Кнопок === */
+        .btn-frosty {
+            /* Використовуємо !important, щоб "перебити" фонові класи Tailwind */
+            background: linear-gradient(145deg, #ffffff, #e6f7ff) !important;
+            border: 1px solid #cceeff !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1), 
+                        inset 0 0 10px rgba(255, 255, 255, 0.7) !important;
+            color: #003366 !important; /* Темно-синій текст для контрасту */
+            text-shadow: 1px 1px 2px #fff;
+            transition: all 0.3s ease;
+        }
+
+        .btn-frosty:hover {
+            transform: scale(1.05); /* Легке збільшення при наведенні */
+            box-shadow: 0 4px 10px rgba(0, 100, 200, 0.2), 
+                        inset 0 0 10px rgba(255, 255, 255, 1) !important;
+        }
+        
+        /* === 3. CSS для Гірлянд === */
+        .garland {
+            position: fixed;
+            top: 5px; /* Невеликий відступ зверху */
+            left: 0;
+            width: 100%;
+            text-align: center;
+            /* z-index: 45, щоб бути над снігом, але під модальними */
+            z-index: 45;
+            pointer-events: none;
+        }
+        .garland-light {
+            display: inline-block;
+            width: 12px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 8px;
+            /* Анімація миготіння */
+            animation: blink 1.2s infinite;
+        }
+
+        /* Різні кольори та тіні для " світіння" */
+        .garland-light.red {
+            background-color: #f00;
+            box-shadow: 0 0 7px 3px #f00;
+            animation-delay: 0s;
+        }
+        .garland-light.green {
+            background-color: #0f0;
+            box-shadow: 0 0 7px 3px #0f0;
+            animation-delay: 0.2s;
+        }
+        .garland-light.blue {
+            background-color: #00f;
+            box-shadow: 0 0 7px 3px #00f;
+            animation-delay: 0.4s;
+        }
+        .garland-light.yellow {
+            background-color: #ff0;
+            box-shadow: 0 0 7px 3px #ff0;
+            animation-delay: 0.6s;
+        }
+        .garland-light.purple {
+            background-color: #800080;
+            box-shadow: 0 0 7px 3px #800080;
+            animation-delay: 0.8s;
+        }
+
+        /* Ключові кадри для анімації миготіння */
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.9);
+            }
+        }
+        /* === 🎄 КІНЕЦЬ ЗИМОВИХ ЕФЕКТІВ 🎄 === */
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+    <!-- === 🎄 ЗИМОВИЙ HTML 🎄 === -->
+    
+    <!-- ГІРЛЯНДИ -->
+    <div class="garland">
+        <!-- Повторюємо вогники, щоб заповнити екран -->
+        <div class="garland-light red"></div>
+        <div class="garland-light green"></div>
+        <div class="garland-light blue"></div>
+        <div class="garland-light yellow"></div>
+        <div class="garland-light purple"></div>
+        <div class="garland-light red"></div>
+        <div class="garland-light green"></div>
+        <div class="garland-light blue"></div>
+        <div class="garland-light yellow"></div>
+        <div class="garland-light purple"></div>
+        <div class="garland-light red"></div>
+        <div class="garland-light green"></div>
+        <div class="garland-light blue"></div>
+        <div class="garland-light yellow"></div>
+        <div class="garland-light purple"></div>
+        <div class="garland-light red"></div>
+        <div class="garland-light green"></div>
+        <div class="garland-light blue"></div>
+        <div class="garland-light yellow"></div>
+        <div class="garland-light purple"></div>
+    </div>
+    
+    <!-- СНІГОПАД -->
+    <div id="snowfall"></div>
+    
+    <!-- === 🎄 КІНЕЦЬ ЗИМОВОГО HTML 🎄 === -->
+
+
     <!-- Спінер завантаження -->
     <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
@@ -67,7 +212,7 @@
             <h3 id="notification-title" class="text-lg font-bold mb-2 text-gray-800"></h3>
             <p id="notification-message" class="text-gray-700 mb-4 break-words"></p>
             <div class="flex justify-end space-x-2">
-                <button id="close-notification-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">OK</button>
+                <button id="close-notification-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">OK</button>
             </div>
         </div>
     </div>
@@ -76,7 +221,7 @@
             <h3 class="text-lg font-bold mb-2 text-gray-800">Переглянути/Редагувати завдання</h3>
             <textarea id="edit-task-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4" rows="8"></textarea>
             <div class="flex justify-end space-x-2">
-                <button id="save-edit-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
+                <button id="save-edit-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Зберегти</button>
                 <button id="cancel-edit-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
@@ -87,7 +232,7 @@
             <p id="confirm-modal-message" class="text-gray-700 mb-4 break-words">Ви впевнені?</p>
             <div class="flex justify-end space-x-2">
                 <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
-                <button class="confirm-btn px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Підтвердити</button>
+                <button class="confirm-btn px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors btn-frosty">Підтвердити</button>
             </div>
         </div>
     </div>
@@ -97,7 +242,7 @@
             <input type="text" id="friend-name-input" placeholder="Ім'я друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <input type="text" id="friend-id-input" placeholder="ID друга" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div class="flex justify-end space-x-2">
-                <button id="save-friend-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Зберегти</button>
+                <button id="save-friend-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Зберегти</button>
                 <button id="cancel-friend-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
@@ -110,7 +255,7 @@
             </select>
             <textarea id="assign-task-input" placeholder="Введіть завдання для друга..." rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none mb-4"></textarea>
             <div class="flex justify-end space-x-2">
-                <button id="send-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Відправити</button>
+                <button id="send-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Відправити</button>
                 <button id="cancel-assign-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
             </div>
         </div>
@@ -126,8 +271,8 @@
             <h3 class="text-lg font-bold mb-4 text-gray-800">Деталі завдання</h3>
             <p id="task-details-content" class="text-gray-700 mb-6 bg-gray-50 p-4 rounded-md whitespace-pre-wrap break-words"></p>
             <div class="flex justify-between items-center">
-                <button id="delete-from-report-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити зі звіту</button>
-                <button id="close-task-details-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">Закрити</button>
+                <button id="delete-from-report-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors btn-frosty">Видалити зі звіту</button>
+                <button id="close-task-details-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Закрити</button>
             </div>
         </div>
     </div>
@@ -137,8 +282,8 @@
             <p class="text-sm text-gray-500 mb-2">Від: <span id="incoming-task-sender" class="font-semibold"></span></p>
             <p id="incoming-task-content" class="text-gray-700 mb-6 bg-gray-50 p-4 rounded-md whitespace-pre-wrap break-words"></p>
             <div class="flex justify-end space-x-2">
-                <button id="incoming-task-decline-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Відхилити</button>
-                <button id="incoming-task-accept-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Прийняти</button>
+                <button id="incoming-task-decline-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors btn-frosty">Відхилити</button>
+                <button id="incoming-task-accept-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors btn-frosty">Прийняти</button>
                 <button id="incoming-task-close-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Закрити</button>
             </div>
         </div>
@@ -148,10 +293,10 @@
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
             <h3 class="text-lg font-bold mb-4 text-gray-800">Дії із завданням</h3>
             <div class="space-y-3">
-                <button id="action-activate-btn" class="w-full px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors">Перемістити в активні</button>
-                <button id="action-defer-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">В роботу</button>
-                <button id="action-prolong-btn" class="w-full px-4 py-2 rounded-lg bg-purple-500 text-white font-semibold hover:bg-purple-600 transition-colors hidden">Продовжити</button>
-                <button id="action-delete-btn" class="w-full px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Видалити</button>
+                <button id="action-activate-btn" class="w-full px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors btn-frosty">Перемістити в активні</button>
+                <button id="action-defer-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors btn-frosty">В роботу</button>
+                <button id="action-prolong-btn" class="w-full px-4 py-2 rounded-lg bg-purple-500 text-white font-semibold hover:bg-purple-600 transition-colors hidden btn-frosty">Продовжити</button>
+                <button id="action-delete-btn" class="w-full px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors btn-frosty">Видалити</button>
             </div>
             <div class="mt-6 text-right">
                 <button id="cancel-actions-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
@@ -171,7 +316,7 @@
 
             <div id="auth-buttons" class="flex flex-col items-center space-y-4 mb-6 hidden">
                 <p class="text-gray-500">Будь ласка, увійдіть, щоб зберегти свої завдання.</p>
-                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2">
+                <button id="google-signin-btn" class="flex items-center justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md space-x-2 btn-frosty">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.24 10.232v3.098h5.364c-.183 1.258-1.554 3.738-5.364 3.738-3.21 0-5.815-2.61-5.815-5.82s2.605-5.82 5.815-5.82c1.724 0 2.872.716 3.518 1.346l2.365-2.285c-1.472-1.39-3.41-2.23-5.883-2.23-4.832 0-8.75 3.92-8.75 8.75s3.918 8.75 8.75 8.75c5.035 0 8.358-3.535 8.358-8.528 0-.583-.075-1.127-.183-1.638h-8.175z"/></svg>
                     <span>Увійти через Google</span>
                 </button>
@@ -179,18 +324,18 @@
 
             <div id="content-section" class="hidden">
                 <div class="flex space-x-2 mb-4">
-                    <button id="report-btn" class="w-full text-center px-6 py-2 rounded-lg bg-teal-500 text-white font-semibold hover:bg-teal-600 transition-colors shadow-md">Звіт</button>
-                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md">
+                    <button id="report-btn" class="w-full text-center px-6 py-2 rounded-lg bg-teal-500 text-white font-semibold hover:bg-teal-600 transition-colors shadow-md btn-frosty">Звіт</button>
+                    <button id="chats-btn" class="relative w-full text-center px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md btn-frosty">
                         Чати
                         <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
                     </button>
-                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md">Вийти</button>
+                    <button id="signout-btn" class="w-full text-center px-6 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md btn-frosty">Вийти</button>
                 </div>
                 <div class="mb-8">
                     <textarea id="task-input" placeholder="Опишіть ваше завдання тут..." rows="6" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                     <div class="flex justify-end space-x-2 mt-2">
-                         <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Додати</button>
-                        <button id="assign-task-open-btn" class="px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-md">Призначити</button>
+                         <button id="add-task-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Додати</button>
+                        <button id="assign-task-open-btn" class="px-6 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-md btn-frosty">Призначити</button>
                     </div>
                 </div>
                 <div class="bg-blue-50 p-6 rounded-2xl shadow-inner mb-6 hidden" id="incoming-tasks-section">
@@ -230,12 +375,12 @@
                                  <label for="stale-duration" class="block text-sm font-medium text-gray-700">Застаріле після (годин)</label>
                                  <input type="number" step="0.01" id="stale-duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="72">
                              </div>
-                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Зберегти</button>
+                             <button id="save-settings-btn" class="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Зберегти</button>
                              <p id="settings-message" class="text-sm text-center text-green-600 hidden"></p>
                          </div>
                          <div class="border-t pt-4">
                             <h3 class="text-lg font-medium text-gray-800 mb-2">Сповіщення</h3>
-                            <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md">Увімкнути сповіщення</button>
+                            <button id="enable-notifications-btn" class="w-full px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 shadow-md btn-frosty">Увімкнути сповіщення</button>
                             <p id="notifications-status" class="text-sm text-center text-gray-500 mt-2"></p>
                         </div>
                     </div>
@@ -247,7 +392,7 @@
                     </div>
                     <div id="friends-content" class="hidden">
                         <div class="flex justify-end mb-4">
-                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Додати друга</button>
+                            <button id="add-friend-open-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 btn-frosty">Додати друга</button>
                         </div>
                         <div id="friends-list" class="space-y-3"></div>
                     </div>
@@ -259,7 +404,7 @@
     <!-- Секція чату -->
     <div id="chat-section" class="max-w-4xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
-             <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
+             <button id="back-to-tasks-btn" class="w-full text-center mb-4 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Назад до завдань</button>
              <div class="flex flex-col md:flex-row h-[80vh] border rounded-lg">
                 <div class="w-full md:w-1/3 border-r bg-gray-50 rounded-l-lg overflow-y-auto">
                     <h2 class="text-xl font-bold p-4 border-b text-gray-700">Друзі</h2>
@@ -283,7 +428,7 @@
                                 <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                             </button>
                             <input type="text" id="chat-message-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Напишіть повідомлення...">
-                            <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Надіслати</button>
+                            <button id="send-chat-message-btn" class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 btn-frosty">Надіслати</button>
                          </div>
                     </div>
                 </div>
@@ -294,7 +439,7 @@
     <!-- Секція Звіту (Таблиця) -->
     <div id="report-section" class="max-w-7xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
-             <button id="back-to-tasks-from-report-btn" class="w-full md:w-auto text-center mb-6 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md">Назад до завдань</button>
+             <button id="back-to-tasks-from-report-btn" class="w-full md:w-auto text-center mb-6 px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Назад до завдань</button>
              <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Звіт по призначених завданнях</h2>
              <div id="report-content" class="overflow-x-auto">
                 <table class="report-table min-w-[800px] md:min-w-full">
@@ -499,8 +644,8 @@
                     const taskItem = document.createElement('div');
                     taskItem.className = `p-4 rounded-xl shadow-md flex items-start justify-between ${task.isStale ? 'bg-red-100' : 'bg-white'} space-x-2`;
                     let buttonsHTML = status === 'completed' 
-                        ? `<button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600">Активувати</button>`
-                        : `<button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600">Виконано</button>
+                        ? `<button class="active-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 btn-frosty">Активувати</button>`
+                        : `<button class="complete-btn px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 btn-frosty">Виконано</button>
                            <button class="more-options-btn p-2 rounded-full hover:bg-gray-200">...</button>`;
                     
                     taskItem.innerHTML = `
@@ -670,7 +815,7 @@
                             <p class="text-gray-800 break-words">${task.text}</p>
                         </div>
                         <div class="flex-shrink-0">
-                            <button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Переглянути</button>
+                            <button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold btn-frosty">Переглянути</button>
                         </div>`;
                     taskItem.querySelector('.view-incoming-task-btn').addEventListener('click', () => showViewIncomingTaskModal(task));
                     taskItem.querySelector('.flex-grow').addEventListener('click', () => showViewIncomingTaskModal(task));
@@ -907,4 +1052,3 @@
     </script>
 </body>
 </html>
-
