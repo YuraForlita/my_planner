@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #001f3f;
         }
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.75);
@@ -54,16 +54,12 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         
-        /* === 🎄 BINTOMIE ЕФЕКТИ 🎄 === */
-
-        /* === 1. CSS для Снігопаду === */
         #snowfall {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            /* Використовуємо 3 шари "сніжинок" (radial-gradient) і анімуємо їх */
             background-image: 
                 radial-gradient(4px 4px at 20% 30%, #fff, transparent),
                 radial-gradient(6px 6px at 40% 60%, #fff, transparent),
@@ -73,9 +69,8 @@
                 radial-gradient(3px 3px at 10% 70%, #fff, transparent);
             background-size: 500px 500px;
             animation: snowfall 10s linear infinite;
-            /* z-index: 40, щоб бути під модальними вікнами (які z-50 і вище) */
             z-index: 40;
-            pointer-events: none; /* Дозволяє клікати "крізь" сніг */
+            pointer-events: none;
         }
 
         @keyframes snowfall {
@@ -87,32 +82,28 @@
             }
         }
         
-        /* === 2. CSS для "Замерзлих" Кнопок === */
         .btn-frosty {
-            /* Використовуємо !important, щоб "перебити" фонові класи Tailwind */
             background: linear-gradient(145deg, #ffffff, #e6f7ff) !important;
             border: 1px solid #cceeff !important;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1), 
                         inset 0 0 10px rgba(255, 255, 255, 0.7) !important;
-            color: #003366 !important; /* Темно-синій текст для контрасту */
+            color: #003366 !important;
             text-shadow: 1px 1px 2px #fff;
             transition: all 0.3s ease;
         }
 
         .btn-frosty:hover {
-            transform: scale(1.05); /* Легке збільшення при наведенні */
+            transform: scale(1.05);
             box-shadow: 0 4px 10px rgba(0, 100, 200, 0.2), 
                         inset 0 0 10px rgba(255, 255, 255, 1) !important;
         }
         
-        /* === 3. CSS для Гірлянд === */
         .garland {
             position: fixed;
-            top: 5px; /* Невеликий відступ зверху */
+            top: 5px;
             left: 0;
             width: 100%;
             text-align: center;
-            /* z-index: 45, щоб бути над снігом, але під модальними */
             z-index: 45;
             pointer-events: none;
         }
@@ -122,57 +113,26 @@
             height: 20px;
             border-radius: 50%;
             margin: 0 8px;
-            /* Анімація миготіння */
             animation: blink 1.2s infinite;
         }
 
-        /* Різні кольори та тіні для " світіння" */
-        .garland-light.red {
-            background-color: #f00;
-            box-shadow: 0 0 7px 3px #f00;
-            animation-delay: 0s;
-        }
-        .garland-light.green {
-            background-color: #0f0;
-            box-shadow: 0 0 7px 3px #0f0;
-            animation-delay: 0.2s;
-        }
-        .garland-light.blue {
-            background-color: #00f;
-            box-shadow: 0 0 7px 3px #00f;
-            animation-delay: 0.4s;
-        }
-        .garland-light.yellow {
-            background-color: #ff0;
-            box-shadow: 0 0 7px 3px #ff0;
-            animation-delay: 0.6s;
-        }
-        .garland-light.purple {
-            background-color: #800080;
-            box-shadow: 0 0 7px 3px #800080;
-            animation-delay: 0.8s;
-        }
+        .garland-light.red { background-color: #f00; box-shadow: 0 0 7px 3px #f00; animation-delay: 0s; }
+        .garland-light.green { background-color: #0f0; box-shadow: 0 0 7px 3px #0f0; animation-delay: 0.2s; }
+        .garland-light.blue { background-color: #00f; box-shadow: 0 0 7px 3px #00f; animation-delay: 0.4s; }
+        .garland-light.yellow { background-color: #ff0; box-shadow: 0 0 7px 3px #ff0; animation-delay: 0.6s; }
+        .garland-light.purple { background-color: #800080; box-shadow: 0 0 7px 3px #800080; animation-delay: 0.8s; }
 
-        /* Ключові кадри для анімації миготіння */
         @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.4;
-                transform: scale(0.9);
-            }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
         }
-        /* === 🎄 КІНЕЦЬ ЗИМОВИХ ЕФЕКТІВ 🎄 === */
+        
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
-    <!-- === 🎄 ЗИМОВИЙ HTML 🎄 === -->
-    
+<body class="min-h-screen p-4 flex flex-col items-center">
+
     <!-- ГІРЛЯНДИ -->
     <div class="garland">
-        <!-- Повторюємо вогники, щоб заповнити екран -->
         <div class="garland-light red"></div>
         <div class="garland-light green"></div>
         <div class="garland-light blue"></div>
@@ -195,10 +155,7 @@
         <div class="garland-light purple"></div>
     </div>
     
-    <!-- СНІГОПАД -->
     <div id="snowfall"></div>
-    
-    <!-- === 🎄 КІНЕЦЬ ЗИМОВОГО HTML 🎄 === -->
 
 
     <!-- Спінер завантаження -->
