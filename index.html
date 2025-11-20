@@ -599,15 +599,15 @@
         </div>
     </div>
 
-    <!-- Секція Live Boards (Нова) -->
+    <!-- Секція Live Boards (Оновлена для мобільних) -->
     <div id="boards-section" class="max-w-7xl w-full hidden h-[90vh]">
         <div class="bg-white h-full p-6 rounded-2xl shadow-xl flex flex-col">
             <!-- Boards List View -->
             <div id="boards-list-view" class="h-full flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <button id="back-to-tasks-from-boards-btn" class="text-center px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Назад до завдань</button>
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <button id="back-to-tasks-from-boards-btn" class="text-center w-full md:w-auto px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Назад до завдань</button>
                     <h2 class="text-2xl font-bold text-gray-800">📋 Спільні Дошки</h2>
-                    <button id="create-board-btn" class="text-center px-6 py-2 rounded-lg bg-orange-400 text-white font-semibold hover:bg-orange-500 shadow-md btn-frosty">
+                    <button id="create-board-btn" class="text-center w-full md:w-auto px-6 py-2 rounded-lg bg-orange-400 text-white font-semibold hover:bg-orange-500 shadow-md btn-frosty">
                         <i class="fas fa-plus mr-2"></i>Створити
                     </button>
                 </div>
@@ -618,24 +618,34 @@
 
             <!-- Active Board View -->
             <div id="active-board-view" class="hidden h-full flex-col">
-                 <div class="flex justify-between items-center mb-4 border-b pb-2">
+                 <div class="flex flex-wrap justify-between items-center mb-4 border-b pb-2 gap-2">
                     <div class="flex items-center gap-4">
                         <button id="back-to-boards-list-btn" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left text-xl"></i></button>
-                        <h2 id="active-board-title" class="text-2xl font-bold text-gray-800"></h2>
+                        <h2 id="active-board-title" class="text-xl md:text-2xl font-bold text-gray-800 truncate max-w-[200px] md:max-w-full"></h2>
                         <div class="text-sm text-gray-500 flex items-center gap-2">
                             <i class="fas fa-users"></i>
-                            <span id="board-member-count">0</span> учасників
+                            <span id="board-member-count">0</span>
                         </div>
                     </div>
                     <button id="add-board-member-btn" class="px-3 py-1 rounded bg-blue-100 text-blue-600 hover:bg-blue-200 text-sm font-medium transition-colors">
-                        <i class="fas fa-user-plus mr-1"></i> Додати друга
+                        <i class="fas fa-user-plus mr-1"></i> <span class="hidden md:inline">Додати друга</span>
+                    </button>
+                </div>
+                
+                <!-- Mobile Tab Switcher -->
+                <div class="md:hidden flex mb-2 bg-gray-100 rounded-lg p-1">
+                    <button id="mobile-tab-tasks" class="flex-1 py-2 rounded-md bg-white shadow-sm text-indigo-600 font-semibold text-sm transition-all">
+                        <i class="fas fa-list-ul mr-2"></i>Завдання
+                    </button>
+                    <button id="mobile-tab-stickers" class="flex-1 py-2 rounded-md text-gray-500 font-medium text-sm hover:bg-white/50 transition-all">
+                        <i class="fas fa-sticky-note mr-2"></i>Стікери
                     </button>
                 </div>
                 
                 <!-- Canvas Area -->
                 <div class="flex-grow flex flex-col md:flex-row gap-4 overflow-hidden relative bg-slate-50 rounded-xl border border-slate-200">
                     <!-- Tasks Column -->
-                    <div class="w-full md:w-1/3 bg-white border-r flex flex-col h-full">
+                    <div id="board-tasks-column" class="w-full md:w-1/3 bg-white border-r flex flex-col h-full md:flex">
                         <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
                             <h3 class="font-bold text-gray-700">✅ Спільні Завдання</h3>
                             <button id="add-board-task-btn" class="text-indigo-600 hover:bg-indigo-50 p-1 rounded"><i class="fas fa-plus"></i></button>
@@ -646,7 +656,7 @@
                     </div>
                     
                     <!-- Sticker Area -->
-                    <div class="w-full md:w-2/3 p-6 relative overflow-y-auto h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                    <div id="board-stickers-column" class="w-full md:w-2/3 p-6 relative overflow-y-auto h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] hidden md:block">
                         <div class="absolute top-4 right-4 z-20">
                             <button id="add-sticker-btn" class="px-4 py-2 rounded-full bg-yellow-400 text-yellow-900 font-bold shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all transform">
                                 <i class="fas fa-sticky-note mr-2"></i>Стікер
@@ -775,7 +785,10 @@
                   saveBoardTaskBtn = getEl('save-board-task-btn'), cancelBoardTaskBtn = getEl('cancel-board-task-btn'),
                   boardStickersArea = getEl('board-stickers-area'), addStickerBtn = getEl('add-sticker-btn'),
                   addStickerModal = getEl('add-sticker-modal'), stickerTextInput = getEl('sticker-text-input'),
-                  saveStickerBtn = getEl('save-sticker-btn'), cancelStickerBtn = getEl('cancel-sticker-btn');
+                  saveStickerBtn = getEl('save-sticker-btn'), cancelStickerBtn = getEl('cancel-sticker-btn'),
+                  // Mobile Tabs
+                  mobileTabTasks = getEl('mobile-tab-tasks'), mobileTabStickers = getEl('mobile-tab-stickers'),
+                  boardTasksColumn = getEl('board-tasks-column'), boardStickersColumn = getEl('board-stickers-column');
 
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
@@ -787,7 +800,7 @@
                 currentShelvesData = [],
                 // Board Variables
                 unsubscribeFromBoards = null, unsubscribeFromBoardItems = null, currentBoardId = null,
-                selectedStickerColor = 'bg-yellow-200';
+                selectedStickerColor = 'bg-yellow-200', currentMobileTab = 'tasks';
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -814,7 +827,7 @@
                 }
             });
             
-            // ... (All previous helper functions remain same until Boards Section) ...
+            // ... Helper functions ...
             const signInWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { console.error("Sign-in error:", error); } };
             const signOutUser = async () => { try { await signOut(auth); } catch (error) { console.error("Sign-out error:", error); } };
             const showNotification = (title, message) => { notificationTitle.textContent = title; notificationMessage.textContent = message; notificationModal.classList.remove('hidden'); };
@@ -841,7 +854,6 @@
                     staleDurationInput.value = staleDurationHours;
                 } catch (e) { console.error("Error loading settings:", e); }
             };
-            // ... (Task/Friend/Chat functions omitted for brevity, assume they are here from previous file) ...
              const subscribeToTasks = () => {
                 if (!db || !userId) return;
                 const q = query(collection(db, `artifacts/${appId}/users/${userId}/tasks`), orderBy("createdAt", "desc"));
@@ -978,7 +990,7 @@
             const addResource = async () => { if (!userId || !currentShelfIdForResource) return; const title = resourceTitleInput.value.trim(); let content = resourceContentInput.value.trim(); if (!title || !content) { showNotification("Помилка", "Всі поля повинні бути заповнені"); return; } if (!content.startsWith('http')) { content = 'https://' + content; } const newItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), title: title, type: 'link', url: content }; try { const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, currentShelfIdForResource); await updateDoc(shelfRef, { items: arrayUnion(newItem) }); addResourceModal.classList.add('hidden'); } catch (e) { console.error("Error adding resource: ", e); } };
             const deleteResource = async (shelfId, itemId, currentItems) => { if (!userId) return; try { const updatedItems = currentItems.filter(item => item.id !== itemId); const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, shelfId); await updateDoc(shelfRef, { items: updatedItems }); } catch (e) { console.error("Error deleting resource: ", e); } };
 
-            // --- NEW BOARDS LOGIC ---
+            // --- BOARDS LOGIC ---
             
             const openBoardsView = () => {
                 mainContent.classList.add('hidden');
@@ -1006,13 +1018,33 @@
                     }
                     snapshot.forEach(doc => {
                         const board = { id: doc.id, ...doc.data() };
+                        const isOwner = board.ownerId === userId;
                         const el = document.createElement('div');
-                        el.className = 'bg-white p-6 rounded-xl shadow-lg border border-orange-100 cursor-pointer hover:shadow-xl transition-all transform hover:-translate-y-1';
+                        el.className = 'bg-white p-6 rounded-xl shadow-lg border border-orange-100 cursor-pointer hover:shadow-xl transition-all transform hover:-translate-y-1 relative group';
+                        
+                        // Delete Button (Only for Owner)
+                        const deleteBtnHtml = isOwner 
+                            ? `<button class="delete-board-btn absolute top-2 right-2 text-gray-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity" data-id="${board.id}" title="Видалити дошку"><i class="fas fa-trash-alt"></i></button>`
+                            : '';
+
                         el.innerHTML = `
-                            <h3 class="font-bold text-xl text-gray-800 mb-2">${board.title}</h3>
+                            <h3 class="font-bold text-xl text-gray-800 mb-2 pr-6">${board.title}</h3>
                             <p class="text-sm text-gray-500"><i class="fas fa-user-friends"></i> ${board.members ? board.members.length : 0} учасників</p>
+                            ${deleteBtnHtml}
                         `;
-                        el.addEventListener('click', () => openActiveBoard(board));
+                        
+                        el.addEventListener('click', (e) => {
+                            if(e.target.closest('.delete-board-btn')) return;
+                            openActiveBoard(board);
+                        });
+
+                        if(isOwner) {
+                            el.querySelector('.delete-board-btn').addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                showConfirmModal(() => deleteBoard(board.id), `Видалити дошку "${board.title}"? Це видалить всі завдання та стікери на ній.`, "Видалити");
+                            });
+                        }
+
                         boardsGrid.appendChild(el);
                     });
                 });
@@ -1033,6 +1065,29 @@
                 } catch(e) { console.error("Error creating board", e); }
             };
 
+            const deleteBoard = async (boardId) => {
+                if(!boardId || !userId) return;
+                try {
+                    // 1. Delete all board items
+                    const itemsQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'board_items'), where('boardId', '==', boardId));
+                    const itemsSnapshot = await getDocs(itemsQuery);
+                    const batch = writeBatch(db);
+                    
+                    itemsSnapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    // 2. Delete the board itself
+                    batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'boards', boardId));
+                    
+                    await batch.commit();
+                    showNotification('Успіх', 'Дошку успішно видалено.');
+                } catch(e) {
+                    console.error("Error deleting board:", e);
+                    showNotification('Помилка', 'Не вдалося видалити дошку.');
+                }
+            };
+
             const openActiveBoard = (board) => {
                 currentBoardId = board.id;
                 activeBoardTitle.textContent = board.title;
@@ -1042,7 +1097,10 @@
                 activeBoardView.classList.remove('hidden');
                 activeBoardView.classList.add('flex');
                 
-                // Update member select options for this board (exclude already members ideally, but simpler for now)
+                // Reset mobile view to tasks
+                switchMobileTab('tasks');
+                
+                // Update member select options
                 boardFriendSelect.innerHTML = '<option value="">Виберіть друга</option>';
                 Object.values(friendsCache).forEach(f => {
                     if(!board.members.includes(f.userId)) {
@@ -1051,6 +1109,37 @@
                 });
 
                 subscribeToBoardItems(board.id);
+            };
+
+            const switchMobileTab = (tab) => {
+                currentMobileTab = tab;
+                
+                // UI State Update
+                if (tab === 'tasks') {
+                    mobileTabTasks.classList.add('bg-white', 'shadow-sm', 'text-indigo-600');
+                    mobileTabTasks.classList.remove('text-gray-500');
+                    mobileTabStickers.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600');
+                    mobileTabStickers.classList.add('text-gray-500');
+                    
+                    boardTasksColumn.classList.remove('hidden');
+                    boardStickersColumn.classList.add('hidden');
+                    
+                    // Restore desktop flex behavior if resized
+                    boardTasksColumn.classList.add('md:flex');
+                    boardStickersColumn.classList.add('md:block');
+                } else {
+                    mobileTabStickers.classList.add('bg-white', 'shadow-sm', 'text-indigo-600');
+                    mobileTabStickers.classList.remove('text-gray-500');
+                    mobileTabTasks.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600');
+                    mobileTabTasks.classList.add('text-gray-500');
+
+                    boardStickersColumn.classList.remove('hidden');
+                    boardTasksColumn.classList.add('hidden');
+                    
+                    // Restore desktop behavior
+                     boardStickersColumn.classList.add('md:block');
+                     boardTasksColumn.classList.add('md:flex');
+                }
             };
 
             const subscribeToBoardItems = (boardId) => {
@@ -1144,11 +1233,8 @@
                         members: arrayUnion(friendId)
                     });
                     addBoardMemberModal.classList.add('hidden');
-                    
-                    // Manually update count UI for immediate feedback or wait for reload
                     const currentCount = parseInt(getEl('board-member-count').textContent);
                     getEl('board-member-count').textContent = currentCount + 1;
-                    
                 } catch(e) { console.error("Error adding member", e); }
             };
 
@@ -1333,6 +1419,9 @@
             cancelStickerBtn.addEventListener('click', () => addStickerModal.classList.add('hidden'));
             saveStickerBtn.addEventListener('click', addSticker);
             
+            mobileTabTasks.addEventListener('click', () => switchMobileTab('tasks'));
+            mobileTabStickers.addEventListener('click', () => switchMobileTab('stickers'));
+
             document.querySelectorAll('.color-option').forEach(el => {
                 el.addEventListener('click', (e) => {
                     document.querySelectorAll('.color-option').forEach(c => c.classList.remove('border-gray-600'));
