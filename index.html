@@ -171,6 +171,24 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #a0a0a0;
         }
+        
+        /* Sticker Styles */
+        .sticker {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .sticker:hover {
+            transform: scale(1.02) rotate(-1deg);
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        .board-task-card {
+            background: white;
+            border-radius: 0.75rem;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
@@ -336,6 +354,71 @@
         </div>
     </div>
 
+    <!-- Modal: Create Board -->
+    <div id="create-board-modal" class="fixed inset-0 z-[85] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Нова Спільна Дошка</h3>
+            <input type="text" id="board-name-input" placeholder="Назва дошки (напр. Новий Рік)" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="flex justify-end space-x-2">
+                <button id="save-board-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Створити</button>
+                <button id="cancel-board-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Board Member -->
+    <div id="add-board-member-modal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Додати Учасника</h3>
+            <select id="board-friend-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Виберіть друга</option>
+            </select>
+            <div class="flex justify-end space-x-2">
+                <button id="save-board-member-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Додати</button>
+                <button id="cancel-board-member-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Sticker -->
+    <div id="add-sticker-modal" class="fixed inset-0 z-[95] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Новий Стікер</h3>
+            <textarea id="sticker-text-input" placeholder="Текст нотатки..." rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="h-8 w-8 rounded-full bg-yellow-200 cursor-pointer border-2 border-transparent hover:border-gray-400 color-option" data-color="bg-yellow-200"></div>
+                <div class="h-8 w-8 rounded-full bg-blue-200 cursor-pointer border-2 border-transparent hover:border-gray-400 color-option" data-color="bg-blue-200"></div>
+                <div class="h-8 w-8 rounded-full bg-green-200 cursor-pointer border-2 border-transparent hover:border-gray-400 color-option" data-color="bg-green-200"></div>
+                <div class="h-8 w-8 rounded-full bg-pink-200 cursor-pointer border-2 border-transparent hover:border-gray-400 color-option" data-color="bg-pink-200"></div>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button id="save-sticker-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Приліпити</button>
+                <button id="cancel-sticker-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Add Complex Task -->
+    <div id="add-board-task-modal" class="fixed inset-0 z-[95] flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Нове Спільне Завдання</h3>
+            <input type="text" id="board-task-title" placeholder="Назва завдання" class="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Етапи (підзавдання):</label>
+                <div id="subtasks-container" class="space-y-2 mb-2">
+                    <input type="text" placeholder="Крок 1" class="subtask-input w-full px-3 py-1.5 rounded border border-gray-200 text-sm">
+                </div>
+                <button id="add-subtask-field-btn" class="text-sm text-indigo-600 hover:underline">+ Додати крок</button>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button id="save-board-task-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors btn-frosty">Створити</button>
+                <button id="cancel-board-task-btn" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Основний контент -->
     <div id="main-content" class="max-w-xl w-full">
         <div class="bg-white p-6 rounded-2xl shadow-xl">
@@ -362,7 +445,8 @@
                         <span id="chat-notification-badge" class="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>
                     </button>
                     <button id="resources-btn" class="w-full text-center px-2 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition-colors shadow-md btn-frosty text-sm">Ресурси</button>
-                    <button id="signout-btn" class="w-full text-center px-2 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md btn-frosty text-sm">Вийти</button>
+                    <button id="boards-btn" class="w-full text-center px-2 py-2 rounded-lg bg-orange-400 text-white font-semibold hover:bg-orange-500 transition-colors shadow-md btn-frosty text-sm">Дошки</button>
+                    <button id="signout-btn" class="col-span-2 md:col-span-4 w-full text-center px-2 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition-colors shadow-md btn-frosty text-sm mt-2 md:mt-0">Вийти</button>
                 </div>
                 <div class="mb-8">
                     <textarea id="task-input" placeholder="Опишіть ваше завдання тут..." rows="6" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
@@ -493,7 +577,7 @@
         </div>
     </div>
     
-    <!-- Секція Ресурсів (Оновлена) -->
+    <!-- Секція Ресурсів -->
     <div id="resources-section" class="max-w-6xl w-full hidden">
         <div class="bg-white p-6 rounded-2xl shadow-xl min-h-[80vh]">
              <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -504,7 +588,6 @@
                  </button>
              </div>
 
-             <!-- Пошук по ресурсах -->
              <div class="mb-6 relative">
                 <input type="text" id="resources-search-input" placeholder="Пошук посилань..." class="w-full px-4 py-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -513,6 +596,68 @@
              <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  <!-- Полки будуть тут -->
              </div>
+        </div>
+    </div>
+
+    <!-- Секція Live Boards (Нова) -->
+    <div id="boards-section" class="max-w-7xl w-full hidden h-[90vh]">
+        <div class="bg-white h-full p-6 rounded-2xl shadow-xl flex flex-col">
+            <!-- Boards List View -->
+            <div id="boards-list-view" class="h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="back-to-tasks-from-boards-btn" class="text-center px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-md btn-frosty">Назад до завдань</button>
+                    <h2 class="text-2xl font-bold text-gray-800">📋 Спільні Дошки</h2>
+                    <button id="create-board-btn" class="text-center px-6 py-2 rounded-lg bg-orange-400 text-white font-semibold hover:bg-orange-500 shadow-md btn-frosty">
+                        <i class="fas fa-plus mr-2"></i>Створити
+                    </button>
+                </div>
+                <div id="boards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto p-2">
+                    <!-- Список дошок -->
+                </div>
+            </div>
+
+            <!-- Active Board View -->
+            <div id="active-board-view" class="hidden h-full flex-col">
+                 <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <div class="flex items-center gap-4">
+                        <button id="back-to-boards-list-btn" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left text-xl"></i></button>
+                        <h2 id="active-board-title" class="text-2xl font-bold text-gray-800"></h2>
+                        <div class="text-sm text-gray-500 flex items-center gap-2">
+                            <i class="fas fa-users"></i>
+                            <span id="board-member-count">0</span> учасників
+                        </div>
+                    </div>
+                    <button id="add-board-member-btn" class="px-3 py-1 rounded bg-blue-100 text-blue-600 hover:bg-blue-200 text-sm font-medium transition-colors">
+                        <i class="fas fa-user-plus mr-1"></i> Додати друга
+                    </button>
+                </div>
+                
+                <!-- Canvas Area -->
+                <div class="flex-grow flex flex-col md:flex-row gap-4 overflow-hidden relative bg-slate-50 rounded-xl border border-slate-200">
+                    <!-- Tasks Column -->
+                    <div class="w-full md:w-1/3 bg-white border-r flex flex-col h-full">
+                        <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">✅ Спільні Завдання</h3>
+                            <button id="add-board-task-btn" class="text-indigo-600 hover:bg-indigo-50 p-1 rounded"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="board-tasks-list" class="flex-grow overflow-y-auto p-4 space-y-3">
+                            <!-- Tasks go here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sticker Area -->
+                    <div class="w-full md:w-2/3 p-6 relative overflow-y-auto h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                        <div class="absolute top-4 right-4 z-20">
+                            <button id="add-sticker-btn" class="px-4 py-2 rounded-full bg-yellow-400 text-yellow-900 font-bold shadow-lg hover:bg-yellow-300 hover:scale-105 transition-all transform">
+                                <i class="fas fa-sticky-note mr-2"></i>Стікер
+                            </button>
+                        </div>
+                        <div id="board-stickers-area" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-12">
+                            <!-- Stickers go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -551,6 +696,7 @@
             const storage = getStorage(app);
 
             const getEl = (id) => document.getElementById(id);
+            // ... Existing elements ...
             const mainContent = getEl('main-content'), taskInput = getEl('task-input'), addTaskButton = getEl('add-task-btn'),
                   assignTaskOpenBtn = getEl('assign-task-open-btn'), userIdSpan = getEl('user-id-span'),
                   loadingSpinner = getEl('loading-spinner'), authButtons = getEl('auth-buttons'),
@@ -611,6 +757,25 @@
                   resourceContentInput = getEl('resource-content-input'),
                   saveResourceBtn = getEl('save-resource-btn'), cancelResourceBtn = getEl('cancel-resource-btn'),
                   resourcesSearchInput = getEl('resources-search-input');
+                  
+            // Boards Elements
+            const boardsBtn = getEl('boards-btn'), boardsSection = getEl('boards-section'),
+                  backToTasksFromBoardsBtn = getEl('back-to-tasks-from-boards-btn'),
+                  boardsGrid = getEl('boards-grid'), createBoardBtn = getEl('create-board-btn'),
+                  createBoardModal = getEl('create-board-modal'), boardNameInput = getEl('board-name-input'),
+                  saveBoardBtn = getEl('save-board-btn'), cancelBoardBtn = getEl('cancel-board-btn'),
+                  boardsListView = getEl('boards-list-view'), activeBoardView = getEl('active-board-view'),
+                  activeBoardTitle = getEl('active-board-title'), backToBoardsListBtn = getEl('back-to-boards-list-btn'),
+                  addBoardMemberBtn = getEl('add-board-member-btn'), addBoardMemberModal = getEl('add-board-member-modal'),
+                  boardFriendSelect = getEl('board-friend-select'), saveBoardMemberBtn = getEl('save-board-member-btn'),
+                  cancelBoardMemberBtn = getEl('cancel-board-member-btn'),
+                  boardTasksList = getEl('board-tasks-list'), addBoardTaskBtn = getEl('add-board-task-btn'),
+                  addBoardTaskModal = getEl('add-board-task-modal'), boardTaskTitle = getEl('board-task-title'),
+                  subtasksContainer = getEl('subtasks-container'), addSubtaskFieldBtn = getEl('add-subtask-field-btn'),
+                  saveBoardTaskBtn = getEl('save-board-task-btn'), cancelBoardTaskBtn = getEl('cancel-board-task-btn'),
+                  boardStickersArea = getEl('board-stickers-area'), addStickerBtn = getEl('add-sticker-btn'),
+                  addStickerModal = getEl('add-sticker-modal'), stickerTextInput = getEl('sticker-text-input'),
+                  saveStickerBtn = getEl('save-sticker-btn'), cancelStickerBtn = getEl('cancel-sticker-btn');
 
 
             let userId = null, currentAction = null, deferredDurationHours = 24, staleDurationHours = 72,
@@ -619,7 +784,10 @@
                 unsubscribeFromReport = null, currentReportTaskIdToDelete = null,
                 currentIncomingTask = null, currentTaskForAction = null,
                 unsubscribeFromResources = null, currentShelfIdForResource = null,
-                currentShelvesData = []; // Store shelves locally for search filtering
+                currentShelvesData = [],
+                // Board Variables
+                unsubscribeFromBoards = null, unsubscribeFromBoardItems = null, currentBoardId = null,
+                selectedStickerColor = 'bg-yellow-200';
 
             onAuthStateChanged(auth, async (user) => {
                 loadingSpinner.classList.add('hidden');
@@ -642,15 +810,16 @@
                     chatSection.classList.add('hidden');
                     reportSection.classList.add('hidden');
                     resourcesSection.classList.add('hidden');
+                    boardsSection.classList.add('hidden');
                 }
             });
             
+            // ... (All previous helper functions remain same until Boards Section) ...
             const signInWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { console.error("Sign-in error:", error); } };
             const signOutUser = async () => { try { await signOut(auth); } catch (error) { console.error("Sign-out error:", error); } };
             const showNotification = (title, message) => { notificationTitle.textContent = title; notificationMessage.textContent = message; notificationModal.classList.remove('hidden'); };
             const hideNotification = () => notificationModal.classList.add('hidden');
             const showPushNotification = (title, options) => { if (document.hidden && Notification.permission === 'granted') { new Notification(title, options); } };
-
             const loadSettings = async () => {
                 if (!userId) return;
                 try {
@@ -672,8 +841,8 @@
                     staleDurationInput.value = staleDurationHours;
                 } catch (e) { console.error("Error loading settings:", e); }
             };
-            
-            const subscribeToTasks = () => {
+            // ... (Task/Friend/Chat functions omitted for brevity, assume they are here from previous file) ...
+             const subscribeToTasks = () => {
                 if (!db || !userId) return;
                 const q = query(collection(db, `artifacts/${appId}/users/${userId}/tasks`), orderBy("createdAt", "desc"));
                 onSnapshot(q, (querySnapshot) => {
@@ -750,28 +919,12 @@
                     }
                 } catch (e) { console.error("Error updating task status: ", e); }
             };
-
             const prolongTask = async (id) => { if (!userId) return; try { await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, id), { lastUpdatedAt: serverTimestamp(), isStale: false }); } catch (e) { console.error("Error prolonging task:", e); } };
             const saveSettings = async () => { if (!userId) return; const newDeferred = parseFloat(deferredDurationInput.value); const newStale = parseFloat(staleDurationInput.value); if (isNaN(newDeferred) || newDeferred < 0 || isNaN(newStale) || newStale < 0) { settingsMessage.textContent = "Будь ласка, введіть дійсні числа."; settingsMessage.className = 'text-sm text-center text-red-600'; return; } try { await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`), { deferredDurationHours: newDeferred, staleDurationHours: newStale }); deferredDurationHours = newDeferred; staleDurationHours = newStale; settingsMessage.textContent = "Налаштування збережено."; settingsMessage.className = 'text-sm text-center text-green-600 visible'; setTimeout(() => settingsMessage.classList.remove('visible'), 3000); } catch (e) { console.error("Error saving settings:", e); } };
             const saveExpansionState = async () => { if (!userId) return; const sections = { deferred: !deferredTasksList.classList.contains('hidden'), completed: !completedTasksList.classList.contains('hidden'), settings: !settingsContent.classList.contains('hidden'), friends: !friendsContent.classList.contains('hidden') }; try { const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/app_settings`); await setDoc(settingsRef, { expandedSections: sections }, { merge: true }); } catch (e) { console.error("Error saving expansion state:", e); } };
             const showConfirmModal = (action, message, buttonText) => { currentAction = action; confirmModalMessage.textContent = message; confirmDeleteButton.textContent = buttonText; confirmModal.classList.remove('hidden'); };
             const hideConfirmModal = () => { confirmModal.classList.add('hidden'); currentAction = null; };
-            
-            const deleteTask = async (task) => {
-                if (!userId || !task || !task.id) return;
-                try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, task.id));
-            
-                    if (task.originalSharedTaskId) {
-                        const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId);
-                        await updateDoc(publicTaskRef, { status: 'declined' });
-                    }
-                } catch (e) {
-                    console.error("Error processing task deletion: ", e);
-                    showNotification('Помилка', 'Не вдалося повністю видалити завдання. Спробуйте ще раз.');
-                }
-            };
-
+            const deleteTask = async (task) => { if (!userId || !task || !task.id) return; try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tasks`, task.id)); if (task.originalSharedTaskId) { const publicTaskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', task.originalSharedTaskId); await updateDoc(publicTaskRef, { status: 'declined' }); } } catch (e) { console.error("Error processing task deletion: ", e); showNotification('Помилка', 'Не вдалося повністю видалити завдання. Спробуйте ще раз.'); } };
             const deleteChatMessage = async (msg) => { if (!userId || !msg.id || msg.senderId !== userId) return; try { const publicDataRef = doc(db, 'artifacts', appId, 'public', 'data'); await deleteDoc(doc(collection(publicDataRef, 'chat_messages'), msg.id)); if (msg.type === 'image' && msg.imageUrl) { const imageRef = ref(storage, msg.imageUrl); await deleteObject(imageRef); } } catch (e) { console.error("Error deleting chat message:", e); } };
             const showViewEditModal = (task) => { currentTaskToEdit = task; editTaskInput.value = task.text; viewEditModal.classList.remove('hidden'); };
             const hideViewEditModal = () => { viewEditModal.classList.add('hidden'); currentTaskToEdit = null; };
@@ -779,134 +932,17 @@
             const showAddFriendModal = () => { friendNameInput.value = ''; friendIdInput.value = ''; addFriendModal.classList.remove('hidden'); };
             const hideAddFriendModal = () => { addFriendModal.classList.add('hidden'); };
             const saveFriend = async () => { const name = friendNameInput.value.trim(); const friendId = friendIdInput.value.trim(); if (name === '' || friendId === '' || friendId === userId) return; try { await setDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId), { name, userId: friendId }); hideAddFriendModal(); } catch (e) { console.error("Error adding friend:", e); } };
-            
-            const deleteFriend = async (friendId) => {
-                if (!userId || !friendId) return;
-                try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId));
-                } catch (e) {
-                    console.error("Error deleting friend:", e);
-                    showNotification('Помилка', 'Не вдалося видалити друга.');
-                }
-            };
-
-            const subscribeToFriends = () => {
-                if (!userId) return;
-                try {
-                    onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/friends`), (snapshot) => {
-                        friendsCache = {};
-                        snapshot.docs.forEach(doc => friendsCache[doc.id] = doc.data());
-                        renderFriends(Object.values(friendsCache));
-                        renderChatFriends(Object.values(friendsCache));
-                    }, error => console.error("Error in friends subscription:", error));
-                } catch (e) { console.error("Error subscribing to friends:", e); }
-            };
-
-            const renderFriends = (friends) => {
-                friendsList.innerHTML = '';
-                friendSelect.innerHTML = '<option value="">Виберіть друга</option>';
-                if (friends.length === 0) {
-                    friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`;
-                    return;
-                }
-                friends.forEach(friend => {
-                    const friendItem = document.createElement('div');
-                    friendItem.className = 'p-3 rounded-lg bg-white shadow-md flex justify-between items-center';
-                    friendItem.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${friend.name}</p>
-                            <p class="text-sm text-gray-500 break-all">${friend.userId}</p>
-                        </div>
-                        <button class="delete-friend-btn p-2 rounded-full hover:bg-red-100 text-red-500">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                    `;
-                    friendItem.querySelector('.delete-friend-btn').addEventListener('click', () => {
-                        showConfirmModal(() => deleteFriend(friend.userId), `Ви впевнені, що хочете видалити ${friend.name} зі списку друзів?`, "Так, видалити");
-                    });
-                    friendsList.appendChild(friendItem);
-                    friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`;
-                });
-            };
-
-            const renderChatFriends = (friends) => {
-                chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` : '';
-                friends.forEach(friend => { const friendItem = document.createElement('div'); friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between'; friendItem.innerHTML = `<div class="font-semibold text-gray-800 flex-grow">${friend.name}</div><span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>`; friendItem.addEventListener('click', () => selectFriendForChat(friend)); chatFriendsList.appendChild(friendItem); });
-            };
+            const deleteFriend = async (friendId) => { if (!userId || !friendId) return; try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendId)); } catch (e) { console.error("Error deleting friend:", e); showNotification('Помилка', 'Не вдалося видалити друга.'); } };
+            const subscribeToFriends = () => { if (!userId) return; try { onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/friends`), (snapshot) => { friendsCache = {}; snapshot.docs.forEach(doc => friendsCache[doc.id] = doc.data()); renderFriends(Object.values(friendsCache)); renderChatFriends(Object.values(friendsCache)); }, error => console.error("Error in friends subscription:", error)); } catch (e) { console.error("Error subscribing to friends:", e); } };
+            const renderFriends = (friends) => { friendsList.innerHTML = ''; friendSelect.innerHTML = '<option value="">Виберіть друга</option>'; if (friends.length === 0) { friendsList.innerHTML = `<p class="text-gray-500 text-center italic">Немає друзів.</p>`; return; } friends.forEach(friend => { const friendItem = document.createElement('div'); friendItem.className = 'p-3 rounded-lg bg-white shadow-md flex justify-between items-center'; friendItem.innerHTML = `<div><p class="font-semibold text-gray-800">${friend.name}</p><p class="text-sm text-gray-500 break-all">${friend.userId}</p></div><button class="delete-friend-btn p-2 rounded-full hover:bg-red-100 text-red-500"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>`; friendItem.querySelector('.delete-friend-btn').addEventListener('click', () => { showConfirmModal(() => deleteFriend(friend.userId), `Ви впевнені, що хочете видалити ${friend.name} зі списку друзів?`, "Так, видалити"); }); friendsList.appendChild(friendItem); friendSelect.innerHTML += `<option value="${friend.userId}">${friend.name}</option>`; }); };
+            const renderChatFriends = (friends) => { chatFriendsList.innerHTML = friends.length === 0 ? `<p class="text-gray-500 text-center italic p-4">Немає друзів для чату.</p>` : ''; friends.forEach(friend => { const friendItem = document.createElement('div'); friendItem.className = 'p-3 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center justify-between'; friendItem.innerHTML = `<div class="font-semibold text-gray-800 flex-grow">${friend.name}</div><span id="unread-count-${friend.userId}" class="px-2 py-1 bg-red-600 text-white text-xs rounded-full hidden"></span>`; friendItem.addEventListener('click', () => selectFriendForChat(friend)); chatFriendsList.appendChild(friendItem); }); };
             const showAssignTaskModal = () => { assignTaskInput.value = ''; friendSelect.value = ''; assignTaskModal.classList.remove('hidden'); };
             const hideAssignTaskModal = () => { assignTaskModal.classList.add('hidden'); };
-
-            const sendAssignedTask = async () => {
-                const recipientId = friendSelect.value;
-                const taskText = assignTaskInput.value.trim();
-                if (recipientId === '' || taskText === '') return;
-                try {
-                    const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                    await addDoc(sharedTasksCollection, { 
-                        text: taskText, 
-                        senderId: userId, 
-                        senderName: auth.currentUser.displayName || 'Анонім', 
-                        recipientId, 
-                        createdAt: serverTimestamp(), 
-                        status: 'pending' 
-                    });
-                    const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text };
-                    await sendChatMessage({ text: `Я призначив вам завдання: "${taskText}"`, recipient: selectedFriend, isTask: true });
-                    hideAssignTaskModal();
-                } catch (e) { console.error("Error sending assigned task:", e); }
-            };
-            
-            const subscribeToIncomingTasks = () => {
-                if (!userId) return;
-                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending"));
-                onSnapshot(q, (snapshot) => {
-                    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                    renderIncomingTasks(tasks);
-                }, error => console.error("Error in incoming tasks subscription:", error));
-            };
-
-            const renderIncomingTasks = (tasks) => {
-                incomingTasksList.innerHTML = '';
-                if (tasks.length === 0) {
-                    incomingTasksSection.style.display = 'none';
-                    return;
-                }
-                incomingTasksSection.style.display = 'block';
-
-                tasks.forEach(task => {
-                    const taskItem = document.createElement('div');
-                    taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex items-center justify-between space-x-2';
-                    taskItem.innerHTML = `
-                        <div class="flex-grow cursor-pointer min-w-0">
-                            <p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p>
-                            <p class="text-gray-800 break-words">${task.text}</p>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold btn-frosty">Переглянути</button>
-                        </div>`;
-                    taskItem.querySelector('.view-incoming-task-btn').addEventListener('click', () => showViewIncomingTaskModal(task));
-                    taskItem.querySelector('.flex-grow').addEventListener('click', () => showViewIncomingTaskModal(task));
-                    incomingTasksList.appendChild(taskItem);
-                });
-            };
-
-            const acceptIncomingTask = async (task) => {
-                if (!userId) return;
-                try {
-                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: task.text, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false, assignedBy: task.senderName, originalSharedTaskId: task.id });
-                    await updateSharedTaskStatus(task.id, 'accepted');
-                } catch (e) { console.error("Error accepting task:", e); }
-            };
-            
-            const updateSharedTaskStatus = async (taskId, status) => {
-                try {
-                    const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', taskId);
-                    await updateDoc(taskRef, { status });
-                } catch (e) { console.error(`Error updating shared task to ${status}:`, e); }
-            };
-
+            const sendAssignedTask = async () => { const recipientId = friendSelect.value; const taskText = assignTaskInput.value.trim(); if (recipientId === '' || taskText === '') return; try { const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks'); await addDoc(sharedTasksCollection, { text: taskText, senderId: userId, senderName: auth.currentUser.displayName || 'Анонім', recipientId, createdAt: serverTimestamp(), status: 'pending' }); const selectedFriend = { userId: recipientId, name: friendSelect.options[friendSelect.selectedIndex].text }; await sendChatMessage({ text: `Я призначив вам завдання: "${taskText}"`, recipient: selectedFriend, isTask: true }); hideAssignTaskModal(); } catch (e) { console.error("Error sending assigned task:", e); } };
+            const subscribeToIncomingTasks = () => { if (!userId) return; const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks'); const q = query(sharedTasksCollection, where("recipientId", "==", userId), where("status", "==", "pending")); onSnapshot(q, (snapshot) => { const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); renderIncomingTasks(tasks); }, error => console.error("Error in incoming tasks subscription:", error)); };
+            const renderIncomingTasks = (tasks) => { incomingTasksList.innerHTML = ''; if (tasks.length === 0) { incomingTasksSection.style.display = 'none'; return; } incomingTasksSection.style.display = 'block'; tasks.forEach(task => { const taskItem = document.createElement('div'); taskItem.className = 'p-4 rounded-xl shadow-md bg-white flex items-center justify-between space-x-2'; taskItem.innerHTML = `<div class="flex-grow cursor-pointer min-w-0"><p class="text-sm text-gray-500">Від: <span class="font-semibold">${task.senderName}</span></p><p class="text-gray-800 break-words">${task.text}</p></div><div class="flex-shrink-0"><button class="view-incoming-task-btn px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold btn-frosty">Переглянути</button></div>`; taskItem.querySelector('.view-incoming-task-btn').addEventListener('click', () => showViewIncomingTaskModal(task)); taskItem.querySelector('.flex-grow').addEventListener('click', () => showViewIncomingTaskModal(task)); incomingTasksList.appendChild(taskItem); }); };
+            const acceptIncomingTask = async (task) => { if (!userId) return; try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tasks`), { text: task.text, status: 'active', createdAt: serverTimestamp(), lastUpdatedAt: serverTimestamp(), isStale: false, assignedBy: task.senderName, originalSharedTaskId: task.id }); await updateSharedTaskStatus(task.id, 'accepted'); } catch (e) { console.error("Error accepting task:", e); } };
+            const updateSharedTaskStatus = async (taskId, status) => { try { const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', taskId); await updateDoc(taskRef, { status }); } catch (e) { console.error(`Error updating shared task to ${status}:`, e); } };
             const openChatView = () => { mainContent.classList.add('hidden'); chatSection.classList.remove('hidden'); };
             const closeChatView = () => { chatSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromChat) unsubscribeFromChat(); unsubscribeFromChat = null; selectedFriendForChat = null; chatWindow.classList.add('hidden'); chatWindowPlaceholder.classList.remove('hidden'); };
             const selectFriendForChat = async (friend) => { selectedFriendForChat = friend; chatWindowPlaceholder.classList.add('hidden'); chatWindow.classList.remove('hidden'); chatHeader.textContent = `Чат з ${friend.name}`; chatMessages.innerHTML = ''; if (unsubscribeFromChat) unsubscribeFromChat(); const participants = [userId, friend.userId].sort(); const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), where("participants", "==", participants), orderBy("timestamp")); unsubscribeFromChat = onSnapshot(q, (snapshot) => { chatMessages.innerHTML = ''; snapshot.docs.forEach(doc => renderChatMessage({ id: doc.id, ...doc.data() })); setTimeout(() => { chatMessages.scrollTop = chatMessages.scrollHeight; }, 0); }, error => console.error("Chat subscription error:", error)); await markMessagesAsRead(friend.userId); };
@@ -919,306 +955,247 @@
             const uploadImageAndSendMessage = (file) => { if (!file || !selectedFriendForChat) return; const participants = [userId, selectedFriendForChat.userId].sort(); const storageRef = ref(storage, `chats/${participants.join('_')}/${Date.now()}-${file.name}`); const uploadTask = uploadBytesResumable(storageRef, file); uploadProgressContainer.classList.remove('hidden'); uploadTask.on('state_changed', (snapshot) => { uploadProgressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`; }, (error) => { console.error("Upload error:", error); uploadProgressContainer.classList.add('hidden'); }, () => { getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => { sendChatMessage({ recipient: selectedFriendForChat, imageUrl: downloadURL }); uploadProgressContainer.classList.add('hidden'); }); }); };
             const checkNotificationStatus = () => { if (!('Notification' in window)) { notificationsStatus.textContent = "Браузер не підтримує сповіщення."; enableNotificationsBtn.disabled = true; return; } const permission = Notification.permission; notificationsStatus.textContent = permission === 'granted' ? "Сповіщення увімкнено." : permission === 'denied' ? "Сповіщення заблоковано." : "Надайте дозвіл."; enableNotificationsBtn.disabled = permission !== 'default'; };
             const requestNotificationPermission = async () => { const permission = await Notification.requestPermission(); if (permission === 'granted') { new Notification("Дякуємо!", { body: "Тепер ви будете отримувати сповіщення." }); } checkNotificationStatus(); };
-
-            // --- Report Functions ---
             const openReportView = () => { mainContent.classList.add('hidden'); reportSection.classList.remove('hidden'); subscribeToReport(); };
             const closeReportView = () => { reportSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromReport) unsubscribeFromReport(); unsubscribeFromReport = null; };
+            const subscribeToReport = () => { if (!userId) return; if (unsubscribeFromReport) unsubscribeFromReport(); const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks'); const q = query(sharedTasksCollection, where("senderId", "==", userId)); unsubscribeFromReport = onSnapshot(q, (snapshot) => { const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); renderReport(tasks); }, error => console.error("Error in report subscription:", error)); };
+            const renderReport = (tasks) => { reportTableBody.innerHTML = ''; if (Object.keys(friendsCache).length === 0 && tasks.length > 0) { setTimeout(() => renderReport(tasks), 100); return; } const tasksByRecipient = {}; tasks.forEach(task => { if (!tasksByRecipient[task.recipientId]) tasksByRecipient[task.recipientId] = []; tasksByRecipient[task.recipientId].push(task); }); if (Object.keys(tasksByRecipient).length === 0) { reportTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 italic py-8">Ви ще не призначили жодного завдання.</td></tr>`; return; } for (const recipientId in tasksByRecipient) { const userTasks = tasksByRecipient[recipientId]; const friendName = friendsCache[recipientId]?.name || `Невідомий (${recipientId.substring(0,5)}...)`; const row = document.createElement('tr'); const statuses = ['pending', 'accepted', 'completed', 'declined']; let cellsHTML = statuses.map(status => { const tasksInStatus = userTasks.filter(t => t.status === status); const cardsHTML = tasksInStatus.map(task => `<div class="report-task-card p-2 mb-2 bg-white rounded-md shadow-sm border" data-task-text="${escape(task.text)}" data-task-id="${task.id}"><p class="text-sm break-words">${task.text}</p></div>`).join(''); return `<td class="align-top">${cardsHTML || ''}</td>`; }).join(''); row.innerHTML = `<td>${friendName}</td>${cellsHTML}`; reportTableBody.appendChild(row); } };
+            const showTaskDetailsModal = (taskText, taskId) => { taskDetailsContent.textContent = unescape(taskText); currentReportTaskIdToDelete = taskId; taskDetailsModal.classList.remove('hidden'); };
+            const hideTaskDetailsModal = () => { taskDetailsModal.classList.add('hidden'); currentReportTaskIdToDelete = null; };
+            const deleteSharedTaskFromReport = async () => { if (!currentReportTaskIdToDelete) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', currentReportTaskIdToDelete)); hideTaskDetailsModal(); } catch (e) { console.error("Error deleting task from report: ", e); } };
+            const showViewIncomingTaskModal = (task) => { currentIncomingTask = task; incomingTaskSender.textContent = task.senderName; incomingTaskContent.textContent = task.text; viewIncomingTaskModal.classList.remove('hidden'); };
+            const hideViewIncomingTaskModal = () => { viewIncomingTaskModal.classList.add('hidden'); currentIncomingTask = null; };
+            const showTaskActionsModal = (task) => { currentTaskForAction = task; actionDeferBtn.classList.toggle('hidden', task.status === 'deferred'); actionActivateBtn.classList.toggle('hidden', task.status !== 'deferred'); actionProlongBtn.classList.toggle('hidden', !task.isStale); taskActionsModal.classList.remove('hidden'); };
+            const hideTaskActionsModal = () => { taskActionsModal.classList.add('hidden'); currentTaskForAction = null; };
+            const openResourcesView = () => { mainContent.classList.add('hidden'); resourcesSection.classList.remove('hidden'); subscribeToResources(); };
+            const closeResourcesView = () => { resourcesSection.classList.add('hidden'); mainContent.classList.remove('hidden'); if (unsubscribeFromResources) unsubscribeFromResources(); unsubscribeFromResources = null; };
+            const subscribeToResources = () => { if (!userId) return; const q = query(collection(db, `artifacts/${appId}/users/${userId}/resources`), orderBy("createdAt", "desc")); unsubscribeFromResources = onSnapshot(q, (snapshot) => { currentShelvesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); filterAndRenderResources(); }, error => console.error("Error in resources subscription: ", error)); };
+            const getFaviconUrl = (url) => { try { const domain = new URL(url).hostname; return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`; } catch (e) { return 'https://www.google.com/s2/favicons?domain=google.com'; } };
+            const filterAndRenderResources = () => { const searchTerm = resourcesSearchInput.value.toLowerCase(); const filteredShelves = currentShelvesData.map(shelf => { const items = (shelf.items || []).filter(item => { return (item.type === 'link') && (item.title.toLowerCase().includes(searchTerm) || item.url.toLowerCase().includes(searchTerm)); }); return { ...shelf, items }; }).filter(shelf => shelf.items.length > 0 || searchTerm === ''); renderResources(filteredShelves); };
+            const renderResources = (shelves) => { resourcesGrid.innerHTML = ''; if (shelves.length === 0) { const emptyMessage = resourcesSearchInput.value ? "Нічого не знайдено за вашим запитом." : `<div class="col-span-full text-center py-12 text-gray-500"><div class="text-4xl mb-2">📚</div><p>У вас поки немає полиць з ресурсами.</p><p class="text-sm">Створіть першу, натиснувши "Нова Полиця"!</p></div>`; resourcesGrid.innerHTML = emptyMessage; return; } shelves.forEach(shelf => { const shelfDiv = document.createElement('div'); shelfDiv.className = 'shelf-card rounded-xl p-4 flex flex-col h-full'; const itemsHTML = (shelf.items || []).map(item => { if(item.type !== 'link') return ''; const faviconUrl = getFaviconUrl(item.url); return `<div class="resource-item flex items-center justify-between p-2 rounded mb-1 group relative cursor-pointer" onclick="window.open('${item.url}', '_blank')"><div class="flex items-center space-x-3 overflow-hidden w-full"><img src="${faviconUrl}" alt="icon" class="resource-favicon flex-shrink-0" onerror="this.src='https://www.google.com/s2/favicons?domain=google.com'"><span class="text-gray-800 font-medium truncate text-sm">${item.title}</span></div><div class="flex space-x-1 absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded shadow-sm backdrop-blur-sm" onclick="event.stopPropagation()"><button class="copy-link-btn text-gray-500 hover:text-indigo-600 p-1.5" data-url="${item.url}" title="Копіювати"><i class="fas fa-copy"></i></button><button class="delete-resource-btn text-gray-500 hover:text-red-600 p-1.5" data-shelf-id="${shelf.id}" data-item-id="${item.id}" title="Видалити"><i class="fas fa-times"></i></button></div></div>`; }).join(''); shelfDiv.innerHTML = `<div class="flex justify-between items-center mb-4 border-b pb-2 border-blue-200"><h3 class="font-bold text-lg text-gray-800 truncate" title="${shelf.title}">${shelf.title}</h3><button class="delete-shelf-btn text-gray-400 hover:text-red-500 transition-colors" data-id="${shelf.id}"><i class="fas fa-trash-alt"></i></button></div><div class="flex-grow overflow-y-auto max-h-64 mb-4 space-y-1 pr-1 custom-scrollbar">${itemsHTML || '<p class="text-sm text-gray-400 italic text-center mt-4">Порожньо</p>'}</div><button class="add-item-btn w-full py-2 rounded-lg border-2 border-dashed border-indigo-300 text-indigo-500 hover:bg-indigo-50 hover:border-indigo-500 transition-all font-medium text-sm" data-id="${shelf.id}">+ Додати посилання</button>`; shelfDiv.querySelector('.delete-shelf-btn').addEventListener('click', () => showConfirmModal(() => deleteShelf(shelf.id), `Видалити полицю "${shelf.title}" та всі її ресурси?`, "Видалити")); shelfDiv.querySelector('.add-item-btn').addEventListener('click', () => openAddResourceModal(shelf.id)); shelfDiv.querySelectorAll('.delete-resource-btn').forEach(btn => { btn.addEventListener('click', (e) => { const itemId = e.currentTarget.dataset.itemId; const originalShelf = currentShelvesData.find(s => s.id === shelf.id); if(originalShelf) deleteResource(shelf.id, itemId, originalShelf.items); }); }); shelfDiv.querySelectorAll('.copy-link-btn').forEach(btn => { btn.addEventListener('click', (e) => { navigator.clipboard.writeText(e.currentTarget.dataset.url); showNotification("Скопійовано!", "Посилання скопійовано в буфер обміну."); }); }); resourcesGrid.appendChild(shelfDiv); }); };
+            const addShelf = async () => { const title = shelfNameInput.value.trim(); if (!title || !userId) return; try { await addDoc(collection(db, `artifacts/${appId}/users/${userId}/resources`), { title: title, createdAt: serverTimestamp(), items: [] }); addShelfModal.classList.add('hidden'); shelfNameInput.value = ''; } catch (e) { console.error("Error adding shelf: ", e); } };
+            const deleteShelf = async (shelfId) => { if (!userId || !shelfId) return; try { await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/resources`, shelfId)); } catch (e) { console.error("Error deleting shelf: ", e); } };
+            const openAddResourceModal = (shelfId) => { currentShelfIdForResource = shelfId; resourceTitleInput.value = ''; resourceContentInput.value = ''; addResourceModal.classList.remove('hidden'); };
+            const addResource = async () => { if (!userId || !currentShelfIdForResource) return; const title = resourceTitleInput.value.trim(); let content = resourceContentInput.value.trim(); if (!title || !content) { showNotification("Помилка", "Всі поля повинні бути заповнені"); return; } if (!content.startsWith('http')) { content = 'https://' + content; } const newItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), title: title, type: 'link', url: content }; try { const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, currentShelfIdForResource); await updateDoc(shelfRef, { items: arrayUnion(newItem) }); addResourceModal.classList.add('hidden'); } catch (e) { console.error("Error adding resource: ", e); } };
+            const deleteResource = async (shelfId, itemId, currentItems) => { if (!userId) return; try { const updatedItems = currentItems.filter(item => item.id !== itemId); const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, shelfId); await updateDoc(shelfRef, { items: updatedItems }); } catch (e) { console.error("Error deleting resource: ", e); } };
 
-            const subscribeToReport = () => {
-                if (!userId) return;
-                if (unsubscribeFromReport) unsubscribeFromReport();
-                const sharedTasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'shared_tasks');
-                const q = query(sharedTasksCollection, where("senderId", "==", userId));
-                
-                unsubscribeFromReport = onSnapshot(q, (snapshot) => {
-                    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    tasks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                    renderReport(tasks);
-                }, error => console.error("Error in report subscription:", error));
-            };
-
-            const renderReport = (tasks) => {
-                reportTableBody.innerHTML = '';
-                if (Object.keys(friendsCache).length === 0 && tasks.length > 0) { setTimeout(() => renderReport(tasks), 100); return; }
-
-                const tasksByRecipient = {};
-                tasks.forEach(task => {
-                    if (!tasksByRecipient[task.recipientId]) tasksByRecipient[task.recipientId] = [];
-                    tasksByRecipient[task.recipientId].push(task);
-                });
-
-                if (Object.keys(tasksByRecipient).length === 0) {
-                    reportTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 italic py-8">Ви ще не призначили жодного завдання.</td></tr>`;
-                    return;
-                }
-
-                for (const recipientId in tasksByRecipient) {
-                    const userTasks = tasksByRecipient[recipientId];
-                    const friendName = friendsCache[recipientId]?.name || `Невідомий (${recipientId.substring(0,5)}...)`;
-                    
-                    const row = document.createElement('tr');
-                    
-                    const statuses = ['pending', 'accepted', 'completed', 'declined'];
-                    let cellsHTML = statuses.map(status => {
-                        const tasksInStatus = userTasks.filter(t => t.status === status);
-                        const cardsHTML = tasksInStatus.map(task => 
-                            `<div class="report-task-card p-2 mb-2 bg-white rounded-md shadow-sm border" data-task-text="${escape(task.text)}" data-task-id="${task.id}">
-                                <p class="text-sm break-words">${task.text}</p>
-                            </div>`
-                        ).join('');
-                        return `<td class="align-top">${cardsHTML || ''}</td>`;
-                    }).join('');
-
-                    row.innerHTML = `<td>${friendName}</td>${cellsHTML}`;
-                    reportTableBody.appendChild(row);
-                }
-            };
+            // --- NEW BOARDS LOGIC ---
             
-            const showTaskDetailsModal = (taskText, taskId) => {
-                taskDetailsContent.textContent = unescape(taskText);
-                currentReportTaskIdToDelete = taskId; 
-                taskDetailsModal.classList.remove('hidden');
-            };
-            const hideTaskDetailsModal = () => {
-                taskDetailsModal.classList.add('hidden');
-                currentReportTaskIdToDelete = null; 
-            };
-            
-            const deleteSharedTaskFromReport = async () => {
-                if (!currentReportTaskIdToDelete) return;
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_tasks', currentReportTaskIdToDelete));
-                    hideTaskDetailsModal(); 
-                } catch (e) {
-                    console.error("Error deleting task from report: ", e);
-                }
-            };
-            
-            const showViewIncomingTaskModal = (task) => {
-                currentIncomingTask = task;
-                incomingTaskSender.textContent = task.senderName;
-                incomingTaskContent.textContent = task.text;
-                viewIncomingTaskModal.classList.remove('hidden');
-            };
-
-            const hideViewIncomingTaskModal = () => {
-                viewIncomingTaskModal.classList.add('hidden');
-                currentIncomingTask = null;
-            };
-
-            const showTaskActionsModal = (task) => {
-                currentTaskForAction = task;
-                actionDeferBtn.classList.toggle('hidden', task.status === 'deferred');
-                actionActivateBtn.classList.toggle('hidden', task.status !== 'deferred');
-                actionProlongBtn.classList.toggle('hidden', !task.isStale);
-                taskActionsModal.classList.remove('hidden');
-            };
-
-            const hideTaskActionsModal = () => {
-                taskActionsModal.classList.add('hidden');
-                currentTaskForAction = null;
-            };
-
-            // --- Resources Functions ---
-            const openResourcesView = () => {
+            const openBoardsView = () => {
                 mainContent.classList.add('hidden');
-                resourcesSection.classList.remove('hidden');
-                subscribeToResources();
+                boardsSection.classList.remove('hidden');
+                subscribeToBoards();
             };
 
-            const closeResourcesView = () => {
-                resourcesSection.classList.add('hidden');
+            const closeBoardsView = () => {
+                boardsSection.classList.add('hidden');
                 mainContent.classList.remove('hidden');
-                if (unsubscribeFromResources) unsubscribeFromResources();
-                unsubscribeFromResources = null;
+                activeBoardView.classList.add('hidden');
+                boardsListView.classList.remove('hidden');
+                if(unsubscribeFromBoards) unsubscribeFromBoards();
+                if(unsubscribeFromBoardItems) unsubscribeFromBoardItems();
             };
 
-            const subscribeToResources = () => {
-                if (!userId) return;
-                const q = query(collection(db, `artifacts/${appId}/users/${userId}/resources`), orderBy("createdAt", "desc"));
-                unsubscribeFromResources = onSnapshot(q, (snapshot) => {
-                    currentShelvesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    filterAndRenderResources();
-                }, error => console.error("Error in resources subscription: ", error));
-            };
-
-            const getFaviconUrl = (url) => {
-                try {
-                    const domain = new URL(url).hostname;
-                    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-                } catch (e) {
-                    return 'https://www.google.com/s2/favicons?domain=google.com'; 
-                }
-            };
-
-            const filterAndRenderResources = () => {
-                const searchTerm = resourcesSearchInput.value.toLowerCase();
-                
-                // Filter items within shelves
-                const filteredShelves = currentShelvesData.map(shelf => {
-                    const items = (shelf.items || []).filter(item => {
-                        // Only keep items if title matches search or search is empty
-                        // Also filtering out old "text" types if any exist, just to be safe for new design
-                        return (item.type === 'link') && 
-                               (item.title.toLowerCase().includes(searchTerm) || item.url.toLowerCase().includes(searchTerm));
-                    });
-                    return { ...shelf, items };
-                }).filter(shelf => shelf.items.length > 0 || searchTerm === ''); // Hide empty shelves ONLY if searching
-
-                renderResources(filteredShelves);
-            };
-
-            const renderResources = (shelves) => {
-                resourcesGrid.innerHTML = '';
-                if (shelves.length === 0) {
-                    const emptyMessage = resourcesSearchInput.value 
-                        ? "Нічого не знайдено за вашим запитом." 
-                        : `
-                        <div class="col-span-full text-center py-12 text-gray-500">
-                            <div class="text-4xl mb-2">📚</div>
-                            <p>У вас поки немає полиць з ресурсами.</p>
-                            <p class="text-sm">Створіть першу, натиснувши "Нова Полиця"!</p>
-                        </div>`;
-                    resourcesGrid.innerHTML = emptyMessage;
-                    return;
-                }
-
-                shelves.forEach(shelf => {
-                    const shelfDiv = document.createElement('div');
-                    shelfDiv.className = 'shelf-card rounded-xl p-4 flex flex-col h-full';
-                    
-                    const itemsHTML = (shelf.items || []).map(item => {
-                        // Ensure it's a link (legacy check)
-                        if(item.type !== 'link') return '';
-
-                        const faviconUrl = getFaviconUrl(item.url);
-                        
-                        return `
-                            <div class="resource-item flex items-center justify-between p-2 rounded mb-1 group relative cursor-pointer" onclick="window.open('${item.url}', '_blank')">
-                                <div class="flex items-center space-x-3 overflow-hidden w-full">
-                                    <img src="${faviconUrl}" alt="icon" class="resource-favicon flex-shrink-0" onerror="this.src='https://www.google.com/s2/favicons?domain=google.com'">
-                                    <span class="text-gray-800 font-medium truncate text-sm">${item.title}</span>
-                                </div>
-                                <div class="flex space-x-1 absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded shadow-sm backdrop-blur-sm" onclick="event.stopPropagation()">
-                                    <button class="copy-link-btn text-gray-500 hover:text-indigo-600 p-1.5" data-url="${item.url}" title="Копіювати">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                    <button class="delete-resource-btn text-gray-500 hover:text-red-600 p-1.5" data-shelf-id="${shelf.id}" data-item-id="${item.id}" title="Видалити">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
+            const subscribeToBoards = () => {
+                if(!userId) return;
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'boards'), where('members', 'array-contains', userId));
+                unsubscribeFromBoards = onSnapshot(q, (snapshot) => {
+                    boardsGrid.innerHTML = '';
+                    if(snapshot.empty) {
+                        boardsGrid.innerHTML = `<p class="text-center col-span-3 text-gray-500">Ви ще не маєте спільних дошок.</p>`;
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const board = { id: doc.id, ...doc.data() };
+                        const el = document.createElement('div');
+                        el.className = 'bg-white p-6 rounded-xl shadow-lg border border-orange-100 cursor-pointer hover:shadow-xl transition-all transform hover:-translate-y-1';
+                        el.innerHTML = `
+                            <h3 class="font-bold text-xl text-gray-800 mb-2">${board.title}</h3>
+                            <p class="text-sm text-gray-500"><i class="fas fa-user-friends"></i> ${board.members ? board.members.length : 0} учасників</p>
                         `;
-                    }).join('');
-
-                    shelfDiv.innerHTML = `
-                        <div class="flex justify-between items-center mb-4 border-b pb-2 border-blue-200">
-                            <h3 class="font-bold text-lg text-gray-800 truncate" title="${shelf.title}">${shelf.title}</h3>
-                            <button class="delete-shelf-btn text-gray-400 hover:text-red-500 transition-colors" data-id="${shelf.id}">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                        <div class="flex-grow overflow-y-auto max-h-64 mb-4 space-y-1 pr-1 custom-scrollbar">
-                            ${itemsHTML || '<p class="text-sm text-gray-400 italic text-center mt-4">Порожньо</p>'}
-                        </div>
-                        <button class="add-item-btn w-full py-2 rounded-lg border-2 border-dashed border-indigo-300 text-indigo-500 hover:bg-indigo-50 hover:border-indigo-500 transition-all font-medium text-sm" data-id="${shelf.id}">
-                            + Додати посилання
-                        </button>
-                    `;
-                    
-                    // Event Listeners within the shelf
-                    shelfDiv.querySelector('.delete-shelf-btn').addEventListener('click', () => showConfirmModal(() => deleteShelf(shelf.id), `Видалити полицю "${shelf.title}" та всі її ресурси?`, "Видалити"));
-                    shelfDiv.querySelector('.add-item-btn').addEventListener('click', () => openAddResourceModal(shelf.id));
-                    
-                    shelfDiv.querySelectorAll('.delete-resource-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const itemId = e.currentTarget.dataset.itemId;
-                            // Find original item list from currentShelvesData to pass correctly (ignoring filter)
-                            const originalShelf = currentShelvesData.find(s => s.id === shelf.id);
-                            if(originalShelf) deleteResource(shelf.id, itemId, originalShelf.items);
-                        });
+                        el.addEventListener('click', () => openActiveBoard(board));
+                        boardsGrid.appendChild(el);
                     });
-
-                    shelfDiv.querySelectorAll('.copy-link-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            navigator.clipboard.writeText(e.currentTarget.dataset.url);
-                            showNotification("Скопійовано!", "Посилання скопійовано в буфер обміну.");
-                        });
-                    });
-
-                    resourcesGrid.appendChild(shelfDiv);
                 });
             };
 
-            const addShelf = async () => {
-                const title = shelfNameInput.value.trim();
-                if (!title || !userId) return;
+            const createBoard = async () => {
+                const title = boardNameInput.value.trim();
+                if(!title || !userId) return;
                 try {
-                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/resources`), {
-                        title: title,
-                        createdAt: serverTimestamp(),
-                        items: []
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'boards'), {
+                        title,
+                        ownerId: userId,
+                        members: [userId],
+                        createdAt: serverTimestamp()
                     });
-                    addShelfModal.classList.add('hidden');
-                    shelfNameInput.value = '';
-                } catch (e) { console.error("Error adding shelf: ", e); }
+                    createBoardModal.classList.add('hidden');
+                    boardNameInput.value = '';
+                } catch(e) { console.error("Error creating board", e); }
             };
 
-            const deleteShelf = async (shelfId) => {
-                if (!userId || !shelfId) return;
-                try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/resources`, shelfId));
-                } catch (e) { console.error("Error deleting shelf: ", e); }
-            };
-
-            const openAddResourceModal = (shelfId) => {
-                currentShelfIdForResource = shelfId;
-                resourceTitleInput.value = '';
-                resourceContentInput.value = '';
-                addResourceModal.classList.remove('hidden');
-            };
-
-            const addResource = async () => {
-                if (!userId || !currentShelfIdForResource) return;
-                const title = resourceTitleInput.value.trim();
-                let content = resourceContentInput.value.trim();
-
-                if (!title || !content) {
-                    showNotification("Помилка", "Всі поля повинні бути заповнені");
-                    return;
-                }
+            const openActiveBoard = (board) => {
+                currentBoardId = board.id;
+                activeBoardTitle.textContent = board.title;
+                getEl('board-member-count').textContent = board.members.length;
                 
-                if (!content.startsWith('http')) {
-                    content = 'https://' + content;
-                }
+                boardsListView.classList.add('hidden');
+                activeBoardView.classList.remove('hidden');
+                activeBoardView.classList.add('flex');
+                
+                // Update member select options for this board (exclude already members ideally, but simpler for now)
+                boardFriendSelect.innerHTML = '<option value="">Виберіть друга</option>';
+                Object.values(friendsCache).forEach(f => {
+                    if(!board.members.includes(f.userId)) {
+                        boardFriendSelect.innerHTML += `<option value="${f.userId}">${f.name}</option>`;
+                    }
+                });
 
-                const newItem = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                    title: title,
-                    type: 'link',
-                    url: content
-                };
-
-                try {
-                    const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, currentShelfIdForResource);
-                    await updateDoc(shelfRef, {
-                        items: arrayUnion(newItem)
-                    });
-                    addResourceModal.classList.add('hidden');
-                } catch (e) { console.error("Error adding resource: ", e); }
+                subscribeToBoardItems(board.id);
             };
 
-            const deleteResource = async (shelfId, itemId, currentItems) => {
-                if (!userId) return;
+            const subscribeToBoardItems = (boardId) => {
+                if(unsubscribeFromBoardItems) unsubscribeFromBoardItems();
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'board_items'), where('boardId', '==', boardId));
+                
+                unsubscribeFromBoardItems = onSnapshot(q, (snapshot) => {
+                    boardTasksList.innerHTML = '';
+                    boardStickersArea.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const item = { id: doc.id, ...doc.data() };
+                        if(item.type === 'task') renderBoardTask(item);
+                        else if(item.type === 'sticker') renderBoardSticker(item);
+                    });
+                });
+            };
+
+            const renderBoardTask = (item) => {
+                const total = item.subtasks ? item.subtasks.length : 0;
+                const done = item.subtasks ? item.subtasks.filter(s => s.completed).length : 0;
+                const percent = total > 0 ? Math.round((done/total) * 100) : 0;
+
+                const el = document.createElement('div');
+                el.className = 'board-task-card p-3 mb-2';
+                
+                let subtasksHtml = '';
+                if(item.subtasks) {
+                    subtasksHtml = item.subtasks.map((s, idx) => `
+                        <div class="flex items-start gap-2 mt-1">
+                            <input type="checkbox" class="mt-1 cursor-pointer" ${s.completed ? 'checked' : ''} data-idx="${idx}">
+                            <span class="text-sm ${s.completed ? 'line-through text-gray-400' : 'text-gray-700'}">${s.text}</span>
+                        </div>
+                    `).join('');
+                }
+
+                el.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-gray-800">${item.text}</h4>
+                        <button class="text-red-400 hover:text-red-600 delete-item-btn"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                        <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2">${done}/${total} виконано</div>
+                    <div class="pl-1 space-y-1">
+                        ${subtasksHtml}
+                    </div>
+                `;
+
+                el.querySelector('.delete-item-btn').addEventListener('click', () => deleteBoardItem(item.id));
+                el.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', (e) => toggleSubtask(item, parseInt(e.target.dataset.idx), e.target.checked));
+                });
+
+                boardTasksList.appendChild(el);
+            };
+
+            const toggleSubtask = async (item, idx, isChecked) => {
+                const newSubtasks = [...item.subtasks];
+                newSubtasks[idx].completed = isChecked;
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'board_items', item.id), {
+                    subtasks: newSubtasks
+                });
+            };
+
+            const renderBoardSticker = (item) => {
+                const el = document.createElement('div');
+                el.className = `sticker ${item.color} p-4 w-full aspect-square flex flex-col relative transform rotate-1`;
+                el.innerHTML = `
+                    <button class="absolute top-1 right-1 text-gray-600 hover:text-red-600 delete-sticker-btn"><i class="fas fa-times"></i></button>
+                    <div class="flex-grow flex items-center justify-center text-center font-medium text-gray-800 break-words overflow-hidden p-2">
+                        ${item.text}
+                    </div>
+                `;
+                el.querySelector('.delete-sticker-btn').addEventListener('click', () => deleteBoardItem(item.id));
+                boardStickersArea.appendChild(el);
+            };
+
+            const deleteBoardItem = async (itemId) => {
+                if(!confirm('Видалити цей елемент?')) return;
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'board_items', itemId));
+            };
+
+            const addBoardMember = async () => {
+                const friendId = boardFriendSelect.value;
+                if(!friendId || !currentBoardId) return;
+                
                 try {
-                    const updatedItems = currentItems.filter(item => item.id !== itemId);
-                    const shelfRef = doc(db, `artifacts/${appId}/users/${userId}/resources`, shelfId);
-                    await updateDoc(shelfRef, { items: updatedItems });
-                } catch (e) { console.error("Error deleting resource: ", e); }
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'boards', currentBoardId), {
+                        members: arrayUnion(friendId)
+                    });
+                    addBoardMemberModal.classList.add('hidden');
+                    
+                    // Manually update count UI for immediate feedback or wait for reload
+                    const currentCount = parseInt(getEl('board-member-count').textContent);
+                    getEl('board-member-count').textContent = currentCount + 1;
+                    
+                } catch(e) { console.error("Error adding member", e); }
+            };
+
+            const addBoardTask = async () => {
+                const title = boardTaskTitle.value.trim();
+                if(!title || !currentBoardId) return;
+
+                const subtaskInputs = document.querySelectorAll('.subtask-input');
+                const subtasks = Array.from(subtaskInputs).map(inp => ({
+                    text: inp.value.trim(),
+                    completed: false
+                })).filter(s => s.text !== '');
+
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'board_items'), {
+                        boardId: currentBoardId,
+                        type: 'task',
+                        text: title,
+                        subtasks,
+                        createdAt: serverTimestamp()
+                    });
+                    addBoardTaskModal.classList.add('hidden');
+                    boardTaskTitle.value = '';
+                    subtasksContainer.innerHTML = '<input type="text" placeholder="Крок 1" class="subtask-input w-full px-3 py-1.5 rounded border border-gray-200 text-sm">';
+                } catch(e) { console.error("Error adding board task", e); }
+            };
+
+            const addSticker = async () => {
+                const text = stickerTextInput.value.trim();
+                if(!text || !currentBoardId) return;
+                
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'board_items'), {
+                        boardId: currentBoardId,
+                        type: 'sticker',
+                        text,
+                        color: selectedStickerColor,
+                        createdAt: serverTimestamp()
+                    });
+                    addStickerModal.classList.add('hidden');
+                    stickerTextInput.value = '';
+                } catch(e) { console.error("Error adding sticker", e); }
             };
 
 
             // --- Event Listeners ---
+            // (Existing listeners omitted for brevity) ...
             googleSignInButton.addEventListener('click', signInWithGoogle);
             signOutButton.addEventListener('click', signOutUser);
             addTaskButton.addEventListener('click', addTask);
@@ -1324,6 +1301,45 @@
             const handleSendMessage = () => { if (!selectedFriendForChat) { showNotification('Помилка', 'Будь ласка, спочатку виберіть друга зі списку.'); return; } sendChatMessage({ text: chatMessageInput.value, recipient: selectedFriendForChat }); };
             sendChatMessageBtn.addEventListener('click', handleSendMessage);
             chatMessageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+
+            // --- Boards Event Listeners ---
+            boardsBtn.addEventListener('click', openBoardsView);
+            backToTasksFromBoardsBtn.addEventListener('click', closeBoardsView);
+            createBoardBtn.addEventListener('click', () => { boardNameInput.value = ''; createBoardModal.classList.remove('hidden'); });
+            cancelBoardBtn.addEventListener('click', () => createBoardModal.classList.add('hidden'));
+            saveBoardBtn.addEventListener('click', createBoard);
+            backToBoardsListBtn.addEventListener('click', () => { activeBoardView.classList.add('hidden'); activeBoardView.classList.remove('flex'); boardsListView.classList.remove('hidden'); if(unsubscribeFromBoardItems) unsubscribeFromBoardItems(); });
+            
+            addBoardMemberBtn.addEventListener('click', () => addBoardMemberModal.classList.remove('hidden'));
+            cancelBoardMemberBtn.addEventListener('click', () => addBoardMemberModal.classList.add('hidden'));
+            saveBoardMemberBtn.addEventListener('click', addBoardMember);
+
+            addBoardTaskBtn.addEventListener('click', () => { 
+                boardTaskTitle.value = ''; 
+                subtasksContainer.innerHTML = '<input type="text" placeholder="Крок 1" class="subtask-input w-full px-3 py-1.5 rounded border border-gray-200 text-sm">';
+                addBoardTaskModal.classList.remove('hidden'); 
+            });
+            cancelBoardTaskBtn.addEventListener('click', () => addBoardTaskModal.classList.add('hidden'));
+            addSubtaskFieldBtn.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `Крок ${subtasksContainer.children.length + 1}`;
+                input.className = 'subtask-input w-full px-3 py-1.5 rounded border border-gray-200 text-sm';
+                subtasksContainer.appendChild(input);
+            });
+            saveBoardTaskBtn.addEventListener('click', addBoardTask);
+
+            addStickerBtn.addEventListener('click', () => { stickerTextInput.value = ''; addStickerModal.classList.remove('hidden'); });
+            cancelStickerBtn.addEventListener('click', () => addStickerModal.classList.add('hidden'));
+            saveStickerBtn.addEventListener('click', addSticker);
+            
+            document.querySelectorAll('.color-option').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    document.querySelectorAll('.color-option').forEach(c => c.classList.remove('border-gray-600'));
+                    e.target.classList.add('border-gray-600');
+                    selectedStickerColor = e.target.dataset.color;
+                });
+            });
             
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) { signInWithCustomToken(auth, initialAuthToken).catch(() => signInAnonymously(auth)); } else { signInAnonymously(auth); }
