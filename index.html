@@ -4,28 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>☃️ Зимовий Планувальник Завдань ☃️</title>
-    <script src="https://cdn.tailwindcss.com">
-// Generic DOM hook: detect clicks on task-complete buttons inside boardTasksList and log event (best-effort)
-document.addEventListener('click', async (e) => {
-    try {
-        const btn = e.target.closest && e.target.closest('[data-board-action]');
-        if (!btn) return;
-        const act = btn.getAttribute('data-board-action');
-        if (act === 'complete') {
-            const titleEl = btn.closest('.board-task-card') && btn.closest('.board-task-card').querySelector('p');
-            const title = titleEl ? titleEl.textContent.trim() : 'Завдання';
-            await logBoardEvent('Завдання виконано', title);
-        } else if (act === 'delete') {
-            const titleEl = btn.closest('.board-task-card') && btn.closest('.board-task-card').querySelector('p');
-            const title = titleEl ? titleEl.textContent.trim() : 'Завдання';
-            await logBoardEvent('Завдання видалено', title);
-        }
-    } catch(e){
-        // ignore
-    }
-});
-
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
@@ -401,21 +380,6 @@ document.addEventListener('click', async (e) => {
         </div>
     </div>
 
-    
-    <!-- Board Report Modal -->
-    <div id="board-report-modal" class="fixed inset-0 z-[120] flex items-center justify-center hidden modal-overlay">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full relative">
-            <h3 class="text-xl font-bold mb-4 text-gray-800">Звітність Дошки</h3>
-            <div id="board-report-table" class="max-h-[70vh] overflow-y-auto border rounded-lg p-3 bg-gray-50 text-sm">
-                <!-- History rows render here -->
-            </div>
-            <div class="flex justify-end mt-4">
-                <button id="close-board-report-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Закрити</button>
-            </div>
-        </div>
-    </div>
-
-
     <!-- Modal: Add Sticker -->
     <div id="add-sticker-modal" class="fixed inset-0 z-[95] flex items-center justify-center hidden modal-overlay">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative">
@@ -666,10 +630,6 @@ document.addEventListener('click', async (e) => {
                     <button id="add-board-member-btn" class="px-3 py-1 rounded bg-blue-100 text-blue-600 hover:bg-blue-200 text-sm font-medium transition-colors">
                         <i class="fas fa-user-plus mr-1"></i> <span class="hidden md:inline">Додати друга</span>
                     </button>
-                        <button id="board-report-btn" class="px-3 py-1 rounded bg-teal-500 text-white hover:bg-teal-600 text-sm font-medium transition-colors">
-                            <i class="fas fa-file-alt mr-1"></i>Звіт
-                        </button>
-
                 </div>
                 
                 <!-- Mobile Tab Switcher -->
@@ -1454,14 +1414,10 @@ document.addEventListener('click', async (e) => {
                 subtasksContainer.appendChild(input);
             });
             saveBoardTaskBtn.addEventListener('click', addBoardTask);
-            // Log creation of board task to history
-            saveBoardTaskBtn.addEventListener('click', async () => { try { const title = boardTaskTitle.value ? boardTaskTitle.value.trim() : ''; if(title) await logBoardEvent('Створено завдання', title); } catch(e){console.error(e);} });
 
             addStickerBtn.addEventListener('click', () => { stickerTextInput.value = ''; addStickerModal.classList.remove('hidden'); });
             cancelStickerBtn.addEventListener('click', () => addStickerModal.classList.add('hidden'));
             saveStickerBtn.addEventListener('click', addSticker);
-            // Log sticker creation to history
-            saveStickerBtn.addEventListener('click', async () => { try { const text = stickerTextInput.value ? stickerTextInput.value.trim() : ''; if(text) await logBoardEvent('Додано стікер', text); } catch(e){console.error(e);} });
             
             mobileTabTasks.addEventListener('click', () => switchMobileTab('tasks'));
             mobileTabStickers.addEventListener('click', () => switchMobileTab('stickers'));
@@ -1477,73 +1433,6 @@ document.addEventListener('click', async (e) => {
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) { signInWithCustomToken(auth, initialAuthToken).catch(() => signInAnonymously(auth)); } else { signInAnonymously(auth); }
         };
-    
-// --- Board Report helpers (added) ---
-async function loadBoardHistory() {
-    if (!currentBoardId) return;
-    try {
-        boardReportTable.innerHTML = '<p class="text-gray-500 text-center py-4">Завантаження...</p>';
-        const historyRef = collection(db, `artifacts/${appId}/public/data/shared_boards/${currentBoardId}/history`);
-        const q = query(historyRef, orderBy('timestamp','desc'));
-        const snap = await getDocs(q);
-        boardReportTable.innerHTML = '';
-        snap.forEach(d => {
-            const h = d.data();
-            const row = document.createElement('div');
-            row.className = \"p-2 bg-white border-b rounded-md mb-1\";
-            const ts = h.timestamp && h.timestamp.toDate ? h.timestamp.toDate() : new Date();
-            row.innerHTML = `
-                <div><b>Користувач:</b> ${h.userName || h.userId || 'Невідомо'}</div>
-                <div><b>Дія:</b> ${h.action}</div>
-                <div><b>Деталі:</b> ${h.details || '-'}</div>
-                <div class="text-xs text-gray-500 mt-1">${ts.toLocaleString()}</div>
-            `;
-            boardReportTable.appendChild(row);
-        });
-        if (snap.empty) boardReportTable.innerHTML = '<p class="text-gray-500 text-center py-4">Немає записів.</p>';
-    } catch (e) {
-        console.error('Error loading board history', e);
-        boardReportTable.innerHTML = '<p class="text-red-500 text-center py-4">Помилка під час завантаження історії.</p>';
-    }
-}
-
-async function logBoardEvent(action, details) {
-    if (!currentBoardId || !userId) return;
-    try {
-        const refHistory = collection(db, `artifacts/${appId}/public/data/shared_boards/${currentBoardId}/history`);
-        await addDoc(refHistory, {
-            userId,
-            userName: auth && auth.currentUser ? auth.currentUser.displayName || null : null,
-            action,
-            details: details || null,
-            timestamp: serverTimestamp()
-        });
-    } catch (e) {
-        console.error('Error logging board event', e);
-    }
-}
-
-// Wire modal UI (elements used below are selected earlier in the file - if not, select them here)
-try {
-    const boardReportBtnEl = document.getElementById('board-report-btn');
-    const boardReportModalEl = document.getElementById('board-report-modal');
-    const boardReportTable = document.getElementById('board-report-table');
-    const closeBoardReportBtn = document.getElementById('close-board-report-btn');
-
-    if (boardReportBtnEl) {
-        boardReportBtnEl.addEventListener('click', () => {
-            loadBoardHistory();
-            boardReportModalEl.classList.remove('hidden');
-        });
-    }
-    if (closeBoardReportBtn) {
-        closeBoardReportBtn.addEventListener('click', () => boardReportModalEl.classList.add('hidden'));
-    }
-} catch(e) {
-    console.warn('Report modal init warning', e);
-}
-// --- end report helpers ---
-
-</script>
+    </script>
 </body>
 </html>
