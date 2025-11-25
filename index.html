@@ -197,95 +197,110 @@
         .timeline-badge { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; padding:6px 8px; border-radius:8px; font-weight:600; font-size:13px; }
         
         @media (max-width: 768px) {
-            #board-report-modal .modal-content {
-                width: 100% !important;
-                height: 100% !important;
-                max-width: 100vw !important;
-                max-height: 100vh !important;
-                padding: 12px !important;
-                border-radius: 0 !important;
-                overflow-y: auto;
-            }
+    /* 1. Модальне вікно (Зберігаємо ваші стилі) */
+    #board-report-modal .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        padding: 12px !important;
+        border-radius: 0 !important;
+        overflow-y: auto;
+    }
 
-            #board-report-header {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-            }
+    /* 2. Контейнер заголовка: Дозволяємо переносити елементи */
+    .modal-content > .flex.items-center.justify-between.p-4.border-b {
+        /* Встановлюємо display: block, щоб наступні flex-елементи не конфліктували
+           або використовуємо flex-wrap, якщо є можливість змінити клас.
+           Я використовую flex-wrap: wrap для більш гнучкого контролю */
+        display: flex;
+        flex-direction: column; /* Змінюємо головний контейнер на вертикальний */
+        gap: 12px;
+        padding-bottom: 12px; /* Зменшуємо внутрішній відступ, оскільки є gap */
+    }
 
-            #board-report-header h2 {
-                font-size: 18px;
-                flex-grow: 1;
-                min-width: 0;
-                word-break: break-word;
-            }
+    /* Верхній рядок: Назва + Закрити (створюємо новий горизонтальний flex-контейнер) */
+    .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-3 {
+        width: 100%;
+        order: 1; /* Верхній рядок */
+        justify-content: space-between; /* Розносимо назву та кнопку "Закрити" */
+    }
 
-            #board-report-close {
-                padding: 8px 14px;
-                font-size: 14px;
-                flex-shrink: 0;
-            }
+    /* Приховуємо кнопку "Закрити" в цьому контейнері, оскільки вона знаходиться в іншому */
+    /* ... або залишаємо, але переносимо її, див. наступний блок */
+    
+    /* Контейнер з Пошуком, Фільтрами, Закрити: Робимо його вертикальним, 
+       або виділяємо окремо Пошук та Фільтри */
+    .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-2 {
+        width: 100%;
+        order: 2; /* Нижній рядок */
+        display: flex;
+        flex-direction: column; /* Вертикальне розташування всіх елементів керування */
+        gap: 8px; /* Менший відступ між елементами управління */
+    }
+    
+    /* Елементи керування: Пошук та Фільтри займають повну ширину */
+    #board-report-search, 
+    #board-report-filter-user, 
+    #board-report-filter-type {
+        width: 100% !important;
+        box-sizing: border-box;
+        margin: 0 !important;
+    }
+    
+    /* Кнопку "Закрити" переміщаємо вниз, або робимо її маленькою */
+    #board-report-close {
+        /* Робимо кнопку "Закрити" маленькою та праворуч усередині її контейнера */
+        width: auto;
+        align-self: flex-end; /* Вирівнюємо праворуч у вертикальному flex-контейнері */
+        padding: 8px 14px;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
 
-            #board-report-search {
-                width: 100% !important;
-                margin-bottom: 10px;
-                font-size: 15px;
-                box-sizing: border-box;
-            }
+    /* 3. Кнопка експорту (Експорт (JSON)): Займає всю ширину */
+    .p-3.border-t.text-right {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    #board-report-download {
+        width: 100%;
+        padding: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+        margin-top: 0;
+    }
+    
+    /* 4. Стилі елементів часової шкали (зберігаємо ваші стилі) */
+    .timeline-item {
+        flex-direction: row;
+        padding: 10px;
+        margin-bottom: 14px;
+        border-radius: 14px;
+    }
 
-            .board-report-filters {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                margin-bottom: 12px;
-            }
+    .timeline-avatar {
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 15px;
+    }
 
-            .board-report-filters select {
-                width: 100% !important;
-                padding: 10px;
-                font-size: 15px;
-                box-sizing: border-box;
-            }
+    .timeline-card {
+        width: calc(100% - 50px);
+    }
 
-            #board-report-export {
-                width: 100%;
-                margin-top: 20px;
-                padding: 12px;
-                font-size: 15px;
-                box-sizing: border-box;
-            }
+    .timeline-card .timeline-badge {
+        font-size: 15px;
+        line-height: 1.25;
+        word-break: break-word;
+    }
 
-            .timeline-item {
-                flex-direction: row;
-                padding: 10px;
-                margin-bottom: 14px;
-                border-radius: 14px;
-            }
-
-            .timeline-avatar {
-                min-width: 40px;
-                min-height: 40px;
-                font-size: 15px;
-            }
-
-            .timeline-card {
-                width: calc(100% - 50px);
-            }
-
-            .timeline-card .timeline-badge {
-                font-size: 15px;
-                line-height: 1.25;
-                word-break: break-word;
-            }
-
-            .timeline-meta {
-                font-size: 12px;
-                opacity: 0.8;
-            }
-        }
+    .timeline-meta {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+}
 
     </style>
 </head>
