@@ -188,110 +188,123 @@
             border-left: 4px solid #6366f1;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        .board-task-card {
+            min-height: 80px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .board-task-card h4,
+        .board-task-card span {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
 
         .timeline-item { display: flex; gap: 12px; padding: 12px; border-radius: 10px; transition: transform .12s; }
-.timeline-item:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-.timeline-avatar { flex: 0 0 44px; height:44px; width:44px; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:600; color:white; }
-.timeline-card { flex:1; min-width:0; }
-.timeline-meta { font-size:12px; color:#6b7280; margin-top:6px; }
-.timeline-badge { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; padding:6px 8px; border-radius:8px; font-weight:600; font-size:13px; }
+        .timeline-item:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+        .timeline-avatar { flex: 0 0 44px; height:44px; width:44px; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:600; color:white; }
+        .timeline-card { flex:1; min-width:0; }
+        .timeline-meta { font-size:12px; color:#6b7280; margin-top:6px; }
+        .timeline-badge { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; padding:6px 8px; border-radius:8px; font-weight:600; font-size:13px; }
 
-    @media (max-width: 768px) {
-        #board-report-modal .modal-content {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            padding: 12px !important;
-            border-radius: 0 !important;
-            overflow-y: auto;
-        }
+            @media (max-width: 768px) {
+                #board-report-modal .modal-content {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-width: 100vw !important;
+                    max-height: 100vh !important;
+                    padding: 12px !important;
+                    border-radius: 0 !important;
+                    overflow-y: auto;
+                }
 
-        .modal-content > .flex.items-center.justify-between.p-4.border-b {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding: 12px !important;
-            border-bottom: 1px solid #e5e7eb;
-        }
+                .modal-content > .flex.items-center.justify-between.p-4.border-b {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    padding: 12px !important;
+                    border-bottom: 1px solid #e5e7eb;
+                }
 
-        .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-3 {
-            width: 100%;
-            order: 1;
-            justify-content: space-between;
-        }
+                .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-3 {
+                    width: 100%;
+                    order: 1;
+                    justify-content: space-between;
+                }
 
-        .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-2 {
-            width: 100%;
-            order: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding-top: 0;
-        }
+                .modal-content > .flex.items-center.justify-between.p-4.border-b > .flex.items-center.gap-2 {
+                    width: 100%;
+                    order: 2;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    padding-top: 0;
+                }
 
-        #board-report-search, 
-        #board-report-filter-user, 
-        #board-report-filter-type {
-            width: 100% !important;
-            box-sizing: border-box;
-            margin: 0 !important;
-        }
+                #board-report-search, 
+                #board-report-filter-user, 
+                #board-report-filter-type {
+                    width: 100% !important;
+                    box-sizing: border-box;
+                    margin: 0 !important;
+                }
 
-        #board-report-close {
-            width: auto;
-            align-self: flex-start;
-            padding: 8px 14px;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
+                #board-report-close {
+                    width: auto;
+                    align-self: flex-start;
+                    padding: 8px 14px;
+                    font-size: 14px;
+                    flex-shrink: 0;
+                }
 
-        .p-3.border-t.text-right {
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-            padding: 12px !important;
-            border-top: 1px solid #e5e7eb;
-        }
+                .p-3.border-t.text-right {
+                    width: 100%;
+                    box-sizing: border-box;
+                    text-align: center;
+                    padding: 12px !important;
+                    border-top: 1px solid #e5e7eb;
+                }
 
-        #board-report-download {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            box-sizing: border-box;
-            margin-top: 0;
-        }
+                #board-report-download {
+                    width: 100%;
+                    padding: 14px;
+                    font-size: 16px;
+                    box-sizing: border-box;
+                    margin-top: 0;
+                }
 
-        .timeline-item {
-            flex-direction: row;
-            gap: 14px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
+                .timeline-item {
+                    flex-direction: row;
+                    gap: 14px;
+                    padding: 12px;
+                    margin-bottom: 12px;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                }
 
-        .timeline-avatar {
-            min-width: 42px;
-            min-height: 42px;
-            font-size: 16px;
-        }
+                .timeline-avatar {
+                    min-width: 42px;
+                    min-height: 42px;
+                    font-size: 16px;
+                }
 
-        .timeline-card {
-            width: calc(100% - 56px); /* Змінено для врахування нового min-width аватара + gap */
-        }
+                .timeline-card {
+                    width: calc(100% - 56px);
+                }
 
-        .timeline-card .timeline-badge {
-            font-size: 15px;
-            line-height: 1.25;
-            word-break: break-word;
-        }
+                .timeline-card .timeline-badge {
+                    font-size: 15px;
+                    line-height: 1.25;
+                    word-break: break-word;
+                }
 
-        .timeline-meta {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-    }
+                .timeline-meta {
+                    font-size: 12px;
+                    opacity: 0.8;
+                }
+            }
 
     </style>
 </head>
@@ -687,12 +700,19 @@
         </div>
     </div>
     <div id="editBoardTaskModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl w-96">
-            <h3 class="font-bold mb-2 text-lg">Редагувати завдання</h3>
-            <input type="text" id="editBoardTaskTitle" class="w-full mb-2 p-2 border rounded" placeholder="Назва завдання">
-            <div id="editSubtasksContainer" class="mb-2"></div>
-            <button id="addEditSubtaskBtn" class="mb-2 px-3 py-1 bg-gray-200 rounded text-sm">Додати крок</button>
-            <div class="flex justify-end gap-2">
+        <div class="bg-white p-6 rounded-xl w-96 flex flex-col max-h-[90vh]">
+            <h3 class="font-bold mb-2 text-lg flex-shrink-0">Редагувати завдання</h3>
+            
+            <div class="overflow-y-auto flex-grow"> 
+                
+                <textarea id="editBoardTaskTitle" class="w-full mb-2 p-3 border rounded text-base" placeholder="Назва завдання" rows="2"></textarea>
+                
+                <div id="editSubtasksContainer" class="mb-2"></div> 
+                
+            </div>
+            <button id="addEditSubtaskBtn" class="mb-2 px-3 py-1 bg-gray-200 rounded text-sm flex-shrink-0">Додати крок</button>
+            
+            <div class="flex justify-end gap-2 flex-shrink-0"> 
                 <button id="cancelEditBoardTaskBtn" class="px-3 py-1 bg-gray-200 rounded">Скасувати</button>
                 <button id="saveEditBoardTaskBtn" class="px-3 py-1 bg-indigo-600 text-white rounded">Зберегти</button>
             </div>
@@ -708,7 +728,7 @@
             </div>
         </div>
     </div>
-    <div id="board-report-modal" class="hidden fixed inset-0 z-[95] flex items-start md:items-center justify-center p-4">
+    <div id="board-report-modal" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 overflow-auto">
         <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between p-4 border-b">
             <div class="flex items-center gap-3">
@@ -808,7 +828,7 @@
     </div>
 
 
-    <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -1484,29 +1504,38 @@ window.onload = function () {
         getEl("editBoardTaskModal").classList.remove("hidden");
     }
 
+    function autoResizeTextarea(element) {
+    element.style.height = "auto";
+    element.style.height = (element.scrollHeight) + "px";
+}
+
     function addEditSubtaskRow(text = "") {
-        const container = getEl("editSubtasksContainer");
+    const container = getEl("editSubtasksContainer");
 
-        const row = document.createElement("div");
-        row.className = "flex items-center gap-2 mb-1";
+    const row = document.createElement("div");
+    row.className = "flex items-start gap-2 mb-1";
 
-        row.innerHTML = `
-            <input type="text"
-                class="edit-subtask-input w-full px-2 py-1 border rounded"
-                value="${text}">
-            <button class="remove-subtask-btn text-red-500 text-lg">&times;</button>
-        `;
+    row.innerHTML = `
+        <textarea 
+            class="edit-subtask-input 
+                w-full 
+                p-2            border 
+                rounded 
+                text-sm 
+                resize-y"       
+            rows="2"           placeholder="Опис кроку">${text}</textarea>
+        <button class="remove-subtask-btn text-red-500 text-lg mt-1">&times;</button>
+    `;
 
-        row.querySelector(".remove-subtask-btn").addEventListener("click", () => {
-            row.remove();
-        });
+    const textarea = row.querySelector(".edit-subtask-input");
+    
+    textarea.addEventListener("input", () => autoResizeTextarea(textarea));
 
-        container.appendChild(row);
-    }
+    row.querySelector(".remove-subtask-btn").addEventListener("click", () => row.remove());
+    container.appendChild(row);
+}
 
-    getEl("addEditSubtaskBtn").addEventListener("click", () => {
-        addEditSubtaskRow("");
-    });
+    getEl("addEditSubtaskBtn").addEventListener("click", () => addEditSubtaskRow(""));
 
     async function updateBoardItem_withLogging(taskId, data) {
 
@@ -1624,28 +1653,33 @@ window.onload = function () {
         getEl("editBoardTaskModal").classList.add("hidden");
         editingBoardTask = null;
     });
+
     const renderBoardTask = (item) => {
         const total = item.subtasks ? item.subtasks.length : 0;
         const done = item.subtasks ? item.subtasks.filter(s => s.completed).length : 0;
-        const percent = total > 0 ? Math.round((done/total) * 100) : 0;
+        const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
         const el = document.createElement('div');
-        el.className = 'board-task-card p-3 mb-2 border rounded';
+        el.className = 'board-task-card p-3 mb-3 border rounded flex flex-col';
+        el.style.minHeight = "80px";
+        el.style.wordBreak = "break-word";
+        el.style.overflowWrap = "break-word"; 
+        el.style.whiteSpace = "normal";
 
         let subtasksHtml = '';
         if(item.subtasks) {
             subtasksHtml = item.subtasks.map((s, idx) => `
                 <div class="flex items-start gap-2 mt-1">
                     <input type="checkbox" class="mt-1 cursor-pointer" ${s.completed ? 'checked' : ''} data-idx="${idx}">
-                    <span class="text-sm ${s.completed ? 'line-through text-gray-400' : 'text-gray-700'}">${s.text}</span>
+                    <span class="text-sm ${s.completed ? 'line-through text-gray-400' : 'text-gray-700'} break-words">${s.text}</span>
                 </div>
             `).join('');
         }
 
         el.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <h4 class="font-bold text-gray-800">${item.text}</h4>
-                <div class="flex gap-2">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-gray-800 break-words">${item.text}</h4>
+                <div class="flex gap-2 flex-shrink-0">
                     <button class="text-blue-400 hover:text-blue-600 edit-item-btn"><i class="fas fa-edit"></i></button>
                     <button class="text-red-400 hover:text-red-600 delete-item-btn"><i class="fas fa-times"></i></button>
                 </div>
