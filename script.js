@@ -786,7 +786,7 @@ window.onload = function () {
         getEl("editBoardTaskModal").classList.add("hidden");
         editingBoardTask = null;
 
-        loadBoardTasks();
+        //loadBoardTasks();//
     }
 
     async function saveEditedBoard() {
