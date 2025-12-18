@@ -840,6 +840,17 @@ window.onload = function () {
         editingBoardTask = null;
     });
 
+    const formatTextForDisplay = (text) => {
+    if (!text) return '';
+        
+        let safeText = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+            
+        return safeText.replace(/\n/g, '<br>');
+    };
+
 
     const renderBoardTask = (item) => {
         const total = item.subtasks ? item.subtasks.length : 0;
@@ -866,18 +877,18 @@ window.onload = function () {
         }
 
         let subtasksHtml = '';
-        if (item.subtasks) {
+        if(item.subtasks) {
             subtasksHtml = item.subtasks.map((s, idx) => `
-            <div class="flex items-start gap-2 mt-1">
-                <input type="checkbox" class="mt-1 cursor-pointer" ${s.completed ? 'checked' : ''} data-idx="${idx}">
-                <span class="text-sm ${s.completed ? 'line-through text-gray-400' : 'text-gray-700'} break-words">${s.text}</span>
-            </div>
-        `).join('');
+                <div class="flex items-start gap-2 mt-1">
+                    <input type="checkbox" class="mt-1 cursor-pointer" ${s.completed ? 'checked' : ''} data-idx="${idx}">
+                    <span class="text-sm ${s.completed ? 'line-through text-gray-400' : 'text-gray-700'} break-words">${formatTextForDisplay(s.text)}</span>
+                </div>
+            `).join('');
         }
 
         el.innerHTML = `
         <div class="flex justify-between items-start mb-2">
-            <h4 class="font-bold text-gray-800 break-words flex-grow mr-2">${item.text}</h4>
+            <h4 class="font-bold text-gray-800 break-words flex-grow mr-2">${formatTextForDisplay(item.text)}</h4>
             <div class="flex gap-2 flex-shrink-0">
                 <button class="text-blue-400 hover:text-blue-600 edit-item-btn"><i class="fas fa-edit"></i></button>
                 <button class="text-red-400 hover:text-red-600 delete-item-btn"><i class="fas fa-times"></i></button>
@@ -901,7 +912,6 @@ window.onload = function () {
             cb.addEventListener('change', (e) => toggleSubtask_withLogging(item, parseInt(e.target.dataset.idx), e.target.checked));
         });
 
-        // НОВИЙ ОБРОБНИК ПОДІЙ ДЛЯ КНОПКИ СКРІПКИ
         const attachmentBtnEl = el.querySelector('.attachment-btn');
         if (attachmentBtnEl) {
             attachmentBtnEl.addEventListener('click', (e) => {
