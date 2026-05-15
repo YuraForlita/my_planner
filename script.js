@@ -1124,7 +1124,9 @@ window.onload = function () {
                 type: 'task',
                 text: title,
                 subtasks,
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                sortOrder: 1,
+                timestamp: serverTimestamp()
             });
 
             await logBoardActivity(currentBoardId, {
